@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "My Qiita Trend Tab",
+  "version": "1.0",
+  "description": "新しいタブをカスタマイズします",
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  },
+  "host_permissions": [
+    "https://qiita.com/*"
+  ]
+}
