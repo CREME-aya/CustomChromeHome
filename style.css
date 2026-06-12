@@ -1,0 +1,21 @@
+/*=========
+  全体の設定
+  =========*/
+  body{
+    margin: 0;
+    padding: 40px, 20px;
+    background-color: #0f172a;
+    color: #f8fafc;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-moothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+/*=========
+  dashborad
+  =========*/
+  .dashboard{
+    max-width: 1400px;
+    margin: 0 auto;
+    
+  }

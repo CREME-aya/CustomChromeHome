@@ -32,6 +32,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const aTag = document.createElement('a');
             const div = document.createElement('div');
 
+            div.className = 'item';
+            aTag.className = 'link';
 
             //href="url"
             aTag.href = url;
