@@ -709,7 +709,7 @@ function renderArticles() {
                 <div class="item-meta">${article.dateStr}</div>
             </div>
             <div class="item-actions">
-                <button class="ai-summary-btn" title="この記事をAIで要約">✨ 要約</button>
+                <button class="ai-summary-btn" title="この記事をAIで要約">要約</button>
                 <button class="fav-btn ${isFav ? 'active' : ''}" title="お気に入り">
                     ${isFav ? '★' : '☆'}
                 </button>

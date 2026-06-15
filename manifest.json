@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "My Qiita Trend Tab",
+  "name": "Nexus Dash",
   "version": "1.0",
-  "description": "新しいタブをカスタマイズします",
+  "description": "時計、天気、ToDo、カレンダー、AI、Spotify、RSSをまとめた新しいタブ用ダッシュボードです",
   "chrome_url_overrides": {
     "newtab": "index.html"
   },
