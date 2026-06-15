@@ -10,6 +10,13 @@ let currentFilter = 'all'; // 'all' or 'favorites'
 let currentSearchQuery = '';
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Chrome拡張（New Tab）等での入力バグ・フォーカス外れ対策
+    document.querySelectorAll('input, textarea, select').forEach(el => {
+        el.addEventListener('click', (e) => {
+            e.target.focus();
+        });
+    });
+
     // UI要素の取得
     const urlInput = document.getElementById('feed-url-input');
     const presetRss = document.getElementById('preset-rss');
@@ -54,6 +61,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedUrl = localStorage.getItem(STORAGE_KEY_URL) || DEFAULT_URL;
     urlInput.value = savedUrl;
     loadFeed(savedUrl);
+    
+    // 初期化 (天気)
+    loadWeather();
 
     // 初期化 (背景)
     const savedBg = localStorage.getItem(STORAGE_KEY_BG);
@@ -144,6 +154,19 @@ document.addEventListener('DOMContentLoaded', () => {
         tabAll.classList.remove('active');
         renderArticles();
     });
+
+    // 天気エリア選択の初期化とイベント
+    const weatherAreaSelect = document.getElementById('weather-area-select');
+    if (weatherAreaSelect) {
+        const savedArea = localStorage.getItem('custom_weather_area');
+        if (savedArea) {
+            weatherAreaSelect.value = savedArea;
+        }
+        weatherAreaSelect.addEventListener('change', (e) => {
+            localStorage.setItem('custom_weather_area', e.target.value);
+            loadWeather();
+        });
+    }
 
     // イベントリスナー: モーダル閉じる
     closeModalBtn.addEventListener('click', closeModal);
@@ -288,116 +311,245 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderMemos();
 
-    // ========== 新機能：Gemini AI Assistant ==========
-    const STORAGE_KEY_GEMINI = 'custom_gemini_api_key';
-    const geminiApiKeyInput = document.getElementById('gemini-api-key');
-    const saveGeminiBtn = document.getElementById('save-gemini-btn');
-    const geminiChatBox = document.getElementById('gemini-chat-box');
-    const geminiInput = document.getElementById('gemini-input');
-    const geminiSendBtn = document.getElementById('gemini-send-btn');
+    // ========== マルチAI & ウィジェット表示トグル管理 ==========
+    const toggles = [
+        { id: 'toggle-clock', targetClass: 'clock-widget' },
+        { id: 'toggle-weather', targetId: 'weather-widget' },
+        { id: 'toggle-links', targetClass: 'quick-links-widget' },
+        { id: 'toggle-ai-openai', targetId: 'ai-panel-openai' },
+        { id: 'toggle-ai-anthropic', targetId: 'ai-panel-anthropic' },
+        { id: 'toggle-ai-gemini', targetId: 'ai-panel-gemini' }
+    ];
 
-    let geminiApiKey = localStorage.getItem(STORAGE_KEY_GEMINI) || '';
-    geminiApiKeyInput.value = geminiApiKey;
+    toggles.forEach(t => {
+        const checkbox = document.getElementById(t.id);
+        if (!checkbox) return;
+        
+        // Load state
+        const stored = localStorage.getItem(t.id);
+        if (stored !== null) checkbox.checked = stored === 'true';
 
-    // 初期の挨拶メッセージ要素を取得
-    const initialAiMsg = document.querySelector('.gemini-chat-box .ai-msg');
-    if (geminiApiKey && initialAiMsg) {
-        initialAiMsg.textContent = 'APIキーを確認しました！何でも質問してください。';
-    }
+        // Apply state function
+        const applyToggle = () => {
+            const isVisible = checkbox.checked;
+            if (t.targetClass) {
+                document.querySelectorAll('.' + t.targetClass).forEach(el => el.classList.toggle('hidden-widget', !isVisible));
+            } else if (t.targetId) {
+                const el = document.getElementById(t.targetId);
+                if (el) el.classList.toggle('hidden-widget', !isVisible);
+            }
+        };
+        applyToggle();
 
-    saveGeminiBtn.addEventListener('click', () => {
-        geminiApiKey = geminiApiKeyInput.value.trim();
-        localStorage.setItem(STORAGE_KEY_GEMINI, geminiApiKey);
-        alert('Gemini API Key を保存しました！');
-        if (geminiApiKey && initialAiMsg) {
-            initialAiMsg.textContent = 'APIキーが登録されました！何でも質問してください。';
-        }
-        toggleSidebar();
+        // Event listener
+        checkbox.addEventListener('change', () => {
+            localStorage.setItem(t.id, checkbox.checked);
+            applyToggle();
+        });
     });
 
-    function addChatMessage(text, sender) {
-        const msgDiv = document.createElement('div');
-        msgDiv.className = `chat-msg ${sender}-msg`;
-        
-        // 簡単なMarkdown処理 (改行と太字)
-        const formattedText = text
-            .replace(/\n/g, '<br>')
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        
-        msgDiv.innerHTML = formattedText;
-        geminiChatBox.appendChild(msgDiv);
-        geminiChatBox.scrollTop = geminiChatBox.scrollHeight;
+    // ========== APIキー管理 ==========
+    const keys = ['openai', 'anthropic', 'gemini'];
+    const apiKeys = {};
+
+    function updateBoxStatus() {
+        if (apiKeys.openai) {
+            const b = document.getElementById('chatbox-openai');
+            if (b && b.innerHTML.includes('APIキーを設定してください')) b.innerHTML = '<div class="chat-msg ai-msg">OpenAIの準備が完了しました！<br><small style="color:#94a3b8;">※質問は上部の検索バーから入力してください</small></div>';
+        }
+        if (apiKeys.anthropic) {
+            const b = document.getElementById('chatbox-anthropic');
+            if (b && b.innerHTML.includes('APIキーを設定してください')) b.innerHTML = '<div class="chat-msg ai-msg">Claudeの準備が完了しました！<br><small style="color:#94a3b8;">※質問は上部の検索バーから入力してください</small></div>';
+        }
+        if (apiKeys.gemini) {
+            const b = document.getElementById('chatbox-gemini');
+            if (b && b.innerHTML.includes('APIキーを設定してください')) b.innerHTML = '<div class="chat-msg ai-msg">Geminiの準備が完了しました！<br><small style="color:#94a3b8;">※質問は上部の検索バーから入力してください</small></div>';
+        }
     }
 
-    window.sendToGemini = async function sendToGemini(prompt) {
-        if (!geminiApiKey) {
-            addChatMessage('エラー：サイドバーの設定から Gemini API Key を登録してください。', 'ai');
-            return;
+    keys.forEach(k => {
+        const input = document.getElementById(`${k}-api-key`);
+        if (input) {
+            const val = localStorage.getItem(`custom_${k}_api_key`) || '';
+            input.value = val;
+            apiKeys[k] = val;
+        }
+    });
+
+    updateBoxStatus();
+
+    const saveKeysBtn = document.getElementById('save-keys-btn');
+    if (saveKeysBtn) {
+        saveKeysBtn.addEventListener('click', () => {
+            keys.forEach(k => {
+                const input = document.getElementById(`${k}-api-key`);
+                if (input) {
+                    const val = input.value.trim();
+                    localStorage.setItem(`custom_${k}_api_key`, val);
+                    apiKeys[k] = val;
+                }
+            });
+            updateBoxStatus();
+            alert('APIキーを保存しました！');
+            toggleSidebar();
+        });
+    }
+
+    // ========== マルチAI チャット機能 ==========
+    const aiGlobalInput = document.getElementById('ai-global-input');
+    const aiGlobalSendBtn = document.getElementById('ai-global-send-btn');
+
+    function formatMarkdown(text) {
+        return text.replace(/\n/g, '<br>')
+                   .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    }
+
+    function addChatMessageToBox(boxId, text, sender) {
+        const box = document.getElementById(boxId);
+        if (!box) return;
+        
+        // APIキー催促メッセージなどをクリア
+        if (box.innerHTML.includes('APIキーを設定してください')) {
+            box.innerHTML = '';
         }
 
-        addChatMessage(prompt, 'user');
-        geminiInput.value = '';
-        geminiSendBtn.disabled = true;
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `chat-msg ${sender}-msg`;
+        msgDiv.innerHTML = formatMarkdown(text);
+        box.appendChild(msgDiv);
+        box.scrollTop = box.scrollHeight;
+        return msgDiv; // ローディング用に戻り値
+    }
 
-        const loadingId = Date.now();
-        const loadingDiv = document.createElement('div');
-        loadingDiv.id = `loading-${loadingId}`;
-        loadingDiv.className = 'chat-msg ai-msg';
-        loadingDiv.textContent = '考え中...';
-        geminiChatBox.appendChild(loadingDiv);
-        geminiChatBox.scrollTop = geminiChatBox.scrollHeight;
-
+    async function fetchOpenAI(prompt, boxId) {
+        if (!apiKeys.openai) {
+            addChatMessageToBox(boxId, 'エラー: OpenAI APIキーが未設定です。', 'ai');
+            return;
+        }
+        const loadingDiv = addChatMessageToBox(boxId, '考え中...', 'ai');
         try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${geminiApiKey}`, {
+            const res = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKeys.openai}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: 'gpt-4o',
+                    messages: [{ role: 'user', content: prompt }]
+                })
+            });
+            const data = await res.json();
+            loadingDiv.remove();
+            if (!res.ok) throw new Error(data.error?.message || 'API Error');
+            addChatMessageToBox(boxId, data.choices[0].message.content, 'ai');
+        } catch (e) {
+            loadingDiv.remove();
+            addChatMessageToBox(boxId, `エラー: ${e.message}`, 'ai');
+        }
+    }
+
+    async function fetchAnthropic(prompt, boxId) {
+        if (!apiKeys.anthropic) {
+            addChatMessageToBox(boxId, 'エラー: Anthropic APIキーが未設定です。', 'ai');
+            return;
+        }
+        const loadingDiv = addChatMessageToBox(boxId, '考え中...', 'ai');
+        try {
+            const res = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                    'x-api-key': apiKeys.anthropic,
+                    'anthropic-version': '2023-06-01',
+                    'content-type': 'application/json',
+                    'anthropic-dangerously-allow-browser': 'true'
+                },
+                body: JSON.stringify({
+                    model: 'claude-3-5-sonnet-20240620',
+                    max_tokens: 1024,
+                    messages: [{ role: 'user', content: prompt }]
+                })
+            });
+            const data = await res.json();
+            loadingDiv.remove();
+            if (!res.ok) throw new Error(data.error?.message || 'API Error');
+            addChatMessageToBox(boxId, data.content[0].text, 'ai');
+        } catch (e) {
+            loadingDiv.remove();
+            addChatMessageToBox(boxId, `エラー: ${e.message}`, 'ai');
+        }
+    }
+
+    async function fetchGemini(prompt, boxId) {
+        if (!apiKeys.gemini) {
+            addChatMessageToBox(boxId, 'エラー: Gemini APIキーが未設定です。', 'ai');
+            return;
+        }
+        const loadingDiv = addChatMessageToBox(boxId, '考え中...', 'ai');
+        try {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKeys.gemini}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     contents: [{ parts: [{ text: prompt }] }]
                 })
             });
-
-            const data = await response.json();
-            
-            const loadingEl = document.getElementById(`loading-${loadingId}`);
-            if (loadingEl) loadingEl.remove();
-
-            if (!response.ok) {
-                throw new Error(data.error?.message || `HTTPエラーが発生しました (${response.status})`);
-            }
-
-            if (!data.candidates || data.candidates.length === 0) {
-                throw new Error('APIから回答が得られませんでした。APIキーや入力内容を確認してください。');
-            }
-
-            const aiText = data.candidates[0]?.content?.parts?.[0]?.text || '(回答が空です)';
-            addChatMessage(aiText, 'ai');
-
-        } catch (error) {
-            const loadingEl = document.getElementById(`loading-${loadingId}`);
-            if (loadingEl) loadingEl.remove();
-            addChatMessage(`エラー: ${error.message}`, 'ai');
-        } finally {
-            geminiSendBtn.disabled = false;
+            const data = await res.json();
+            loadingDiv.remove();
+            if (!res.ok) throw new Error(data.error?.message || 'API Error');
+            addChatMessageToBox(boxId, data.candidates[0].content.parts[0].text, 'ai');
+        } catch (e) {
+            loadingDiv.remove();
+            addChatMessageToBox(boxId, `エラー: ${e.message}`, 'ai');
         }
     }
 
-    geminiSendBtn.addEventListener('click', () => {
-        const text = geminiInput.value.trim();
-        if (text) {
-            sendToGemini(text);
-        } else {
-            alert('質問内容を入力してください。');
-        }
-    });
+    window.sendToAI = async function(prompt) {
+        if (!prompt) return;
+        
+        const isOpenAIVisible = document.getElementById('toggle-ai-openai')?.checked;
+        const isAnthropicVisible = document.getElementById('toggle-ai-anthropic')?.checked;
+        const isGeminiVisible = document.getElementById('toggle-ai-gemini')?.checked;
 
-    geminiInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && !geminiSendBtn.disabled) {
-            const text = geminiInput.value.trim();
-            if (text) {
-                sendToGemini(text);
-            }
+        if (!isOpenAIVisible && !isAnthropicVisible && !isGeminiVisible) {
+            alert('表示されているAIモデルがありません。設定から表示をONにしてください。');
+            return;
         }
-    });
+
+        if (isOpenAIVisible) addChatMessageToBox('chatbox-openai', prompt, 'user');
+        if (isAnthropicVisible) addChatMessageToBox('chatbox-anthropic', prompt, 'user');
+        if (isGeminiVisible) addChatMessageToBox('chatbox-gemini', prompt, 'user');
+
+        aiGlobalInput.value = '';
+        aiGlobalSendBtn.disabled = true;
+
+        const promises = [];
+        if (isOpenAIVisible) promises.push(fetchOpenAI(prompt, 'chatbox-openai'));
+        if (isAnthropicVisible) promises.push(fetchAnthropic(prompt, 'chatbox-anthropic'));
+        if (isGeminiVisible) promises.push(fetchGemini(prompt, 'chatbox-gemini'));
+
+        await Promise.all(promises);
+        aiGlobalSendBtn.disabled = false;
+    };
+
+    // ✨要約ボタン用互換レイヤー
+    window.sendToGemini = function(prompt) {
+        window.sendToAI(prompt);
+    };
+
+    if (aiGlobalSendBtn) {
+        aiGlobalSendBtn.addEventListener('click', () => {
+            window.sendToAI(aiGlobalInput.value.trim());
+        });
+    }
+
+    if (aiGlobalInput) {
+        aiGlobalInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                window.sendToAI(aiGlobalInput.value.trim());
+            }
+        });
+    }
 
 });
 
@@ -568,4 +720,56 @@ function closeModal() {
     setTimeout(() => {
         document.getElementById('modal-body').innerHTML = '';
     }, 300);
+}
+
+/**
+ * 気象庁APIから天気情報を取得して描画する
+ */
+async function loadWeather() {
+    const weatherWidget = document.getElementById('weather-widget');
+    if (!weatherWidget) return;
+
+    try {
+        const areaCode = localStorage.getItem('custom_weather_area') || '130000';
+        
+        // データを取得
+        const res = await fetch(`https://www.jma.go.jp/bosai/forecast/data/forecast/${areaCode}.json`);
+        if (!res.ok) throw new Error('HTTP Error');
+        const data = await res.json();
+        
+        const areaName = data[0].timeSeries[0].areas[0].area.name;
+        const weatherCode = data[0].timeSeries[0].areas[0].weatherCodes[0];
+        const weatherText = data[0].timeSeries[0].areas[0].weathers[0].replace(/　/g, ' ');
+
+        // 降水確率 (データが存在しない場合を考慮)
+        let popText = '--%';
+        try {
+            const pops = data[0].timeSeries[1].areas[0].pops;
+            popText = Math.max(...pops.map(p => parseInt(p, 10) || 0)) + '%';
+        } catch(e){}
+
+        function getWeatherEmoji(code) {
+            if (code.startsWith('1')) return '☀️'; // 晴れ
+            if (code.startsWith('2')) return '☁️'; // 曇り
+            if (code.startsWith('3')) return '☔️'; // 雨
+            if (code.startsWith('4')) return '⛄️'; // 雪
+            return '🌡️';
+        }
+        
+        const icon = getWeatherEmoji(weatherCode);
+
+        weatherWidget.innerHTML = `
+            <div class="weather-info">
+                <div class="weather-area">${areaName}</div>
+                <div class="weather-temp-container">
+                    <span class="weather-desc">${weatherText}</span>
+                    <span class="weather-rain">☔ ${popText}</span>
+                </div>
+            </div>
+            <div class="weather-icon-container">${icon}</div>
+        `;
+    } catch (e) {
+        console.error(e);
+        weatherWidget.innerHTML = '<div class="weather-error">天気情報の取得に失敗しました</div>';
+    }
 }

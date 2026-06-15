@@ -20,6 +20,8 @@
                 <label for="preset-rss" class="sidebar-label">おすすめフィードから選択:</label>
                 <select id="preset-rss" class="url-input" style="cursor: pointer; padding: 10px;">
                     <option value="">-- カスタム入力 --</option>
+                    <option value="https://news.google.com/rss/headlines/section/topic/TECHNOLOGY?hl=ja&gl=JP&ceid=JP:ja">Google ニュース (テクノロジー)</option>
+                    <option value="https://news.google.com/rss?hl=ja&gl=JP&ceid=JP:ja">Google ニュース (トップ総合)</option>
                     <option value="https://qiita.com/popular-items/feed">Qiita (トレンド)</option>
                     <option value="https://zenn.dev/feed">Zenn (トレンド)</option>
                     <option value="https://b.hatena.ne.jp/hotentry/it.rss">はてなブックマーク (IT・テクノロジー)</option>
@@ -50,9 +52,51 @@
             <hr class="sidebar-divider">
 
             <div class="setting-block">
-                <label for="gemini-api-key" class="sidebar-label">Gemini API Key (AI機能用):</label>
-                <input type="password" id="gemini-api-key" placeholder="AI Studio APIキー..." class="url-input">
-                <button id="save-gemini-btn" class="save-btn" style="background: linear-gradient(135deg, #10b981, #059669);">キーを保存</button>
+                <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1rem; color: #e2e8f0;">ウィジェット表示設定</h3>
+                <label style="display:flex; align-items:center; gap:8px; margin-bottom: 8px; color: #cbd5e1; cursor:pointer;"><input type="checkbox" id="toggle-clock" checked> 時計</label>
+                <label style="display:flex; align-items:center; gap:8px; margin-bottom: 8px; color: #cbd5e1; cursor:pointer;"><input type="checkbox" id="toggle-weather" checked> 天気・災害情報</label>
+                <label style="display:flex; align-items:center; gap:8px; margin-bottom: 8px; color: #cbd5e1; cursor:pointer;"><input type="checkbox" id="toggle-links" checked> クイックリンク</label>
+                <label style="display:flex; align-items:center; gap:8px; margin-bottom: 8px; color: #cbd5e1; cursor:pointer;"><input type="checkbox" id="toggle-ai-openai" checked> AI: ChatGPT (OpenAI)</label>
+                <label style="display:flex; align-items:center; gap:8px; margin-bottom: 8px; color: #cbd5e1; cursor:pointer;"><input type="checkbox" id="toggle-ai-anthropic" checked> AI: Claude (Anthropic)</label>
+                <label style="display:flex; align-items:center; gap:8px; margin-bottom: 8px; color: #cbd5e1; cursor:pointer;"><input type="checkbox" id="toggle-ai-gemini" checked> AI: Gemini (Google)</label>
+            </div>
+
+            <hr class="sidebar-divider">
+
+            <div class="setting-block">
+                <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1rem; color: #e2e8f0;">天気ウィジェット設定</h3>
+                <label for="weather-area-select" class="sidebar-label">地域を選択:</label>
+                <select id="weather-area-select" class="url-input">
+                    <option value="016000">北海道 (札幌)</option>
+                    <option value="040000">宮城県</option>
+                    <option value="130000" selected>東京都</option>
+                    <option value="140000">神奈川県</option>
+                    <option value="110000">埼玉県</option>
+                    <option value="120000">千葉県</option>
+                    <option value="230000">愛知県</option>
+                    <option value="270000">大阪府</option>
+                    <option value="260000">京都府</option>
+                    <option value="280000">兵庫県</option>
+                    <option value="340000">広島県</option>
+                    <option value="400000">福岡県</option>
+                    <option value="471000">沖縄県</option>
+                </select>
+            </div>
+
+            <hr class="sidebar-divider">
+
+            <div class="setting-block">
+                <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1rem; color: #e2e8f0;">AI API Keys</h3>
+                <label for="openai-api-key" class="sidebar-label">OpenAI API Key:</label>
+                <input type="password" id="openai-api-key" placeholder="sk-..." class="url-input" style="margin-bottom: 10px;">
+                
+                <label for="anthropic-api-key" class="sidebar-label">Anthropic API Key:</label>
+                <input type="password" id="anthropic-api-key" placeholder="sk-ant-..." class="url-input" style="margin-bottom: 10px;">
+
+                <label for="gemini-api-key" class="sidebar-label">Gemini API Key:</label>
+                <input type="password" id="gemini-api-key" placeholder="AIza..." class="url-input">
+
+                <button id="save-keys-btn" class="save-btn" style="background: linear-gradient(135deg, #10b981, #059669); margin-top: 10px;">キーを保存</button>
             </div>
         </div>
     </aside>
@@ -74,15 +118,33 @@
                     <div id="date-display" class="date">--月--日</div>
                 </div>
 
-                <!-- Gemini AI (検索バー風) -->
-                <div class="gemini-widget search-bar-style">
-                    <div class="gemini-input-group">
+                <!-- 天気ウィジェット -->
+                <div id="weather-widget" class="weather-widget">
+                    <div class="weather-loading">天気情報を取得中...</div>
+                </div>
+
+                <!-- マルチAI 検索バー -->
+                <div class="ai-search-bar search-bar-style">
+                    <div class="ai-input-group">
                         <span class="ai-icon">✨</span>
-                        <input type="text" id="gemini-input" class="memo-input" placeholder="Gemini に質問する、または検索...">
-                        <button id="gemini-send-btn" class="send-btn">➤</button>
+                        <input type="text" id="ai-global-input" class="memo-input" placeholder="ここから3つのAIに同時に質問できます...">
+                        <button id="ai-global-send-btn" class="send-btn">➤</button>
                     </div>
-                    <div id="gemini-chat-box" class="gemini-chat-box">
-                        <div class="chat-msg ai-msg">こんにちは！APIキーを登録するとお話しできます。</div>
+                </div>
+
+                <!-- 各AIの回答パネル -->
+                <div id="ai-panels-container" class="ai-panels-grid">
+                    <div id="ai-panel-openai" class="ai-panel" data-widget-id="toggle-ai-openai">
+                        <div class="ai-panel-header">ChatGPT <span class="ai-model-name">(gpt-4o)</span></div>
+                        <div id="chatbox-openai" class="ai-chat-content">APIキーを設定してください</div>
+                    </div>
+                    <div id="ai-panel-anthropic" class="ai-panel" data-widget-id="toggle-ai-anthropic">
+                        <div class="ai-panel-header">Claude <span class="ai-model-name">(3.5 Sonnet)</span></div>
+                        <div id="chatbox-anthropic" class="ai-chat-content">APIキーを設定してください</div>
+                    </div>
+                    <div id="ai-panel-gemini" class="ai-panel" data-widget-id="toggle-ai-gemini">
+                        <div class="ai-panel-header">Gemini <span class="ai-model-name">(3.5 Flash)</span></div>
+                        <div id="chatbox-gemini" class="ai-chat-content">APIキーを設定してください</div>
                     </div>
                 </div>
 

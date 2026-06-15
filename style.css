@@ -186,11 +186,21 @@
     font-size: 1rem;
     outline: none;
     transition: all 0.3s ease;
+    user-select: auto !important;
+    -webkit-user-select: auto !important;
+    pointer-events: auto !important;
   }
 
   .url-input:focus {
     border-color: #60a5fa;
     box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+  }
+
+  /* その他の入力欄も一律で保護 */
+  input, textarea, select {
+    user-select: auto !important;
+    -webkit-user-select: auto !important;
+    pointer-events: auto !important;
   }
 
   .setting-block {
@@ -419,8 +429,8 @@
     border-color: #fff;
   }
 
-  /* ========== Gemini AI ウィジェット (検索バー風) ========== */
-  .gemini-widget.search-bar-style {
+  /* ========== マルチAI ウィジェット ========== */
+  .ai-search-bar.search-bar-style {
     width: 100%;
     background: rgba(15, 23, 42, 0.5);
     backdrop-filter: blur(12px);
@@ -433,26 +443,26 @@
     transition: all 0.3s ease;
   }
 
-  .gemini-widget.search-bar-style:focus-within {
+  .ai-search-bar.search-bar-style:focus-within {
     background: rgba(30, 41, 59, 0.8);
     border-color: rgba(16, 185, 129, 0.5);
     box-shadow: 0 8px 30px rgba(16, 185, 129, 0.2);
   }
 
-  .gemini-widget.search-bar-style .gemini-input-group {
+  .ai-search-bar .ai-input-group {
     display: flex;
     align-items: center;
     width: 100%;
     background: transparent;
   }
 
-  .gemini-widget.search-bar-style .ai-icon {
+  .ai-search-bar .ai-icon {
     font-size: 1.2rem;
     margin-right: 12px;
     opacity: 0.8;
   }
 
-  .gemini-widget.search-bar-style input {
+  .ai-search-bar input {
     flex: 1;
     background: transparent;
     border: none;
@@ -462,7 +472,7 @@
     padding: 8px 0;
   }
 
-  .gemini-widget.search-bar-style .send-btn {
+  .ai-search-bar .send-btn {
     background: transparent;
     border: none;
     color: #10b981;
@@ -470,24 +480,65 @@
     cursor: pointer;
     transition: transform 0.2s;
   }
-  .gemini-widget.search-bar-style .send-btn:hover {
+  .ai-search-bar .send-btn:hover {
     transform: scale(1.1);
   }
 
-  .gemini-widget.search-bar-style .gemini-chat-box {
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    max-height: 250px;
-    overflow-y: auto;
-    font-size: 0.95rem;
-    display: none; /* 初期状態は非表示、チャットがあれば表示 */
+  /* 3連AIパネル */
+  .ai-panels-grid {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+    margin-top: -10px;
   }
 
-  .gemini-widget.search-bar-style .gemini-chat-box:not(:empty) {
+  .ai-panel {
+    flex: 1;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    min-height: 200px;
+    max-height: 350px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+  }
+
+  .ai-panel-header {
+    font-size: 1rem;
+    color: #f8fafc;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 8px;
+  }
+
+  .ai-model-name {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    font-weight: normal;
+  }
+
+  .ai-chat-content {
+    flex: 1;
+    overflow-y: auto;
+    font-size: 0.9rem;
+    color: #cbd5e1;
     display: flex;
     flex-direction: column;
     gap: 12px;
+    padding-right: 4px;
+  }
+
+  /* 表示オフ用クラス */
+  .hidden-widget {
+    display: none !important;
   }
 
   /* メモ（タスク）ウィジェット */
@@ -906,4 +957,73 @@
 
   .read-more-btn:hover {
     background: #46a300;
+  }
+
+  /* ========== 天気ウィジェット ========== */
+  .weather-widget {
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 450px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    color: #f8fafc;
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+  }
+
+  .weather-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .weather-area {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    font-weight: bold;
+  }
+
+  .weather-temp-container {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .weather-desc {
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+
+  .weather-rain {
+    font-size: 0.85rem;
+    color: #60a5fa;
+    background: rgba(96, 165, 250, 0.1);
+    padding: 2px 8px;
+    border-radius: 12px;
+  }
+  
+  .weather-icon-container {
+    font-size: 3rem;
+    line-height: 1;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
+  }
+
+  .weather-loading {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    text-align: center;
+    width: 100%;
+  }
+
+  .weather-error {
+    font-size: 0.9rem;
+    color: #ef4444;
+    text-align: center;
+    width: 100%;
   }
