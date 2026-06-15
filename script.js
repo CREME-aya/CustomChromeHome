@@ -141,6 +141,185 @@ document.addEventListener('DOMContentLoaded', () => {
     modal.addEventListener('click', (e) => {
         if (e.target === modal) closeModal(); // 背景クリックで閉じる
     });
+
+    // ========== 新機能：時計ウィジェット ==========
+    const timeDisplay = document.getElementById('time-display');
+    const dateDisplay = document.getElementById('date-display');
+    
+    function updateClock() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        timeDisplay.textContent = `${hours}:${minutes}`;
+
+        const options = { month: 'long', day: 'numeric', weekday: 'short' };
+        dateDisplay.textContent = now.toLocaleDateString('ja-JP', options);
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // ========== 新機能：クイックメモ（タスク）ウィジェット ==========
+    const STORAGE_KEY_MEMO = 'custom_quick_memos';
+    const memoInput = document.getElementById('memo-input');
+    const memoList = document.getElementById('memo-list');
+    let memos = JSON.parse(localStorage.getItem(STORAGE_KEY_MEMO) || '[]');
+
+    function saveMemos() {
+        localStorage.setItem(STORAGE_KEY_MEMO, JSON.stringify(memos));
+    }
+
+    function renderMemos() {
+        memoList.innerHTML = '';
+        memos.forEach((memo, index) => {
+            const li = document.createElement('li');
+            
+            const span = document.createElement('span');
+            span.className = `memo-text ${memo.completed ? 'completed' : ''}`;
+            span.textContent = memo.text;
+            span.addEventListener('click', () => {
+                memos[index].completed = !memos[index].completed;
+                saveMemos();
+                renderMemos();
+            });
+
+            const delBtn = document.createElement('button');
+            delBtn.className = 'delete-memo-btn';
+            delBtn.innerHTML = '&times;';
+            delBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                memos.splice(index, 1);
+                saveMemos();
+                renderMemos();
+            });
+
+            li.appendChild(span);
+            li.appendChild(delBtn);
+            memoList.appendChild(li);
+        });
+    }
+
+    memoInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && memoInput.value.trim() !== '') {
+            memos.push({ text: memoInput.value.trim(), completed: false });
+            memoInput.value = '';
+            saveMemos();
+            renderMemos();
+        }
+    });
+
+    renderMemos();
+
+    // ========== 新機能：Gemini AI Assistant ==========
+    const STORAGE_KEY_GEMINI = 'custom_gemini_api_key';
+    const geminiApiKeyInput = document.getElementById('gemini-api-key');
+    const saveGeminiBtn = document.getElementById('save-gemini-btn');
+    const geminiChatBox = document.getElementById('gemini-chat-box');
+    const geminiInput = document.getElementById('gemini-input');
+    const geminiSendBtn = document.getElementById('gemini-send-btn');
+
+    let geminiApiKey = localStorage.getItem(STORAGE_KEY_GEMINI) || '';
+    geminiApiKeyInput.value = geminiApiKey;
+
+    // 初期の挨拶メッセージ要素を取得
+    const initialAiMsg = document.querySelector('.gemini-chat-box .ai-msg');
+    if (geminiApiKey && initialAiMsg) {
+        initialAiMsg.textContent = 'APIキーを確認しました！何でも質問してください。';
+    }
+
+    saveGeminiBtn.addEventListener('click', () => {
+        geminiApiKey = geminiApiKeyInput.value.trim();
+        localStorage.setItem(STORAGE_KEY_GEMINI, geminiApiKey);
+        alert('Gemini API Key を保存しました！');
+        if (geminiApiKey && initialAiMsg) {
+            initialAiMsg.textContent = 'APIキーが登録されました！何でも質問してください。';
+        }
+        toggleSidebar();
+    });
+
+    function addChatMessage(text, sender) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `chat-msg ${sender}-msg`;
+        
+        // 簡単なMarkdown処理 (改行と太字)
+        const formattedText = text
+            .replace(/\n/g, '<br>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        
+        msgDiv.innerHTML = formattedText;
+        geminiChatBox.appendChild(msgDiv);
+        geminiChatBox.scrollTop = geminiChatBox.scrollHeight;
+    }
+
+    window.sendToGemini = async function sendToGemini(prompt) {
+        if (!geminiApiKey) {
+            addChatMessage('エラー：サイドバーの設定から Gemini API Key を登録してください。', 'ai');
+            return;
+        }
+
+        addChatMessage(prompt, 'user');
+        geminiInput.value = '';
+        geminiSendBtn.disabled = true;
+
+        const loadingId = Date.now();
+        const loadingDiv = document.createElement('div');
+        loadingDiv.id = `loading-${loadingId}`;
+        loadingDiv.className = 'chat-msg ai-msg';
+        loadingDiv.textContent = '考え中...';
+        geminiChatBox.appendChild(loadingDiv);
+        geminiChatBox.scrollTop = geminiChatBox.scrollHeight;
+
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${geminiApiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }]
+                })
+            });
+
+            const data = await response.json();
+            
+            const loadingEl = document.getElementById(`loading-${loadingId}`);
+            if (loadingEl) loadingEl.remove();
+
+            if (!response.ok) {
+                throw new Error(data.error?.message || `HTTPエラーが発生しました (${response.status})`);
+            }
+
+            if (!data.candidates || data.candidates.length === 0) {
+                throw new Error('APIから回答が得られませんでした。APIキーや入力内容を確認してください。');
+            }
+
+            const aiText = data.candidates[0]?.content?.parts?.[0]?.text || '(回答が空です)';
+            addChatMessage(aiText, 'ai');
+
+        } catch (error) {
+            const loadingEl = document.getElementById(`loading-${loadingId}`);
+            if (loadingEl) loadingEl.remove();
+            addChatMessage(`エラー: ${error.message}`, 'ai');
+        } finally {
+            geminiSendBtn.disabled = false;
+        }
+    }
+
+    geminiSendBtn.addEventListener('click', () => {
+        const text = geminiInput.value.trim();
+        if (text) {
+            sendToGemini(text);
+        } else {
+            alert('質問内容を入力してください。');
+        }
+    });
+
+    geminiInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !geminiSendBtn.disabled) {
+            const text = geminiInput.value.trim();
+            if (text) {
+                sendToGemini(text);
+            }
+        }
+    });
+
 });
 
 /**
@@ -230,14 +409,30 @@ function renderArticles() {
                 <h3 class="item-title">${article.title}</h3>
                 <div class="item-meta">${article.dateStr}</div>
             </div>
-            <button class="fav-btn ${isFav ? 'active' : ''}" title="お気に入り">
-                ${isFav ? '★' : '☆'}
-            </button>
+            <div class="item-actions">
+                <button class="ai-summary-btn" title="この記事をAIで要約">要約</button>
+                <button class="fav-btn ${isFav ? 'active' : ''}" title="お気に入り">
+                    ${isFav ? '★' : '☆'}
+                </button>
+            </div>
         `;
 
         // 記事クリックでプレビューを開く
         const contentDiv = div.querySelector('.item-content');
         contentDiv.addEventListener('click', () => openModal(article));
+
+        // AI要約ボタン処理
+        const aiBtn = div.querySelector('.ai-summary-btn');
+        aiBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // モーダルが開くのを防ぐ
+            const apiKey = localStorage.getItem('custom_gemini_api_key');
+            if (!apiKey) {
+                alert('左上のメニュー(☰)から Gemini API Key を設定してください。');
+                return;
+            }
+            const prompt = `以下の記事の内容を推測し、その魅力や要点を日本語で3行以内で簡潔に要約してください。\nタイトル: ${article.title}\nリンク: ${article.link}\n概要: ${article.description || 'なし'}`;
+            window.sendToGemini(prompt);
+        });
 
         // お気に入りボタン処理
         const favBtn = div.querySelector('.fav-btn');

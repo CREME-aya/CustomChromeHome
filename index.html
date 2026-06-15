@@ -35,6 +35,14 @@
                     <button id="clear-bg-btn" class="outline-btn">クリア</button>
                 </div>
             </div>
+
+            <hr class="sidebar-divider">
+
+            <div class="setting-block">
+                <label for="gemini-api-key" class="sidebar-label">Gemini API Key (AI機能用):</label>
+                <input type="password" id="gemini-api-key" placeholder="AI Studio APIキー..." class="url-input">
+                <button id="save-gemini-btn" class="save-btn" style="background: linear-gradient(135deg, #10b981, #059669);">キーを保存</button>
+            </div>
         </div>
     </aside>
 
@@ -46,8 +54,35 @@
             </div>
         </header>
 
-        <section class="feed-section">
-            <div class="section-header">
+        <div class="dashboard-main">
+            <!-- 左側パネル：時計とメモとAI -->
+            <div class="left-panel">
+                <div class="clock-widget">
+                    <div id="time-display" class="time">--:--</div>
+                    <div id="date-display" class="date">--月--日</div>
+                </div>
+
+                <div class="memo-widget">
+                    <h3>Quick Tasks</h3>
+                    <ul id="memo-list" class="memo-list"></ul>
+                    <input type="text" id="memo-input" class="memo-input" placeholder="タスクを追加してEnter...">
+                </div>
+
+                <div class="gemini-widget">
+                    <h3>✨ Gemini Assistant</h3>
+                    <div id="gemini-chat-box" class="gemini-chat-box">
+                        <div class="chat-msg ai-msg">こんにちは！設定からAPIキーを登録すると、私と会話できるようになります。</div>
+                    </div>
+                    <div class="gemini-input-group">
+                        <input type="text" id="gemini-input" class="memo-input" placeholder="AIに質問する...">
+                        <button id="gemini-send-btn" class="send-btn">➤</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側パネル：記事リスト -->
+            <section class="feed-section">
+                <div class="section-header">
                 <h2 id="feed-title">最新記事</h2>
                 <div class="controls-bar">
                     <input type="text" id="search-input" placeholder="記事を検索..." class="search-input">
@@ -61,6 +96,7 @@
                 <div class="loading">記事を読み込み中...</div>
             </div>
         </section>
+        </div> <!-- end dashboard-main -->
     </div>
 
     <!-- 記事プレビュー用モーダル -->
