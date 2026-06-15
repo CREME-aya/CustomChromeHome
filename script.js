@@ -1,55 +1,95 @@
-//DOM処理後に非同期で処理する
-//Container HTML構造体への橋渡し
-document.addEventListener('DOMContentLoaded', async () => {
-    //qiitaのタグを探しに行く
-    const container = document.getElementById('qiita');
+// 定数の定義
+const DEFAULT_URL = 'https://qiita.com/popular-items/feed';
+const STORAGE_KEY = 'custom_feed_url';
 
-    //res       fetchを利用しRSSで特定のデータを取る
-    //text      テキストに変換する
-    //parser    DOMを解析する
-    //xml       解析済みのデータを持つ
-    //entries   全ての記事のタグをもつ
+// DOM読み込み完了時に初期化処理を行う
+document.addEventListener('DOMContentLoaded', () => {
+    const urlInput = document.getElementById('feed-url-input');
+    const saveBtn = document.getElementById('save-url-btn');
+    
+    // 保存されたURLを読み込む（なければデフォルトのQiita）
+    const savedUrl = localStorage.getItem(STORAGE_KEY) || DEFAULT_URL;
+    urlInput.value = savedUrl;
+
+    // 初回フィード読み込み
+    loadFeed(savedUrl);
+
+    // 保存ボタンのクリックイベント
+    saveBtn.addEventListener('click', () => {
+        const url = urlInput.value.trim();
+        if (url) {
+            localStorage.setItem(STORAGE_KEY, url);
+            loadFeed(url);
+        }
+    });
+});
+
+/**
+ * 指定されたURLからRSS/Atomフィードを取得し、画面に描画する
+ * @param {string} url - 取得するフィードのURL
+ */
+async function loadFeed(url) {
+    const container = document.getElementById('feed-container');
+    container.innerHTML = '<div class="loading">記事を読み込み中...</div>';
+
     try {
-        const res = await fetch('https://qiita.com/popular-items/feed');
+        // Chromeの新しいタブ等のコンテキストではCORS制約が厳しいため、パブリックプロキシを経由して取得する
+        const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+        const res = await fetch(proxyUrl);
+        if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+        
         const text = await res.text();
         const parser = new DOMParser();
         const xml = parser.parseFromString(text, "text/xml");
-        const entries = xml.querySelectorAll('entry');
         
-        //containerに関連するインラインHTMLのテキストを非表示にする
+        // パースエラーのチェック
+        if (xml.querySelector('parsererror')) {
+            throw new Error('XMLの解析に失敗しました。URLが正しいRSS/Atomフィードか確認してください。');
+        }
+
+        // Atom (entry) と RSS 2.0 (item) の両方に対応
+        const entries = xml.querySelectorAll('entry, item');
+        
         container.innerHTML = '';
+        
+        if (entries.length === 0) {
+            container.innerHTML = '<div class="loading">記事が見つかりませんでした。</div>';
+            return;
+        }
 
-        //title     記事のタイトルを走査する
-        //linkNode  記事のタグを走査する
-        //url       リンクのタグから文字列として属性を抜き出す
-        //aTag      <a href=""></a>を生成する(これを持つ)
-        //div       <div></div>を生成する(これを持つ)
-        //entriesからentryに要素数分だけ代入ループ
+        // DOMの頻繁な更新を防ぐためにDocumentFragmentを使用
+        const fragment = document.createDocumentFragment();
+
         entries.forEach((entry) => {
-            const title = entry.querySelector('title').textContent;
-            const linkNode = entry.querySelector('link');
-            const url = linkNode ? linkNode.getAttribute('href') : '#';
-            const aTag = document.createElement('a');
-            const div = document.createElement('div');
-
-            div.className = 'item';
-            aTag.className = 'link';
-
-            //href="url"
-            aTag.href = url;
-            //文字列としてtitleを取得
-            aTag.textContent = title;
-            //新しいタブで実行する
-            aTag.target = '_blank';
-            //divの中にaTagを格納する
-            //<div><aTag></aTag></div>のイメージ
-            div.appendChild(aTag);
+            const titleNode = entry.querySelector('title');
+            const title = titleNode ? titleNode.textContent : 'No Title';
             
-            //先ほどのdivをHTMLに格納する
-            container.appendChild(div);
+            // リンクの取得 (Atom: <link href="...">, RSS: <link>...</link>)
+            const linkNode = entry.querySelector('link');
+            let itemUrl = '#';
+            if (linkNode) {
+                itemUrl = linkNode.getAttribute('href') || linkNode.textContent;
+            }
+
+            const div = document.createElement('div');
+            div.className = 'item';
+            
+            const aTag = document.createElement('a');
+            aTag.className = 'link';
+            aTag.href = itemUrl;
+            aTag.textContent = title;
+            aTag.target = '_blank';
+            aTag.rel = 'noopener noreferrer'; // セキュリティ向上
+
+            div.appendChild(aTag);
+            fragment.appendChild(div);
         });  
+
+        // 組み立てたDOMを一括で追加
+        container.appendChild(fragment);
+
     } catch(err) {
         console.error(err);
-        container.textContent = "記事の取得に失敗しました。";
+        container.innerHTML = `<div class="error-msg">フィードの取得に失敗しました。<br><small>${err.message}</small></div>`;
     }
-});
+}

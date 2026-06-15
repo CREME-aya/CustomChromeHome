@@ -6,14 +6,24 @@
     <link rel = "stylesheet" href = "style.css">
 </head>
 <body>
-    <div class=""dashboard>
+    <div class="dashboard">
+        <header class="app-header">
+            <h1>My Custom Feed</h1>
+            <div class="settings-group">
+                <input type="url" id="feed-url-input" placeholder="RSS/AtomのURLを入力..." class="url-input">
+                <button id="save-url-btn" class="save-btn">保存して更新</button>
+            </div>
+        </header>
+
         <section class="feed-section">
             <div class="section-header">
-                <img src="https://qiita.com/favicon.ico" alt="Qiita" class="feed-icon">
-                    <h2>Qiita トレンド</h2>
-                </div>
-            </section>
-        </div>
+                <h2 id="feed-title">最新記事</h2>
+            </div>
+            <div id="feed-container" class="feed-list">
+                <div class="loading">記事を読み込み中...</div>
+            </div>
+        </section>
+    </div>
     <script src="script.js"></script>
 </body>
 </html>
