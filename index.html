@@ -65,13 +65,8 @@
 
             <hr class="sidebar-divider">
 
-            <div class="setting-block">
-                <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1rem; color: #e2e8f0;">Spotify設定</h3>
-                <label for="spotify-url-input" class="sidebar-label">プレイリスト/アルバムのURL:</label>
-                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                    <input type="text" id="spotify-url-input" class="url-input" placeholder="https://open.spotify.com/playlist/..." style="margin-bottom: 0;">
-                    <button id="spotify-save-btn" class="save-btn" style="flex: 0 0 auto; padding: 0 16px;">設定</button>
-                </div>
+            <div class="setting-block" style="display:none;">
+                <!-- Spotify API settings moved to widget -->
             </div>
 
             <hr class="sidebar-divider">
@@ -113,6 +108,32 @@
                 <button id="menu-btn" class="icon-btn menu-btn">☰</button>
                 <h1>Nexus Dash</h1>
             </div>
+
+            <!-- Spotify ウィジェット (フローティング) -->
+            <div id="spotify-widget" class="spotify-widget spotify-horizontal" style="position: absolute; right: 20px; top: 10px;">
+                <div id="spotify-player-container" style="display:none; flex-direction:row; gap:16px; align-items:center; width:100%;">
+                    <img id="spotify-art" src="" alt="" style="width: 48px; height: 48px; border-radius: 6px; object-fit: cover; background: rgba(255,255,255,0.1);">
+                    
+                    <div style="flex: 1; overflow: hidden; display:flex; flex-direction:column; justify-content:center;">
+                        <div id="spotify-track" style="font-weight:bold; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">再生されていません</div>
+                        <div id="spotify-artist" style="color: #cbd5e1; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">-</div>
+                    </div>
+                    
+                    <div style="display:flex; justify-content: center; gap: 12px; align-items: center;">
+                        <button id="spotify-prev-btn" class="spotify-ctrl-btn">⏮</button>
+                        <button id="spotify-play-btn" class="spotify-ctrl-btn" style="font-size: 1.6rem;">▶️</button>
+                        <button id="spotify-next-btn" class="spotify-ctrl-btn">⏭</button>
+                    </div>
+                    
+                    <button id="spotify-logout-btn" class="outline-btn" style="margin-left: 8px; padding: 4px 8px; font-size: 0.75rem; border-color: #ef4444; color: #ef4444; display:none;">解除</button>
+                </div>
+
+                <div id="spotify-auth-prompt" style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                    <span style="color:#94a3b8; font-size: 0.9rem; font-weight:bold;">🎵 Spotify</span>
+                    <button id="spotify-login-btn" class="outline-btn" style="padding: 4px 12px; font-size: 0.8rem; border-color: #1DB954; color: #1DB954;">連携する</button>
+                </div>
+            </div>
+
         </header>
 
         <div class="dashboard-main">
@@ -128,12 +149,13 @@
                 <div id="weather-widget" class="weather-widget">
                     <div class="weather-loading">天気情報を取得中...</div>
                 </div>
+            </div>
 
                 <!-- マルチAI 検索バー -->
                 <div class="ai-search-bar search-bar-style">
                     <div class="ai-input-group">
                         <span class="ai-icon">✨</span>
-                        <input type="text" id="ai-global-input" class="memo-input" placeholder="ここから3つのAIに同時に質問できます...">
+                        <input type="text" id="ai-global-input" class="memo-input" placeholder="AIに質問する...">
                         <button id="ai-global-send-btn" class="send-btn">➤</button>
                     </div>
                 </div>
@@ -166,11 +188,7 @@
                         <ul id="todo-list" class="todo-list"></ul>
                     </div>
 
-                    <!-- Spotify ウィジェット -->
-                    <div id="spotify-widget" class="spotify-widget">
-                        <div class="widget-header">🎵 Spotify</div>
-                        <iframe id="spotify-iframe" src="" width="100%" height="152" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
-                    </div>
+                    <!-- Spotify Widget was moved to top right -->
                 </div>
 
                 <!-- クイックリンク -->
@@ -180,9 +198,8 @@
                     </div>
                     <button id="add-link-btn" class="add-link-btn" title="ショートカットを追加">+</button>
                 </div>
-            </div>
 
-            <!-- 下部セクション（Discover風 記事リスト） -->
+                <!-- 下部セクション（Discover風 記事リスト） -->
             <div class="discover-section">
                 <section class="feed-section">
                     <div class="section-header">

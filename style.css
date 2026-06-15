@@ -443,6 +443,7 @@
     box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     display: flex;
     flex-direction: column;
+    margin-bottom: 24px;
     transition: all 0.3s ease;
   }
 
@@ -492,7 +493,7 @@
     display: flex;
     gap: 16px;
     width: 100%;
-    margin-top: -10px;
+    margin-top: 0;
   }
 
   .ai-panel {
@@ -1224,8 +1225,38 @@
     opacity: 1;
   }
 
-  /* Spotify */
-  .spotify-widget iframe {
-    border-radius: 12px;
-    background: transparent;
+  /* Spotify Controls */
+  .spotify-ctrl-btn {
+    background: none;
+    border: none;
+    color: #f8fafc;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: transform 0.2s, opacity 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .spotify-ctrl-btn:hover {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+
+  /* Top Right Area for Weather & Spotify */
+  .top-right-area {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 16px;
+  }
+
+  /* Horizontal Spotify Widget */
+  .spotify-horizontal {
+    width: 320px;
+    padding: 12px 16px;
+    min-height: 72px; /* 高さを少しコンパクトに */
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }

@@ -3,11 +3,59 @@ const DEFAULT_URL = 'https://qiita.com/popular-items/feed';
 const STORAGE_KEY_URL = 'custom_feed_url';
 const STORAGE_KEY_FAVS = 'custom_feed_favorites';
 const STORAGE_KEY_BG = 'custom_bg_image';
+const STORAGE_KEY_SPOTIFY_URL = 'spotify_url';
+const STORAGE_KEY_TODOS = 'custom_todos';
+const WEATHER_STORAGE_KEYS = {
+    lat: 'custom_weather_lat',
+    lon: 'custom_weather_lon',
+    name: 'custom_weather_name'
+};
+const DEFAULT_WEATHER_LOCATION = {
+    lat: '35.6895',
+    lon: '139.6917',
+    name: '東京都'
+};
+const WEATHER_STATUS_RESET_DELAY_MS = 3000;
+const WEATHER_CHART_HOURS = 6;
+const WEATHER_CHART_BAR_MAX_HEIGHT = 36;
+const WEATHER_CHART_BAR_MIN_HEIGHT = 4;
+const WEATHER_CHART_EMPTY_BAR_HEIGHT = 2;
+const WMO_WEATHER = {
+    0: { emoji: '☀️', text: '快晴' },
+    1: { emoji: '🌤️', text: '晴れ' },
+    2: { emoji: '⛅', text: '一部曇り' },
+    3: { emoji: '☁️', text: '曇り' },
+    45: { emoji: '🌫️', text: '霧' },
+    48: { emoji: '🌫️', text: '霧氷' },
+    51: { emoji: '🌦️', text: '弱い霧雨' },
+    53: { emoji: '🌦️', text: '霧雨' },
+    55: { emoji: '🌧️', text: '強い霧雨' },
+    56: { emoji: '🌧️', text: '弱い着氷性霧雨' },
+    57: { emoji: '🌧️', text: '強い着氷性霧雨' },
+    61: { emoji: '☔', text: '弱い雨' },
+    63: { emoji: '☔', text: '雨' },
+    65: { emoji: '☔', text: '強い雨' },
+    66: { emoji: '🌧️', text: '弱い着氷性の雨' },
+    67: { emoji: '🌧️', text: '強い着氷性の雨' },
+    71: { emoji: '❄️', text: '弱い雪' },
+    73: { emoji: '❄️', text: '雪' },
+    75: { emoji: '❄️', text: '強い雪' },
+    77: { emoji: '❄️', text: '霧雪' },
+    80: { emoji: '☔', text: 'にわか雨' },
+    81: { emoji: '☔', text: '強いにわか雨' },
+    82: { emoji: '☔', text: '猛烈なにわか雨' },
+    85: { emoji: '⛄', text: '雪見舞' },
+    86: { emoji: '⛄', text: '強い雪見舞' },
+    95: { emoji: '⛈️', text: '雷雨' },
+    96: { emoji: '⛈️', text: '雷雨（弱雹）' },
+    99: { emoji: '⛈️', text: '雷雨（強雹）' }
+};
 
 let currentArticles = [];
 let favoriteArticles = JSON.parse(localStorage.getItem(STORAGE_KEY_FAVS) || '[]');
 let currentFilter = 'all'; // 'all' or 'favorites'
 let currentSearchQuery = '';
+let todos = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     // Chrome拡張（New Tab）等での入力バグ・フォーカス外れ対策
@@ -155,89 +203,9 @@ document.addEventListener('DOMContentLoaded', () => {
         renderArticles();
     });
 
-    // 天気エリア検索設定
-    const weatherCityInput = document.getElementById('weather-city-input');
-    const weatherCityBtn = document.getElementById('weather-city-btn');
-    const weatherCityStatus = document.getElementById('weather-city-status');
-
-    function updateWeatherCityStatus() {
-        if (!weatherCityStatus) return;
-        const savedName = localStorage.getItem('custom_weather_name') || '東京都';
-        weatherCityStatus.textContent = `現在: ${savedName}`;
-    }
-    updateWeatherCityStatus();
-
-    if (weatherCityBtn && weatherCityInput) {
-        weatherCityBtn.addEventListener('click', async () => {
-            const query = weatherCityInput.value.trim();
-            if (!query) return;
-            
-            weatherCityStatus.textContent = '検索中...';
-            try {
-                const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=ja&format=json`);
-                const data = await res.json();
-                if (data.results && data.results.length > 0) {
-                    const result = data.results[0];
-                    const lat = result.latitude;
-                    const lon = result.longitude;
-                    const name = result.name + (result.admin1 ? `, ${result.admin1}` : '');
-                    
-                    localStorage.setItem('custom_weather_lat', lat);
-                    localStorage.setItem('custom_weather_lon', lon);
-                    localStorage.setItem('custom_weather_name', name);
-                    
-                    weatherCityInput.value = '';
-                    updateWeatherCityStatus();
-                    loadWeather();
-                } else {
-                    weatherCityStatus.textContent = '見つかりませんでした';
-                    setTimeout(updateWeatherCityStatus, 3000);
-                }
-            } catch(e) {
-                weatherCityStatus.textContent = 'エラーが発生しました';
-                setTimeout(updateWeatherCityStatus, 3000);
-            }
-        });
-    }
-
-    // 現在地から取得するボタン
-    const weatherLocBtn = document.getElementById('weather-location-btn');
-    if (weatherLocBtn) {
-        weatherLocBtn.addEventListener('click', () => {
-            if (!navigator.geolocation) {
-                weatherCityStatus.textContent = '位置情報に対応していません';
-                setTimeout(updateWeatherCityStatus, 3000);
-                return;
-            }
-            weatherCityStatus.textContent = '位置情報を取得中...';
-            navigator.geolocation.getCurrentPosition(async (position) => {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-                try {
-                    // BigDataCloud の無料APIで逆ジオコーディング
-                    const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=ja`);
-                    const data = await res.json();
-                    const name = data.locality || data.city || data.principalSubdivision || '現在地';
-                    
-                    localStorage.setItem('custom_weather_lat', lat);
-                    localStorage.setItem('custom_weather_lon', lon);
-                    localStorage.setItem('custom_weather_name', name);
-                    
-                    updateWeatherCityStatus();
-                    loadWeather();
-                } catch(e) {
-                    localStorage.setItem('custom_weather_lat', lat);
-                    localStorage.setItem('custom_weather_lon', lon);
-                    localStorage.setItem('custom_weather_name', '現在地');
-                    updateWeatherCityStatus();
-                    loadWeather();
-                }
-            }, (error) => {
-                weatherCityStatus.textContent = '位置情報の取得に失敗・拒否されました';
-                setTimeout(updateWeatherCityStatus, 3000);
-            });
-        });
-    }
+    initWeatherSettings();
+    initSpotify();
+    initTodo();
 
     // イベントリスナー: モーダル閉じる
     closeModalBtn.addEventListener('click', closeModal);
@@ -803,196 +771,449 @@ async function loadWeather() {
     if (!weatherWidget) return;
 
     try {
-        // デフォルトは東京
-        const lat = localStorage.getItem('custom_weather_lat') || '35.6895';
-        const lon = localStorage.getItem('custom_weather_lon') || '139.6917';
-        let areaName = localStorage.getItem('custom_weather_name') || '東京都';
-        
-        // 都道府県名などが付いている場合は短くする
-        areaName = areaName.split(',')[0];
-
-        // データを取得 (現在の天気 + 1時間ごとの降水確率, 日本の気象庁モデルを使用)
-        const meteoRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=precipitation_probability&timezone=Asia%2FTokyo&models=jma_seamless`);
+        const location = getStoredWeatherLocation();
+        const meteoRes = await fetch(buildWeatherForecastUrl(location));
         if (!meteoRes.ok) throw new Error('HTTP Error');
         const meteoData = await meteoRes.json();
-        
-        const current = meteoData.current_weather;
-        const weatherCode = current.weathercode;
-        const temp = current.temperature;
-
-        const timeArray = meteoData.hourly.time;
-        const popArray = meteoData.hourly.precipitation_probability;
-
-        // WMOコードを絵文字とテキストに変換
-        function getWMOEmojiAndText(code) {
-            const wmo = {
-                0: { emoji: '☀️', text: '快晴' },
-                1: { emoji: '🌤️', text: '晴れ' },
-                2: { emoji: '⛅', text: '一部曇り' },
-                3: { emoji: '☁️', text: '曇り' },
-                45: { emoji: '🌫️', text: '霧' },
-                48: { emoji: '🌫️', text: '霧氷' },
-                51: { emoji: '🌦️', text: '弱い霧雨' },
-                53: { emoji: '🌦️', text: '霧雨' },
-                55: { emoji: '🌧️', text: '強い霧雨' },
-                56: { emoji: '🌧️', text: '弱い着氷性霧雨' },
-                57: { emoji: '🌧️', text: '強い着氷性霧雨' },
-                61: { emoji: '☔', text: '弱い雨' },
-                63: { emoji: '☔', text: '雨' },
-                65: { emoji: '☔', text: '強い雨' },
-                66: { emoji: '🌧️', text: '弱い着氷性の雨' },
-                67: { emoji: '🌧️', text: '強い着氷性の雨' },
-                71: { emoji: '❄️', text: '弱い雪' },
-                73: { emoji: '❄️', text: '雪' },
-                75: { emoji: '❄️', text: '強い雪' },
-                77: { emoji: '❄️', text: '霧雪' },
-                80: { emoji: '☔', text: 'にわか雨' },
-                81: { emoji: '☔', text: '強いにわか雨' },
-                82: { emoji: '☔', text: '猛烈なにわか雨' },
-                85: { emoji: '⛄', text: '雪見舞' },
-                86: { emoji: '⛄', text: '強い雪見舞' },
-                95: { emoji: '⛈️', text: '雷雨' },
-                96: { emoji: '⛈️', text: '雷雨（弱雹）' },
-                99: { emoji: '⛈️', text: '雷雨（強雹）' },
-            };
-            return wmo[code] || { emoji: '🌡️', text: '不明' };
-        }
-        
-        const { emoji: icon, text: weatherText } = getWMOEmojiAndText(weatherCode);
-
-        // 現在の時刻に最も近いインデックスを探す
-        const nowTime = new Date().getTime();
-        let startIndex = 0;
-        for(let i = 0; i < timeArray.length; i++) {
-            if (new Date(timeArray[i]).getTime() >= nowTime - 3600000) {
-                startIndex = i;
-                break;
-            }
-        }
-
-        let chartHTML = '<div class="weather-chart-container">';
-        // 直近6時間分を描画
-        for(let i = 0; i < 6; i++) {
-            const idx = startIndex + i;
-            if (idx >= timeArray.length) break;
-            
-            const popVal = popArray[idx] || 0;
-            const hour = new Date(timeArray[idx]).getHours().toString().padStart(2, '0');
-            
-            // バーの高さ計算 (最低2px ~ 最大40px)
-            const h = popVal > 0 ? Math.max(4, (popVal / 100) * 36) : 2; 
-            
-            chartHTML += `
-                <div class="weather-chart-bar-wrap">
-                    <span class="weather-chart-val">${popVal}</span>
-                    <div class="weather-chart-bar" style="height: ${h}px; opacity: ${popVal > 0 ? 1 : 0.3};"></div>
-                    <span class="weather-chart-label">${hour}</span>
-                </div>
-            `;
-        }
-        chartHTML += '</div>';
-
-        weatherWidget.innerHTML = `
-            <div style="display:flex; align-items:center; gap: 16px;">
-                <div class="weather-icon-container">${icon}</div>
-                <div class="weather-info">
-                    <div class="weather-area">${areaName}</div>
-                    <div class="weather-temp-container">
-                        <span class="weather-desc">${weatherText}</span>
-                        <span class="weather-rain" style="margin-left: 8px;">${temp}℃</span>
-                    </div>
-                </div>
-            </div>
-            ${chartHTML}
-        `;
+        weatherWidget.innerHTML = renderWeatherWidget(location.name, meteoData);
     } catch (e) {
         console.error(e);
         weatherWidget.innerHTML = '<div class="weather-error">天気情報の取得に失敗しました</div>';
     }
 }
 
-// ==========================================
-// Spotify ウィジェット ロジック
-// ==========================================
-function initSpotify() {
-    const iframe = document.getElementById('spotify-iframe');
-    const input = document.getElementById('spotify-url-input');
-    const btn = document.getElementById('spotify-save-btn');
-    if(!iframe || !input || !btn) return;
+function initWeatherSettings() {
+    const cityInput = document.getElementById('weather-city-input');
+    const cityButton = document.getElementById('weather-city-btn');
+    const status = document.getElementById('weather-city-status');
+    const locationButton = document.getElementById('weather-location-btn');
 
-    // 保存されているURLを読み込み
-    const savedUrl = localStorage.getItem('spotify_url') || '';
-    if(savedUrl) {
-        input.value = savedUrl;
-        updateSpotifyIframe(savedUrl, iframe);
+    updateWeatherCityStatus(status);
+
+    if (cityButton && cityInput) {
+        cityButton.addEventListener('click', () => handleWeatherCitySearch(cityInput, status));
     }
 
-    btn.addEventListener('click', () => {
-        const val = input.value.trim();
-        localStorage.setItem('spotify_url', val);
-        updateSpotifyIframe(val, iframe);
-        btn.textContent = '保存しました';
-        setTimeout(() => { btn.textContent = '設定'; }, 2000);
+    if (locationButton) {
+        locationButton.addEventListener('click', () => handleWeatherCurrentLocation(status));
+    }
+}
+
+function updateWeatherCityStatus(status) {
+    if (!status) return;
+    status.textContent = `現在: ${getStoredWeatherLocation().name}`;
+}
+
+function resetWeatherCityStatus(status) {
+    setTimeout(() => updateWeatherCityStatus(status), WEATHER_STATUS_RESET_DELAY_MS);
+}
+
+async function handleWeatherCitySearch(input, status) {
+    const query = input.value.trim();
+    if (!query) return;
+
+    setWeatherStatus(status, '検索中...');
+    try {
+        const location = await fetchWeatherLocationByCity(query);
+        if (!location) {
+            setWeatherStatus(status, '見つかりませんでした');
+            resetWeatherCityStatus(status);
+            return;
+        }
+
+        saveWeatherLocation(location);
+        input.value = '';
+        updateWeatherCityStatus(status);
+        loadWeather();
+    } catch (e) {
+        setWeatherStatus(status, 'エラーが発生しました');
+        resetWeatherCityStatus(status);
+    }
+}
+
+async function handleWeatherCurrentLocation(status) {
+    if (!navigator.geolocation) {
+        setWeatherStatus(status, '位置情報に対応していません');
+        resetWeatherCityStatus(status);
+        return;
+    }
+
+    setWeatherStatus(status, '位置情報を取得中...');
+    navigator.geolocation.getCurrentPosition(async (position) => {
+        const lat = String(position.coords.latitude);
+        const lon = String(position.coords.longitude);
+        const name = await fetchReverseGeocodedLocationName(lat, lon);
+
+        saveWeatherLocation({ lat, lon, name });
+        updateWeatherCityStatus(status);
+        loadWeather();
+    }, () => {
+        setWeatherStatus(status, '位置情報の取得に失敗・拒否されました');
+        resetWeatherCityStatus(status);
     });
 }
 
-function updateSpotifyIframe(url, iframe) {
-    if(!url) {
-        iframe.src = '';
-        return;
-    }
-    // https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M?si=...
-    // を
-    // https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M?utm_source=generator&theme=0 に変換
+function setWeatherStatus(status, message) {
+    if (status) status.textContent = message;
+}
+
+async function fetchWeatherLocationByCity(query) {
+    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=ja&format=json`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const result = data.results?.[0];
+    if (!result) return null;
+
+    return {
+        lat: String(result.latitude),
+        lon: String(result.longitude),
+        name: result.name + (result.admin1 ? `, ${result.admin1}` : '')
+    };
+}
+
+async function fetchReverseGeocodedLocationName(lat, lon) {
     try {
-        const urlObj = new URL(url);
-        if(urlObj.hostname === 'open.spotify.com') {
-            const parts = urlObj.pathname.split('/').filter(Boolean); // ['playlist', 'xxx']
-            if(parts.length >= 2) {
-                const type = parts[0]; // playlist, album, track etc.
-                const id = parts[1];
-                iframe.src = `https://open.spotify.com/embed/${type}/${id}?utm_source=generator&theme=0`;
-                return;
-            }
-        }
-        // フォールバック
-        iframe.src = url;
-    } catch(e) {
-        // パースエラー
-        iframe.src = '';
+        const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=ja`;
+        const res = await fetch(url);
+        const data = await res.json();
+        return data.locality || data.city || data.principalSubdivision || '現在地';
+    } catch (e) {
+        return '現在地';
     }
 }
 
+function saveWeatherLocation({ lat, lon, name }) {
+    localStorage.setItem(WEATHER_STORAGE_KEYS.lat, lat);
+    localStorage.setItem(WEATHER_STORAGE_KEYS.lon, lon);
+    localStorage.setItem(WEATHER_STORAGE_KEYS.name, name);
+}
+
+function getStoredWeatherLocation() {
+    return {
+        lat: localStorage.getItem(WEATHER_STORAGE_KEYS.lat) || DEFAULT_WEATHER_LOCATION.lat,
+        lon: localStorage.getItem(WEATHER_STORAGE_KEYS.lon) || DEFAULT_WEATHER_LOCATION.lon,
+        name: localStorage.getItem(WEATHER_STORAGE_KEYS.name) || DEFAULT_WEATHER_LOCATION.name
+    };
+}
+
+function buildWeatherForecastUrl({ lat, lon }) {
+    const params = new URLSearchParams({
+        latitude: lat,
+        longitude: lon,
+        current_weather: 'true',
+        hourly: 'precipitation_probability',
+        timezone: 'Asia/Tokyo',
+        models: 'jma_seamless'
+    });
+
+    return `https://api.open-meteo.com/v1/forecast?${params.toString()}`;
+}
+
+function renderWeatherWidget(locationName, meteoData) {
+    const current = meteoData.current_weather;
+    const weather = WMO_WEATHER[current.weathercode] || { emoji: '🌡️', text: '不明' };
+    const chartHTML = renderWeatherChart(
+        meteoData.hourly.time,
+        meteoData.hourly.precipitation_probability
+    );
+
+    return `
+        <div style="display:flex; align-items:center; gap: 16px;">
+            <div class="weather-icon-container">${weather.emoji}</div>
+            <div class="weather-info">
+                <div class="weather-area">${formatWeatherLocationName(locationName)}</div>
+                <div class="weather-temp-container">
+                    <span class="weather-desc">${weather.text}</span>
+                    <span class="weather-rain" style="margin-left: 8px;">${current.temperature}℃</span>
+                </div>
+            </div>
+        </div>
+        ${chartHTML}
+    `;
+}
+
+function renderWeatherChart(times, precipitationProbabilities) {
+    const startIndex = findForecastStartIndex(times);
+    const chartItems = [];
+
+    for (let i = 0; i < WEATHER_CHART_HOURS; i++) {
+        const index = startIndex + i;
+        if (index >= times.length) break;
+
+        const probability = precipitationProbabilities[index] || 0;
+        const hour = new Date(times[index]).getHours().toString().padStart(2, '0');
+        const height = getWeatherChartBarHeight(probability);
+        const opacity = probability > 0 ? 1 : 0.3;
+
+        chartItems.push(`
+            <div class="weather-chart-bar-wrap">
+                <span class="weather-chart-val">${probability}</span>
+                <div class="weather-chart-bar" style="height: ${height}px; opacity: ${opacity};"></div>
+                <span class="weather-chart-label">${hour}</span>
+            </div>
+        `);
+    }
+
+    return `<div class="weather-chart-container">${chartItems.join('')}</div>`;
+}
+
+function findForecastStartIndex(times) {
+    const oneHourAgo = Date.now() - 3600000;
+    const index = times.findIndex(time => new Date(time).getTime() >= oneHourAgo);
+    return index === -1 ? 0 : index;
+}
+
+function getWeatherChartBarHeight(probability) {
+    if (probability <= 0) return WEATHER_CHART_EMPTY_BAR_HEIGHT;
+    return Math.max(
+        WEATHER_CHART_BAR_MIN_HEIGHT,
+        (probability / 100) * WEATHER_CHART_BAR_MAX_HEIGHT
+    );
+}
+
+function formatWeatherLocationName(name) {
+    return name.split(',')[0];
+}
+
+const SPOTIFY_CLIENT_ID = '3ed94377fd3840f2b3f3e88967a2ed78';
+const SPOTIFY_SCOPES = 'user-read-playback-state user-modify-playback-state user-read-currently-playing';
+
+let spotifyPollInterval = null;
+
+function initSpotify() {
+    const loginBtn = document.getElementById('spotify-login-btn');
+    const logoutBtn = document.getElementById('spotify-logout-btn');
+    if(!loginBtn) return;
+
+    const token = localStorage.getItem('spotify_access_token');
+    if (token) {
+        showSpotifyPlayer(true);
+        startSpotifyPolling();
+    } else {
+        showSpotifyPlayer(false);
+    }
+
+    loginBtn.addEventListener('click', authenticateSpotify);
+    logoutBtn.addEventListener('click', logoutSpotify);
+
+    document.getElementById('spotify-play-btn').addEventListener('click', toggleSpotifyPlay);
+    document.getElementById('spotify-next-btn').addEventListener('click', () => controlSpotify('next', 'POST'));
+    document.getElementById('spotify-prev-btn').addEventListener('click', () => controlSpotify('previous', 'POST'));
+}
+
 // ==========================================
-// ToDo ウィジェット ロジック
+// Spotify API / PKCE Auth Helpers
 // ==========================================
-let todos = [];
+function generateRandomString(length) {
+    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const values = crypto.getRandomValues(new Uint8Array(length));
+    return values.reduce((acc, x) => acc + possible[x % possible.length], "");
+}
+
+async function generateCodeChallenge(codeVerifier) {
+    const data = new TextEncoder().encode(codeVerifier);
+    const digest = await crypto.subtle.digest('SHA-256', data);
+    return btoa(String.fromCharCode.apply(null, [...new Uint8Array(digest)]))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+}
+
+async function authenticateSpotify() {
+    // chrome.identity.launchWebAuthFlow が使える環境（Chrome拡張）かチェック
+    if (typeof chrome === 'undefined' || !chrome.identity || !chrome.identity.launchWebAuthFlow) {
+        alert("Chrome拡張機能として動作していないか、manifest.jsonにidentity権限がありません。");
+        return;
+    }
+
+    const redirectUri = chrome.identity.getRedirectURL();
+    console.log("Spotify Redirect URI:", redirectUri);
+
+    // PKCE用のコードを生成
+    const codeVerifier = generateRandomString(64);
+    const codeChallenge = await generateCodeChallenge(codeVerifier);
+
+    const authUrl = `https://accounts.spotify.com/authorize?client_id=${SPOTIFY_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(SPOTIFY_SCOPES)}&code_challenge_method=S256&code_challenge=${codeChallenge}&show_dialog=true`;
+    
+    chrome.identity.launchWebAuthFlow({
+        url: authUrl,
+        interactive: true
+    }, async function(redirectUrl) {
+        if (chrome.runtime.lastError || !redirectUrl) {
+            console.error("Auth Error:", chrome.runtime.lastError);
+            alert("Spotifyの認証がキャンセルされたか失敗しました。\n詳細: " + (chrome.runtime.lastError?.message || ""));
+            return;
+        }
+        
+        // redirectUrl: https://.../?code=AQD...
+        const urlObj = new URL(redirectUrl);
+        const code = urlObj.searchParams.get('code');
+        if (!code) {
+            alert("認証コードが取得できませんでした。");
+            return;
+        }
+
+        // Tokenの取得 (PKCE Authorization Code Flow)
+        try {
+            const body = new URLSearchParams({
+                client_id: SPOTIFY_CLIENT_ID,
+                grant_type: 'authorization_code',
+                code: code,
+                redirect_uri: redirectUri,
+                code_verifier: codeVerifier
+            });
+
+            const res = await fetch('https://accounts.spotify.com/api/token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: body.toString()
+            });
+
+            if (!res.ok) {
+                const errJson = await res.json();
+                console.error("Token Error:", errJson);
+                alert("トークンの取得に失敗しました。");
+                return;
+            }
+
+            const data = await res.json();
+            if (data.access_token) {
+                localStorage.setItem('spotify_access_token', data.access_token);
+                showSpotifyPlayer(true);
+                startSpotifyPolling();
+            }
+        } catch(e) {
+            console.error(e);
+            alert("トークン取得時にエラーが発生しました。");
+        }
+    });
+}
+
+function logoutSpotify() {
+    localStorage.removeItem('spotify_access_token');
+    stopSpotifyPolling();
+    showSpotifyPlayer(false);
+}
+
+function showSpotifyPlayer(isLoggedIn) {
+    document.getElementById('spotify-login-btn').style.display = isLoggedIn ? 'none' : 'block';
+    document.getElementById('spotify-logout-btn').style.display = isLoggedIn ? 'block' : 'none';
+    document.getElementById('spotify-auth-prompt').style.display = isLoggedIn ? 'none' : 'block';
+    document.getElementById('spotify-player-container').style.display = isLoggedIn ? 'flex' : 'none';
+}
+
+function startSpotifyPolling() {
+    if (spotifyPollInterval) clearInterval(spotifyPollInterval);
+    fetchSpotifyCurrentlyPlaying();
+    spotifyPollInterval = setInterval(fetchSpotifyCurrentlyPlaying, 5000);
+}
+
+function stopSpotifyPolling() {
+    if (spotifyPollInterval) clearInterval(spotifyPollInterval);
+}
+
+async function fetchSpotifyCurrentlyPlaying() {
+    const token = localStorage.getItem('spotify_access_token');
+    if (!token) return;
+
+    try {
+        const res = await fetch('https://api.spotify.com/v1/me/player', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (res.status === 401) {
+            // トークン期限切れ
+            logoutSpotify();
+            return;
+        }
+        
+        if (res.status === 204 || res.status === 202) {
+            // 再生されていない
+            updateSpotifyUI(null);
+            return;
+        }
+
+        const data = await res.json();
+        updateSpotifyUI(data);
+    } catch(e) {
+        console.error("Spotify Fetch Error:", e);
+    }
+}
+
+function updateSpotifyUI(data) {
+    const trackEl = document.getElementById('spotify-track');
+    const artistEl = document.getElementById('spotify-artist');
+    const artEl = document.getElementById('spotify-art');
+    const playBtn = document.getElementById('spotify-play-btn');
+
+    if (!data || !data.item) {
+        trackEl.textContent = 'デバイスで再生されていません';
+        artistEl.textContent = '-';
+        artEl.src = '';
+        playBtn.textContent = '▶️';
+        return;
+    }
+
+    trackEl.textContent = data.item.name;
+    artistEl.textContent = data.item.artists.map(a => a.name).join(', ');
+    if (data.item.album && data.item.album.images.length > 0) {
+        artEl.src = data.item.album.images[0].url;
+    }
+
+    if (data.is_playing) {
+        playBtn.textContent = '⏸';
+    } else {
+        playBtn.textContent = '▶️';
+    }
+}
+
+async function controlSpotify(action, method = 'PUT') {
+    const token = localStorage.getItem('spotify_access_token');
+    if (!token) return;
+    try {
+        await fetch(`https://api.spotify.com/v1/me/player/${action}`, {
+            method: method,
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        setTimeout(fetchSpotifyCurrentlyPlaying, 500); // すぐに状態を更新
+    } catch(e) {
+        console.error(e);
+    }
+}
+
+async function toggleSpotifyPlay() {
+    const playBtn = document.getElementById('spotify-play-btn');
+    const isPlaying = playBtn.textContent === '⏸';
+    await controlSpotify(isPlaying ? 'pause' : 'play', 'PUT');
+}
 
 function initTodo() {
-    const saved = localStorage.getItem('custom_todos');
-    if (saved) {
-        try {
-            todos = JSON.parse(saved);
-        } catch(e) {
-            todos = [];
-        }
-    }
-    
+    todos = readTodos();
     renderTodos();
 
     const input = document.getElementById('todo-input');
     const btn = document.getElementById('todo-add-btn');
-    if(input && btn) {
+    if (input && btn) {
         btn.addEventListener('click', () => addTodo(input.value));
         input.addEventListener('keypress', (e) => {
-            if(e.key === 'Enter') addTodo(input.value);
+            if (e.key === 'Enter') addTodo(input.value);
         });
+    }
+}
+
+function readTodos() {
+    try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY_TODOS) || '[]');
+    } catch (e) {
+        return [];
     }
 }
 
 function renderTodos() {
     const list = document.getElementById('todo-list');
-    if(!list) return;
+    if (!list) return;
     list.innerHTML = '';
     
     todos.forEach((todo, index) => {
@@ -1029,20 +1250,17 @@ function renderTodos() {
 }
 
 function addTodo(text) {
-    if(!text.trim()) return;
-    todos.unshift({ text: text.trim(), completed: false }); // 先頭に追加
+    const todoText = text.trim();
+    if (!todoText) return;
+
+    todos.unshift({ text: todoText, completed: false });
     saveTodos();
     renderTodos();
+
     const input = document.getElementById('todo-input');
-    if(input) input.value = '';
+    if (input) input.value = '';
 }
 
 function saveTodos() {
-    localStorage.setItem('custom_todos', JSON.stringify(todos));
+    localStorage.setItem(STORAGE_KEY_TODOS, JSON.stringify(todos));
 }
-
-// 初期化呼び出し
-document.addEventListener('DOMContentLoaded', () => {
-    initSpotify();
-    initTodo();
-});
