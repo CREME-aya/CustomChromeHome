@@ -468,8 +468,8 @@ function renderArticles() {
         );
     }
 
-    // 表示を最大5件に制限
-    const MAX_ITEMS = 5;
+    // 画面全体スクロールなので多めに表示
+    const MAX_ITEMS = 20;
     targetArticles = targetArticles.slice(0, MAX_ITEMS);
 
     if (targetArticles.length === 0) {

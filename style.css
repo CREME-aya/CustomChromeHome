@@ -28,37 +28,44 @@
 
   .dashboard-main {
     display: flex;
-    gap: 40px;
+    flex-direction: column;
     flex: 1;
-    overflow: hidden;
+    overflow-y: auto; /* 画面全体でスクロールさせる */
+    align-items: center;
+    padding-top: 40px;
+    padding-bottom: 60px;
   }
 
-  /* 左パネル（時計・メモ・AI） */
-  .left-panel {
-    flex: 1;
+  /* 上部セクション（Google検索風） */
+  .top-section {
     display: flex;
     flex-direction: column;
-    gap: 24px;
-    padding-top: 10px;
-    padding-right: 10px;
-    overflow-y: auto;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 40px;
+    gap: 30px;
+    width: 100%;
+    max-width: 700px;
+    flex-shrink: 0;
   }
 
-  /* セクション全体（記事リスト） */
+  /* 下部セクション（Discover風） */
+  .discover-section {
+    width: 100%;
+    max-width: 800px; /* 記事が読みやすい最大幅 */
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* 記事リストコンテナ */
   .feed-section {
-    width: 400px;
-    background: rgba(30, 41, 59, 0.7);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    padding: 24px;
-    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-    overflow-y: auto;
+    width: 100%;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
     display: flex;
     flex-direction: column;
-    height: 100%;
-    box-sizing: border-box;
   }
 
   /* ヘッダーと設定 UI */
@@ -281,7 +288,7 @@
 
   /* 時計ウィジェット */
   .clock-widget {
-    text-align: left;
+    text-align: center;
     text-shadow: 0 2px 10px rgba(0,0,0,0.5);
   }
 
@@ -290,11 +297,11 @@
     font-weight: 700;
     line-height: 1;
     letter-spacing: -0.02em;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
   }
 
   .clock-widget .date {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: 300;
     color: #cbd5e1;
   }
@@ -303,14 +310,15 @@
   .quick-links-widget {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 12px;
-    background: rgba(15, 23, 42, 0.5);
+    background: rgba(15, 23, 42, 0.4);
     backdrop-filter: blur(8px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 16px;
-    padding: 16px;
+    padding: 12px 24px;
     box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-    max-width: 400px;
+    max-width: 600px;
   }
 
   .quick-links-grid {
@@ -409,6 +417,77 @@
   .add-link-btn:hover {
     background: rgba(255, 255, 255, 0.2);
     border-color: #fff;
+  }
+
+  /* ========== Gemini AI ウィジェット (検索バー風) ========== */
+  .gemini-widget.search-bar-style {
+    width: 100%;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 30px;
+    padding: 10px 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+  }
+
+  .gemini-widget.search-bar-style:focus-within {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(16, 185, 129, 0.5);
+    box-shadow: 0 8px 30px rgba(16, 185, 129, 0.2);
+  }
+
+  .gemini-widget.search-bar-style .gemini-input-group {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    background: transparent;
+  }
+
+  .gemini-widget.search-bar-style .ai-icon {
+    font-size: 1.2rem;
+    margin-right: 12px;
+    opacity: 0.8;
+  }
+
+  .gemini-widget.search-bar-style input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #f8fafc;
+    font-size: 1.1rem;
+    outline: none;
+    padding: 8px 0;
+  }
+
+  .gemini-widget.search-bar-style .send-btn {
+    background: transparent;
+    border: none;
+    color: #10b981;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .gemini-widget.search-bar-style .send-btn:hover {
+    transform: scale(1.1);
+  }
+
+  .gemini-widget.search-bar-style .gemini-chat-box {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    max-height: 250px;
+    overflow-y: auto;
+    font-size: 0.95rem;
+    display: none; /* 初期状態は非表示、チャットがあれば表示 */
+  }
+
+  .gemini-widget.search-bar-style .gemini-chat-box:not(:empty) {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
   }
 
   /* メモ（タスク）ウィジェット */

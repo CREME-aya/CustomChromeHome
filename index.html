@@ -66,54 +66,58 @@
         </header>
 
         <div class="dashboard-main">
-            <!-- 左側パネル：時計とメモとAI -->
-            <div class="left-panel">
+            <!-- 上部セクション（Google検索風） -->
+            <div class="top-section">
+                <!-- 時計 -->
                 <div class="clock-widget">
                     <div id="time-display" class="time">--:--</div>
                     <div id="date-display" class="date">--月--日</div>
                 </div>
 
+                <!-- Gemini AI (検索バー風) -->
+                <div class="gemini-widget search-bar-style">
+                    <div class="gemini-input-group">
+                        <span class="ai-icon">✨</span>
+                        <input type="text" id="gemini-input" class="memo-input" placeholder="Gemini に質問する、または検索...">
+                        <button id="gemini-send-btn" class="send-btn">➤</button>
+                    </div>
+                    <div id="gemini-chat-box" class="gemini-chat-box">
+                        <div class="chat-msg ai-msg">こんにちは！APIキーを登録するとお話しできます。</div>
+                    </div>
+                </div>
+
+                <!-- クイックリンク -->
                 <div class="quick-links-widget">
                     <div id="quick-links-container" class="quick-links-grid">
                         <!-- ここにリンクがJSで生成される -->
                     </div>
                     <button id="add-link-btn" class="add-link-btn" title="ショートカットを追加">+</button>
                 </div>
-
-                <div class="memo-widget">
-                    <h3>Quick Tasks</h3>
-                    <ul id="memo-list" class="memo-list"></ul>
-                    <input type="text" id="memo-input" class="memo-input" placeholder="タスクを追加してEnter...">
-                </div>
-
-                <div class="gemini-widget">
-                    <h3>✨ Gemini Assistant</h3>
-                    <div id="gemini-chat-box" class="gemini-chat-box">
-                        <div class="chat-msg ai-msg">こんにちは！設定からAPIキーを登録すると、私と会話できるようになります。</div>
-                    </div>
-                    <div class="gemini-input-group">
-                        <input type="text" id="gemini-input" class="memo-input" placeholder="AIに質問する...">
-                        <button id="gemini-send-btn" class="send-btn">➤</button>
-                    </div>
-                </div>
             </div>
 
-            <!-- 右側パネル：記事リスト -->
-            <section class="feed-section">
-                <div class="section-header">
-                <h2 id="feed-title">最新記事</h2>
-                <div class="controls-bar">
-                    <input type="text" id="search-input" placeholder="記事を検索..." class="search-input">
-                    <div class="filter-buttons">
-                        <button id="tab-all" class="tab-btn active">すべて</button>
-                        <button id="tab-favorites" class="tab-btn">お気に入り</button>
+            <!-- 下部セクション（Discover風 記事リスト） -->
+            <div class="discover-section">
+                <section class="feed-section">
+                    <div class="section-header">
+                        <h2 id="feed-title">Discover</h2>
+                        <div class="controls-bar">
+                            <input type="text" id="search-input" placeholder="記事を検索..." class="search-input">
+                            <button id="tab-all" class="tab-btn active">すべて</button>
+                            <button id="tab-favorites" class="tab-btn">お気に入り</button>
+                        </div>
                     </div>
-                </div>
+                    <div id="feed-container" class="feed-list">
+                        <div class="loading">記事を読み込み中...</div>
+                    </div>
+                </section>
             </div>
-            <div id="feed-container" class="feed-list">
-                <div class="loading">記事を読み込み中...</div>
+
+            <!-- メモ機能は一旦非表示 -->
+            <div class="memo-widget" style="display: none;">
+                <h3>Quick Tasks</h3>
+                <ul id="memo-list" class="memo-list"></ul>
+                <input type="text" id="memo-input" class="memo-input" placeholder="タスクを追加してEnter...">
             </div>
-        </section>
         </div> <!-- end dashboard-main -->
     </div>
 
