@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>本日の技術トレンド</title>
+    <title>Nexus Dash</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -17,6 +17,17 @@
         </div>
         <div class="sidebar-content">
             <div class="setting-block">
+                <label for="preset-rss" class="sidebar-label">おすすめフィードから選択:</label>
+                <select id="preset-rss" class="url-input" style="cursor: pointer; padding: 10px;">
+                    <option value="">-- カスタム入力 --</option>
+                    <option value="https://qiita.com/popular-items/feed">Qiita (トレンド)</option>
+                    <option value="https://zenn.dev/feed">Zenn (トレンド)</option>
+                    <option value="https://b.hatena.ne.jp/hotentry/it.rss">はてなブックマーク (IT・テクノロジー)</option>
+                    <option value="https://rss.itmedia.co.jp/rss/2.0/news_bursts.xml">ITmedia NEWS</option>
+                    <option value="https://www.publickey1.jp/atom.xml">Publickey (エンタープライズIT)</option>
+                    <option value="https://gigazine.net/news/rss_2.0/">GIGAZINE</option>
+                </select>
+                <div class="or-text" style="margin: 4px 0;">- またはURLを直接入力 -</div>
                 <label for="feed-url-input" class="sidebar-label">RSS/Atom URL:</label>
                 <input type="url" id="feed-url-input" placeholder="https://..." class="url-input">
                 <button id="save-url-btn" class="save-btn">フィードを更新</button>
@@ -50,7 +61,7 @@
         <header class="app-header">
             <div class="header-left">
                 <button id="menu-btn" class="icon-btn menu-btn">☰</button>
-                <h1>My Custom Feed</h1>
+                <h1>Nexus Dash</h1>
             </div>
         </header>
 
@@ -60,6 +71,13 @@
                 <div class="clock-widget">
                     <div id="time-display" class="time">--:--</div>
                     <div id="date-display" class="date">--月--日</div>
+                </div>
+
+                <div class="quick-links-widget">
+                    <div id="quick-links-container" class="quick-links-grid">
+                        <!-- ここにリンクがJSで生成される -->
+                    </div>
+                    <button id="add-link-btn" class="add-link-btn" title="ショートカットを追加">+</button>
                 </div>
 
                 <div class="memo-widget">

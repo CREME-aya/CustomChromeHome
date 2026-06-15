@@ -12,7 +12,16 @@ let currentSearchQuery = '';
 document.addEventListener('DOMContentLoaded', () => {
     // UI要素の取得
     const urlInput = document.getElementById('feed-url-input');
+    const presetRss = document.getElementById('preset-rss');
     const saveBtn = document.getElementById('save-url-btn');
+
+    if (presetRss) {
+        presetRss.addEventListener('change', () => {
+            if (presetRss.value !== '') {
+                urlInput.value = presetRss.value;
+            }
+        });
+    }
     const searchInput = document.getElementById('search-input');
     const tabAll = document.getElementById('tab-all');
     const tabFavs = document.getElementById('tab-favorites');
@@ -157,6 +166,76 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     setInterval(updateClock, 1000);
     updateClock();
+
+    // ========== 新機能：クイックリンク ==========
+    const STORAGE_KEY_LINKS = 'custom_quick_links';
+    const quickLinksContainer = document.getElementById('quick-links-container');
+    const addLinkBtn = document.getElementById('add-link-btn');
+
+    const defaultLinks = [
+        { title: 'Google', url: 'https://www.google.com' },
+        { title: 'YouTube', url: 'https://www.youtube.com' },
+        { title: 'GitHub', url: 'https://github.com' }
+    ];
+
+    let quickLinks = JSON.parse(localStorage.getItem(STORAGE_KEY_LINKS));
+    if (!quickLinks) {
+        quickLinks = defaultLinks;
+        localStorage.setItem(STORAGE_KEY_LINKS, JSON.stringify(quickLinks));
+    }
+
+    function renderQuickLinks() {
+        quickLinksContainer.innerHTML = '';
+        quickLinks.forEach((link, index) => {
+            const a = document.createElement('a');
+            a.href = link.url;
+            a.className = 'quick-link-item';
+            
+            // アイコンにはGoogleのFavicon APIを利用
+            let hostname = 'localhost';
+            try { hostname = new URL(link.url).hostname; } catch(e){}
+            const iconUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
+            
+            a.innerHTML = `
+                <img src="${iconUrl}" class="quick-link-icon" alt="icon">
+                <span class="quick-link-title">${link.title}</span>
+                <button class="delete-link-btn" title="削除">&times;</button>
+            `;
+
+            // 削除ボタンの処理
+            const delBtn = a.querySelector('.delete-link-btn');
+            delBtn.addEventListener('click', (e) => {
+                e.preventDefault(); // リンク遷移を防ぐ
+                e.stopPropagation();
+                if (confirm(`ショートカット「${link.title}」を削除しますか？`)) {
+                    quickLinks.splice(index, 1);
+                    localStorage.setItem(STORAGE_KEY_LINKS, JSON.stringify(quickLinks));
+                    renderQuickLinks();
+                }
+            });
+
+            quickLinksContainer.appendChild(a);
+        });
+    }
+
+    addLinkBtn.addEventListener('click', () => {
+        const url = prompt('追加するサイトのURLを入力してください (例: https://qiita.com):');
+        if (!url) return;
+        
+        try {
+            new URL(url); // URLのフォーマット検証
+            let title = prompt('サイトのタイトルを入力してください:');
+            if (!title) title = new URL(url).hostname.replace('www.', '');
+            
+            quickLinks.push({ title, url });
+            localStorage.setItem(STORAGE_KEY_LINKS, JSON.stringify(quickLinks));
+            renderQuickLinks();
+        } catch (e) {
+            alert('正しいURLを入力してください (必ず https://... から始めてください)。');
+        }
+    });
+
+    renderQuickLinks();
 
     // ========== 新機能：クイックメモ（タスク）ウィジェット ==========
     const STORAGE_KEY_MEMO = 'custom_quick_memos';
@@ -343,22 +422,25 @@ async function loadFeed(url) {
         }
 
         currentArticles = []; // リセット
+        // RSSデータの解析と成形
+        currentArticles = data.items.map(item => {
+            const dateStr = item.pubDate ? new Date(item.pubDate.replace(/-/g, '/')).toLocaleDateString('ja-JP') : '';
+            
+            // サムネイル画像の取得（thumbnail, enclosure, または description内のimgタグから）
+            let thumb = item.thumbnail || (item.enclosure && item.enclosure.link) || '';
+            if (!thumb && item.description) {
+                const match = item.description.match(/<img[^>]+src="([^">]+)"/);
+                if (match) thumb = match[1];
+            }
 
-        data.items.forEach((item) => {
-            const title = item.title || 'No Title';
-            const itemUrl = item.link || '#';
-            // RSSの仕様によって内容が入っているプロパティが異なるため、フォールバックして取得
-            const summaryHTML = item.description || item.content || '<p>プレビュー内容がありません。</p>';
-            const dateStr = item.pubDate ? new Date(item.pubDate).toLocaleDateString('ja-JP') : '';
-
-            // 固有IDとしてURLを使用
-            currentArticles.push({
-                id: itemUrl,
-                title,
-                url: itemUrl,
-                summaryHTML,
-                dateStr
-            });
+            return {
+                id: item.link,
+                title: item.title || 'No Title',
+                url: item.link || '#',
+                dateStr: dateStr,
+                summaryHTML: item.description || item.content || '<p>プレビュー内容がありません。</p>',
+                thumbnail: thumb
+            };
         });
 
         renderArticles();
@@ -410,7 +492,7 @@ function renderArticles() {
                 <div class="item-meta">${article.dateStr}</div>
             </div>
             <div class="item-actions">
-                <button class="ai-summary-btn" title="この記事をAIで要約">要約</button>
+                <button class="ai-summary-btn" title="この記事をAIで要約">✨ 要約</button>
                 <button class="fav-btn ${isFav ? 'active' : ''}" title="お気に入り">
                     ${isFav ? '★' : '☆'}
                 </button>
