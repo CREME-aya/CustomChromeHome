@@ -303,17 +303,20 @@
   }
 
   .clock-widget .time {
-    font-size: 5rem;
+    font-size: 3.5rem;
     font-weight: 700;
-    line-height: 1;
-    letter-spacing: -0.02em;
-    margin-bottom: 5px;
+    line-height: 1.1;
+    color: #f8fafc;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
   }
 
   .clock-widget .date {
-    font-size: 1.2rem;
-    font-weight: 300;
-    color: #cbd5e1;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: #f8fafc;
+    margin-top: 4px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
   }
 
   /* クイックリンク（ショートカット）ウィジェット */
@@ -322,9 +325,9 @@
     align-items: center;
     justify-content: center;
     gap: 12px;
-    background: rgba(15, 23, 42, 0.4);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 16px;
     padding: 12px 24px;
     box-shadow: 0 10px 20px rgba(0,0,0,0.3);
@@ -432,10 +435,10 @@
   /* ========== マルチAI ウィジェット ========== */
   .ai-search-bar.search-bar-style {
     width: 100%;
-    background: rgba(15, 23, 42, 0.5);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 30px;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
     padding: 10px 20px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     display: flex;
@@ -494,9 +497,9 @@
 
   .ai-panel {
     flex: 1;
-    background: rgba(15, 23, 42, 0.6);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 12px;
     padding: 16px;
     display: flex;
@@ -543,10 +546,10 @@
 
   /* メモ（タスク）ウィジェット */
   .memo-widget {
-    background: rgba(15, 23, 42, 0.5);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
     padding: 24px;
     max-width: 400px;
     box-shadow: 0 10px 20px rgba(0,0,0,0.3);
@@ -627,10 +630,10 @@
 
   /* Gemini AI ウィジェット */
   .gemini-widget {
-    background: rgba(15, 23, 42, 0.5);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
     padding: 24px;
     max-width: 400px;
     box-shadow: 0 10px 20px rgba(0,0,0,0.3);
@@ -961,9 +964,9 @@
 
   /* ========== 天気ウィジェット ========== */
   .weather-widget {
-    background: rgba(15, 23, 42, 0.4);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 20px;
     padding: 16px 24px;
     display: flex;
@@ -984,9 +987,10 @@
   }
 
   .weather-area {
-    font-size: 0.9rem;
-    color: #94a3b8;
+    font-size: 0.95rem;
+    color: #e2e8f0;
     font-weight: bold;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
   }
 
   .weather-temp-container {
@@ -996,8 +1000,10 @@
   }
 
   .weather-desc {
-    font-size: 1.2rem;
+    font-size: 1.25rem;
     font-weight: 600;
+    color: #f8fafc;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.6);
   }
 
   .weather-rain {
@@ -1026,4 +1032,200 @@
     color: #ef4444;
     text-align: center;
     width: 100%;
+  }
+
+  /* 降水確率グラフ */
+  .weather-chart-container {
+    display: flex;
+    gap: 8px;
+    margin-left: 16px;
+    border-left: 1px solid rgba(255,255,255,0.1);
+    padding-left: 16px;
+    height: 60px;
+    align-items: flex-end;
+  }
+
+  .weather-chart-bar-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+    width: 24px;
+    gap: 4px;
+  }
+
+  .weather-chart-bar {
+    width: 12px;
+    background: linear-gradient(to top, #3b82f6, #60a5fa);
+    border-radius: 4px 4px 0 0;
+    transition: height 0.5s ease;
+  }
+
+  .weather-chart-label {
+    font-size: 0.65rem;
+    color: #cbd5e1;
+    white-space: nowrap;
+  }
+
+  .weather-chart-val {
+    font-size: 0.7rem;
+    color: #f8fafc;
+    font-weight: bold;
+    margin-bottom: -2px;
+  }
+
+  /* ========== ユーティリティウィジェット群 ========== */
+  .utility-widgets-container {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 768px) {
+    .utility-widgets-container {
+      flex-direction: column;
+    }
+  }
+
+  .todo-widget, .spotify-widget {
+    flex: 1;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 16px 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    color: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+  }
+
+  .widget-header {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-bottom: 12px;
+    color: #e2e8f0;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  }
+
+  /* ToDo List */
+  .todo-input-container {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .todo-input-container input {
+    flex: 1;
+    padding: 10px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(0,0,0,0.2);
+    color: #fff;
+    outline: none;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+  }
+
+  .todo-input-container input:focus {
+    border-color: #3b82f6;
+    background: rgba(0,0,0,0.4);
+  }
+
+  .todo-input-container button {
+    background: #3b82f6;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    width: 40px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    font-weight: bold;
+    transition: all 0.3s;
+  }
+
+  .todo-input-container button:hover {
+    background: #2563eb;
+    transform: scale(1.05);
+  }
+
+  .todo-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 152px;
+    overflow-y: auto;
+  }
+
+  /* スクロールバー装飾 */
+  .todo-list::-webkit-scrollbar {
+    width: 6px;
+  }
+  .todo-list::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.05);
+    border-radius: 3px;
+  }
+  .todo-list::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 3px;
+  }
+
+  .todo-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    transition: all 0.2s;
+  }
+
+  .todo-item:hover {
+    background: rgba(255,255,255,0.1);
+  }
+
+  .todo-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #3b82f6;
+  }
+
+  .todo-text {
+    flex: 1;
+    font-size: 0.95rem;
+    color: #e2e8f0;
+    word-break: break-all;
+    transition: color 0.3s, text-decoration 0.3s;
+  }
+
+  .todo-item.completed .todo-text {
+    text-decoration: line-through;
+    color: #64748b;
+  }
+
+  .todo-delete-btn {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    font-size: 1.1rem;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+  }
+
+  .todo-item:hover .todo-delete-btn {
+    opacity: 1;
+  }
+
+  /* Spotify */
+  .spotify-widget iframe {
+    border-radius: 12px;
+    background: transparent;
   }

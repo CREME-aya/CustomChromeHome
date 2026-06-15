@@ -55,6 +55,8 @@
                 <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1rem; color: #e2e8f0;">ウィジェット表示設定</h3>
                 <label style="display:flex; align-items:center; gap:8px; margin-bottom: 8px; color: #cbd5e1; cursor:pointer;"><input type="checkbox" id="toggle-clock" checked> 時計</label>
                 <label style="display:flex; align-items:center; gap:8px; margin-bottom: 8px; color: #cbd5e1; cursor:pointer;"><input type="checkbox" id="toggle-weather" checked> 天気・災害情報</label>
+                <label style="display:flex; align-items:center; gap:8px; margin-bottom: 8px; color: #cbd5e1; cursor:pointer;"><input type="checkbox" id="toggle-todo" checked> ToDoリスト</label>
+                <label style="display:flex; align-items:center; gap:8px; margin-bottom: 8px; color: #cbd5e1; cursor:pointer;"><input type="checkbox" id="toggle-spotify" checked> Spotify</label>
                 <label style="display:flex; align-items:center; gap:8px; margin-bottom: 8px; color: #cbd5e1; cursor:pointer;"><input type="checkbox" id="toggle-links" checked> クイックリンク</label>
                 <label style="display:flex; align-items:center; gap:8px; margin-bottom: 8px; color: #cbd5e1; cursor:pointer;"><input type="checkbox" id="toggle-ai-openai" checked> AI: ChatGPT (OpenAI)</label>
                 <label style="display:flex; align-items:center; gap:8px; margin-bottom: 8px; color: #cbd5e1; cursor:pointer;"><input type="checkbox" id="toggle-ai-anthropic" checked> AI: Claude (Anthropic)</label>
@@ -64,23 +66,27 @@
             <hr class="sidebar-divider">
 
             <div class="setting-block">
+                <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1rem; color: #e2e8f0;">Spotify設定</h3>
+                <label for="spotify-url-input" class="sidebar-label">プレイリスト/アルバムのURL:</label>
+                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                    <input type="text" id="spotify-url-input" class="url-input" placeholder="https://open.spotify.com/playlist/..." style="margin-bottom: 0;">
+                    <button id="spotify-save-btn" class="save-btn" style="flex: 0 0 auto; padding: 0 16px;">設定</button>
+                </div>
+            </div>
+
+            <hr class="sidebar-divider">
+
+            <div class="setting-block">
                 <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1rem; color: #e2e8f0;">天気ウィジェット設定</h3>
-                <label for="weather-area-select" class="sidebar-label">地域を選択:</label>
-                <select id="weather-area-select" class="url-input">
-                    <option value="016000">北海道 (札幌)</option>
-                    <option value="040000">宮城県</option>
-                    <option value="130000" selected>東京都</option>
-                    <option value="140000">神奈川県</option>
-                    <option value="110000">埼玉県</option>
-                    <option value="120000">千葉県</option>
-                    <option value="230000">愛知県</option>
-                    <option value="270000">大阪府</option>
-                    <option value="260000">京都府</option>
-                    <option value="280000">兵庫県</option>
-                    <option value="340000">広島県</option>
-                    <option value="400000">福岡県</option>
-                    <option value="471000">沖縄県</option>
-                </select>
+                <label for="weather-city-input" class="sidebar-label">市区町村を入力して検索:</label>
+                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                    <input type="text" id="weather-city-input" class="url-input" placeholder="例: 渋谷区, 横浜市" style="margin-bottom: 0;">
+                    <button id="weather-city-btn" class="save-btn" style="flex: 0 0 auto; padding: 0 16px;">検索</button>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <button id="weather-location-btn" class="outline-btn" style="width: 100%; padding: 8px; font-size: 0.9rem; border-color: #3b82f6; color: #3b82f6;">📍 現在地から取得</button>
+                </div>
+                <div id="weather-city-status" style="font-size: 0.85rem; color: #94a3b8;">現在: 東京都 (デフォルト)</div>
             </div>
 
             <hr class="sidebar-divider">
@@ -145,6 +151,25 @@
                     <div id="ai-panel-gemini" class="ai-panel" data-widget-id="toggle-ai-gemini">
                         <div class="ai-panel-header">Gemini <span class="ai-model-name">(3.5 Flash)</span></div>
                         <div id="chatbox-gemini" class="ai-chat-content">APIキーを設定してください</div>
+                    </div>
+                </div>
+
+                <!-- 中部セクション（ユーティリティ） -->
+                <div class="utility-widgets-container">
+                    <!-- ToDo ウィジェット -->
+                    <div id="todo-widget" class="todo-widget">
+                        <div class="widget-header">📝 ToDo List</div>
+                        <div class="todo-input-container">
+                            <input type="text" id="todo-input" placeholder="タスクを追加 (Enter)">
+                            <button id="todo-add-btn">＋</button>
+                        </div>
+                        <ul id="todo-list" class="todo-list"></ul>
+                    </div>
+
+                    <!-- Spotify ウィジェット -->
+                    <div id="spotify-widget" class="spotify-widget">
+                        <div class="widget-header">🎵 Spotify</div>
+                        <iframe id="spotify-iframe" src="" width="100%" height="152" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
                     </div>
                 </div>
 
