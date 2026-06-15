@@ -629,40 +629,9 @@
     border-color: #a78bfa;
   }
 
-  /* Gemini AI ウィジェット */
-  .gemini-widget {
-    background: rgba(15, 23, 42, 0.7);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 20px;
-    padding: 24px;
-    max-width: 400px;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-    display: flex;
-    flex-direction: column;
-    flex: 1; /* 余った高さを占有 */
-    min-height: 250px;
-  }
 
-  .gemini-widget h3 {
-    margin: 0 0 16px 0;
-    font-size: 1.2rem;
-    color: #e2e8f0;
-    font-weight: 600;
-    background: linear-gradient(90deg, #10b981, #3b82f6);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
 
-  .gemini-chat-box {
-    flex: 1;
-    overflow-y: auto;
-    margin-bottom: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding-right: 8px;
-  }
+
 
   .chat-msg {
     padding: 10px 14px;
@@ -687,10 +656,7 @@
     border-bottom-right-radius: 2px;
   }
 
-  .gemini-input-group {
-    display: flex;
-    gap: 8px;
-  }
+
 
   .send-btn {
     background: #3b82f6;
@@ -1112,7 +1078,42 @@
     text-shadow: 0 1px 3px rgba(0,0,0,0.5);
   }
 
+  .sidebar-status {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    margin-top: 8px;
+    line-height: 1.4;
+  }
+
   /* ToDo List */
+  .todo-widget-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .todo-calendar-btn {
+    flex: 0 0 auto;
+    border: 1px solid rgba(96, 165, 250, 0.55);
+    background: rgba(59, 130, 246, 0.14);
+    color: #bfdbfe;
+    border-radius: 8px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    white-space: nowrap;
+  }
+
+  .todo-calendar-btn:hover {
+    background: rgba(59, 130, 246, 0.24);
+    border-color: rgba(147, 197, 253, 0.85);
+    color: #dbeafe;
+  }
+
   .todo-input-container {
     display: flex;
     gap: 8px;
@@ -1199,15 +1200,32 @@
   }
 
   .todo-text {
-    flex: 1;
     font-size: 0.95rem;
     color: #e2e8f0;
     word-break: break-all;
     transition: color 0.3s, text-decoration 0.3s;
   }
 
+  .todo-text-wrap {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .todo-meta {
+    color: #93c5fd;
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+
   .todo-item.completed .todo-text {
     text-decoration: line-through;
+    color: #64748b;
+  }
+
+  .todo-item.completed .todo-meta {
     color: #64748b;
   }
 
@@ -1243,13 +1261,7 @@
     opacity: 0.8;
   }
 
-  /* Top Right Area for Weather & Spotify */
-  .top-right-area {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 16px;
-  }
+
 
   /* Horizontal Spotify Widget */
   .spotify-horizontal {
@@ -1259,4 +1271,88 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    position: absolute;
+    right: 20px;
+    top: 10px;
+  }
+
+  /* Spotify プレイヤー（横長レイアウト） */
+  .spotify-player-row {
+    display: none;
+    flex-direction: row;
+    gap: 16px;
+    align-items: center;
+    width: 100%;
+  }
+
+  .spotify-art {
+    width: 48px;
+    height: 48px;
+    border-radius: 6px;
+    object-fit: cover;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .spotify-track-info {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .spotify-track-name {
+    font-weight: bold;
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .spotify-artist-name {
+    color: #cbd5e1;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .spotify-controls {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .spotify-play-main {
+    font-size: 1.6rem;
+  }
+
+  .spotify-logout-inline {
+    margin-left: 8px;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    border-color: #ef4444;
+    color: #ef4444;
+    display: none;
+  }
+
+  .spotify-auth-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  .spotify-label {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    font-weight: bold;
+  }
+
+  .spotify-connect-btn {
+    padding: 4px 12px;
+    font-size: 0.8rem;
+    border-color: #1DB954;
+    color: #1DB954;
   }

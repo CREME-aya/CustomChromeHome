@@ -65,8 +65,22 @@
 
             <hr class="sidebar-divider">
 
-            <div class="setting-block" style="display:none;">
-                <!-- Spotify API settings moved to widget -->
+            <div class="setting-block">
+                <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1rem; color: #e2e8f0;">Googleカレンダー ToDo化</h3>
+                <label for="calendar-ical-url-input" class="sidebar-label">Googleカレンダーの iCal URL:</label>
+                <input type="url" id="calendar-ical-url-input" class="url-input" placeholder="https://calendar.google.com/calendar/ical/.../basic.ics">
+                <label for="calendar-lookahead-select" class="sidebar-label">取り込み範囲:</label>
+                <select id="calendar-lookahead-select" class="url-input" style="cursor: pointer; padding: 10px;">
+                    <option value="3">今後3日</option>
+                    <option value="7" selected>今後7日</option>
+                    <option value="14">今後14日</option>
+                    <option value="30">今後30日</option>
+                </select>
+                <div class="btn-group">
+                    <button id="calendar-save-btn" class="save-btn">保存</button>
+                    <button id="calendar-sync-btn" class="outline-btn">予定をToDo化</button>
+                </div>
+                <div id="calendar-import-status" class="sidebar-status">未設定</div>
             </div>
 
             <hr class="sidebar-divider">
@@ -109,97 +123,87 @@
                 <h1>Nexus Dash</h1>
             </div>
 
-            <!-- Spotify ウィジェット (フローティング) -->
-            <div id="spotify-widget" class="spotify-widget spotify-horizontal" style="position: absolute; right: 20px; top: 10px;">
-                <div id="spotify-player-container" style="display:none; flex-direction:row; gap:16px; align-items:center; width:100%;">
-                    <img id="spotify-art" src="" alt="" style="width: 48px; height: 48px; border-radius: 6px; object-fit: cover; background: rgba(255,255,255,0.1);">
-                    
-                    <div style="flex: 1; overflow: hidden; display:flex; flex-direction:column; justify-content:center;">
-                        <div id="spotify-track" style="font-weight:bold; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">再生されていません</div>
-                        <div id="spotify-artist" style="color: #cbd5e1; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">-</div>
+            <!-- Spotify ウィジェット（ヘッダー右上固定） -->
+            <div id="spotify-widget" class="spotify-widget spotify-horizontal">
+                <div id="spotify-player-container" class="spotify-player-row">
+                    <img id="spotify-art" class="spotify-art" src="" alt="">
+                    <div class="spotify-track-info">
+                        <div id="spotify-track" class="spotify-track-name">再生されていません</div>
+                        <div id="spotify-artist" class="spotify-artist-name">-</div>
                     </div>
-                    
-                    <div style="display:flex; justify-content: center; gap: 12px; align-items: center;">
+                    <div class="spotify-controls">
                         <button id="spotify-prev-btn" class="spotify-ctrl-btn">⏮</button>
-                        <button id="spotify-play-btn" class="spotify-ctrl-btn" style="font-size: 1.6rem;">▶️</button>
+                        <button id="spotify-play-btn" class="spotify-ctrl-btn spotify-play-main">▶️</button>
                         <button id="spotify-next-btn" class="spotify-ctrl-btn">⏭</button>
                     </div>
-                    
-                    <button id="spotify-logout-btn" class="outline-btn" style="margin-left: 8px; padding: 4px 8px; font-size: 0.75rem; border-color: #ef4444; color: #ef4444; display:none;">解除</button>
+                    <button id="spotify-logout-btn" class="outline-btn spotify-logout-inline">解除</button>
                 </div>
-
-                <div id="spotify-auth-prompt" style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-                    <span style="color:#94a3b8; font-size: 0.9rem; font-weight:bold;">🎵 Spotify</span>
-                    <button id="spotify-login-btn" class="outline-btn" style="padding: 4px 12px; font-size: 0.8rem; border-color: #1DB954; color: #1DB954;">連携する</button>
+                <div id="spotify-auth-prompt" class="spotify-auth-row">
+                    <span class="spotify-label">🎵 Spotify</span>
+                    <button id="spotify-login-btn" class="outline-btn spotify-connect-btn">連携する</button>
                 </div>
             </div>
-
         </header>
 
         <div class="dashboard-main">
-            <!-- 上部セクション（Google検索風） -->
+            <!-- 上部セクション（時計・天気） -->
             <div class="top-section">
-                <!-- 時計 -->
                 <div class="clock-widget">
                     <div id="time-display" class="time">--:--</div>
                     <div id="date-display" class="date">--月--日</div>
                 </div>
-
-                <!-- 天気ウィジェット -->
                 <div id="weather-widget" class="weather-widget">
                     <div class="weather-loading">天気情報を取得中...</div>
                 </div>
             </div>
 
-                <!-- マルチAI 検索バー -->
-                <div class="ai-search-bar search-bar-style">
-                    <div class="ai-input-group">
-                        <span class="ai-icon">✨</span>
-                        <input type="text" id="ai-global-input" class="memo-input" placeholder="AIに質問する...">
-                        <button id="ai-global-send-btn" class="send-btn">➤</button>
-                    </div>
+            <!-- マルチAI 検索バー -->
+            <div class="ai-search-bar search-bar-style">
+                <div class="ai-input-group">
+                    <span class="ai-icon">✨</span>
+                    <input type="text" id="ai-global-input" class="memo-input" placeholder="AIに質問する...">
+                    <button id="ai-global-send-btn" class="send-btn">➤</button>
                 </div>
+            </div>
 
-                <!-- 各AIの回答パネル -->
-                <div id="ai-panels-container" class="ai-panels-grid">
-                    <div id="ai-panel-openai" class="ai-panel" data-widget-id="toggle-ai-openai">
-                        <div class="ai-panel-header">ChatGPT <span class="ai-model-name">(gpt-4o)</span></div>
-                        <div id="chatbox-openai" class="ai-chat-content">APIキーを設定してください</div>
-                    </div>
-                    <div id="ai-panel-anthropic" class="ai-panel" data-widget-id="toggle-ai-anthropic">
-                        <div class="ai-panel-header">Claude <span class="ai-model-name">(3.5 Sonnet)</span></div>
-                        <div id="chatbox-anthropic" class="ai-chat-content">APIキーを設定してください</div>
-                    </div>
-                    <div id="ai-panel-gemini" class="ai-panel" data-widget-id="toggle-ai-gemini">
-                        <div class="ai-panel-header">Gemini <span class="ai-model-name">(3.5 Flash)</span></div>
-                        <div id="chatbox-gemini" class="ai-chat-content">APIキーを設定してください</div>
-                    </div>
+            <!-- 各AIの回答パネル -->
+            <div id="ai-panels-container" class="ai-panels-grid">
+                <div id="ai-panel-openai" class="ai-panel" data-widget-id="toggle-ai-openai">
+                    <div class="ai-panel-header">ChatGPT <span class="ai-model-name">(gpt-4o)</span></div>
+                    <div id="chatbox-openai" class="ai-chat-content">APIキーを設定してください</div>
                 </div>
-
-                <!-- 中部セクション（ユーティリティ） -->
-                <div class="utility-widgets-container">
-                    <!-- ToDo ウィジェット -->
-                    <div id="todo-widget" class="todo-widget">
-                        <div class="widget-header">📝 ToDo List</div>
-                        <div class="todo-input-container">
-                            <input type="text" id="todo-input" placeholder="タスクを追加 (Enter)">
-                            <button id="todo-add-btn">＋</button>
-                        </div>
-                        <ul id="todo-list" class="todo-list"></ul>
-                    </div>
-
-                    <!-- Spotify Widget was moved to top right -->
+                <div id="ai-panel-anthropic" class="ai-panel" data-widget-id="toggle-ai-anthropic">
+                    <div class="ai-panel-header">Claude <span class="ai-model-name">(3.5 Sonnet)</span></div>
+                    <div id="chatbox-anthropic" class="ai-chat-content">APIキーを設定してください</div>
                 </div>
-
-                <!-- クイックリンク -->
-                <div class="quick-links-widget">
-                    <div id="quick-links-container" class="quick-links-grid">
-                        <!-- ここにリンクがJSで生成される -->
-                    </div>
-                    <button id="add-link-btn" class="add-link-btn" title="ショートカットを追加">+</button>
+                <div id="ai-panel-gemini" class="ai-panel" data-widget-id="toggle-ai-gemini">
+                    <div class="ai-panel-header">Gemini <span class="ai-model-name">(3.5 Flash)</span></div>
+                    <div id="chatbox-gemini" class="ai-chat-content">APIキーを設定してください</div>
                 </div>
+            </div>
 
-                <!-- 下部セクション（Discover風 記事リスト） -->
+            <!-- ユーティリティウィジェット -->
+            <div class="utility-widgets-container">
+                <div id="todo-widget" class="todo-widget">
+                    <div class="widget-header todo-widget-header">
+                        <span>📝 ToDo List</span>
+                        <button id="calendar-import-btn" class="todo-calendar-btn" title="GoogleカレンダーからToDoを作成">予定を取込</button>
+                    </div>
+                    <div class="todo-input-container">
+                        <input type="text" id="todo-input" placeholder="タスクを追加 (Enter)">
+                        <button id="todo-add-btn">＋</button>
+                    </div>
+                    <ul id="todo-list" class="todo-list"></ul>
+                </div>
+            </div>
+
+            <!-- クイックリンク -->
+            <div class="quick-links-widget">
+                <div id="quick-links-container" class="quick-links-grid"></div>
+                <button id="add-link-btn" class="add-link-btn" title="ショートカットを追加">+</button>
+            </div>
+
+            <!-- Discover 記事リスト -->
             <div class="discover-section">
                 <section class="feed-section">
                     <div class="section-header">
@@ -215,14 +219,7 @@
                     </div>
                 </section>
             </div>
-
-            <!-- メモ機能は一旦非表示 -->
-            <div class="memo-widget" style="display: none;">
-                <h3>Quick Tasks</h3>
-                <ul id="memo-list" class="memo-list"></ul>
-                <input type="text" id="memo-input" class="memo-input" placeholder="タスクを追加してEnter...">
-            </div>
-        </div> <!-- end dashboard-main -->
+        </div>
     </div>
 
     <!-- 記事プレビュー用モーダル -->
