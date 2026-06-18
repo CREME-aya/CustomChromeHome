@@ -329,10 +329,19 @@ function makeElementDraggable(el, container) {
             return;
         }
 
+        // リサイズ領域（右下隅）のクリックかどうかをチェックして、リサイズ時はドラッグを開始しない
+        const rect = el.getBoundingClientRect();
+        const resizeZone = 20; // 右下から20pxの範囲をリサイズ用の閾値にする
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+        
+        if (clickX > rect.width - resizeZone && clickY > rect.height - resizeZone) {
+            return; // リサイズ操作を優先
+        }
+
         activeDragElement = el;
         e.preventDefault();
 
-        const rect = el.getBoundingClientRect();
         const containerRect = container.getBoundingClientRect();
         
         if (el.classList.contains('widget-pinned')) {
