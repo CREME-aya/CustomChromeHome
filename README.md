@@ -47,6 +47,8 @@ OAuth 連携ではなく iCal URL 方式です。Google カレンダーの設定
 - Chrome 拡張の `identity` API を使った Spotify 認証
 - 再生中トラック、アーティスト、アートワークの表示
 - 再生 / 一時停止、前へ、次への操作
+- アクセストークン期限切れ時の自動更新
+- `identity` API で認証ページを開けない場合の通常タブフォールバック
 
 ### RSS / Discover
 
@@ -88,6 +90,20 @@ https://<user-name>.github.io/<repository-name>/privacy.html
 
 同じ予定を再度取り込んでも、既存の ToDo が重複して増えないようにしています。
 
+## Spotify 連携の設定
+
+Spotify 認証を使うには、Spotify Developer Dashboard の対象アプリで Redirect URI を登録する必要があります。
+
+1. この拡張機能を Chrome に読み込む
+2. 新しいタブを開き、DevTools の Console を開く
+3. Spotify の「連携する」を押す
+4. Console に出る `Spotify Redirect URI:` の値をコピーする
+5. Spotify Developer Dashboard のアプリ設定で Redirect URI に同じ値を追加する
+
+Redirect URI は完全一致が必要です。このアプリは `https://<拡張機能ID>.chromiumapp.org/spotify` の形式を使います。`/spotify` の有無、末尾スラッシュ、大文字小文字が違うと Spotify 側で `redirect_uri: Not matching configuration` になります。
+
+Spotify 側へ登録後は、Chrome の拡張機能ページで Nexus Dash をリロードし、新しいタブを開き直してください。
+
 ## 設定と保存先
 
 この拡張機能は主に `localStorage` に設定を保存します。
@@ -99,6 +115,7 @@ https://<user-name>.github.io/<repository-name>/privacy.html
 - Google カレンダー iCal URL
 - AI API キー
 - Spotify アクセストークン
+- Spotify リフレッシュトークン
 - クイックリンク
 
 共有 PC で使う場合は、API キーや iCal URL の扱いに注意してください。
@@ -108,6 +125,7 @@ https://<user-name>.github.io/<repository-name>/privacy.html
 `manifest.json` では以下の権限を使います。
 
 - `identity`: Spotify 認証に使うため
+- `tabs`: Spotify 認証ページを通常タブで開くフォールバックに使うため
 - `host_permissions`: RSS、天気、カレンダー、AI、Spotify API へアクセスするため
 
 ## ファイル構成
