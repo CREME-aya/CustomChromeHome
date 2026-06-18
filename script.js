@@ -265,7 +265,7 @@ function addPinButton(el) {
 
     const btn = document.createElement('button');
     btn.className = 'widget-pin-btn';
-    btn.innerHTML = el.classList.contains('widget-pinned') ? '📌 固定中' : '📌 固定する';
+    btn.innerHTML = el.classList.contains('widget-pinned') ? '固定中' : '固定する';
     if (el.classList.contains('widget-pinned')) {
         btn.classList.add('active');
     }
@@ -275,7 +275,7 @@ function addPinButton(el) {
         const isPinned = el.classList.toggle('widget-pinned');
         
         if (isPinned) {
-            btn.innerHTML = '📌 固定中';
+            btn.innerHTML = '固定中';
             btn.classList.add('active');
             
             // absoluteからfixedへ切り替え (ウィンドウ相対)
@@ -284,7 +284,7 @@ function addPinButton(el) {
             el.style.left = `${rect.left}px`;
             el.style.top = `${rect.top}px`;
         } else {
-            btn.innerHTML = '📌 固定する';
+            btn.innerHTML = '固定する';
             btn.classList.remove('active');
             
             // fixedからabsoluteへ切り替え (コンテナ相対)

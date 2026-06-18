@@ -50,8 +50,6 @@ html.theme-minimal {
 
   .dashboard {
     width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -64,8 +62,6 @@ html.theme-minimal {
     overflow-y: auto; /* スクロール可能にする */
     padding: 40px 20px 60px 20px;
     width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
     box-sizing: border-box;
     /* 子要素が絶対配置になるため、高さが0にならないよう最低の高さを確保 */
     min-height: calc(100vh - 120px);
@@ -120,14 +116,12 @@ html.theme-minimal {
     padding: 3px 8px;
     transition: all 0.2s ease;
     z-index: 15;
-    opacity: 0; /* 通常時は非表示、ホバーまたは編集モードで表示 */
+    display: none; /* デフォルト非表示（通常モード時は完全非表示） */
   }
 
-  /* ウィジェットにホバーした時、または編集モードの時はピンボタンを表示 */
-  .sortable-item:hover .widget-pin-btn,
-  .layout-edit-active .sortable-item .widget-pin-btn,
-  .widget-pin-btn.active {
-    opacity: 1;
+  /* 編集モード有効時（.layout-edit-active）のみ固定ボタンを表示する */
+  .layout-edit-active .widget-pin-btn {
+    display: block;
   }
 
   .widget-pin-btn.active {

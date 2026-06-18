@@ -17,7 +17,7 @@
             <div class="setting-block">
                 <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1rem; color: #e2e8f0;">レイアウト設定</h3>
                 <div class="toggle-row">
-                    <label for="toggle-edit-mode" class="sidebar-label" style="margin-bottom: 0; font-weight: bold; color: #60a5fa;">🛠️ 編集モードを有効化</label>
+                    <label for="toggle-edit-mode" class="sidebar-label" style="margin-bottom: 0; font-weight: bold; color: #60a5fa;">編集モードを有効化</label>
                     <input type="checkbox" id="toggle-edit-mode" class="toggle-checkbox">
                 </div>
             </div>
@@ -27,35 +27,35 @@
             <div class="setting-block">
                 <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1rem; color: #e2e8f0;">表示ウィジェットの選択</h3>
                 <div class="toggle-row">
-                    <label for="toggle-clock" class="sidebar-label" style="margin-bottom: 0;">⏱ 時計</label>
+                    <label for="toggle-clock" class="sidebar-label" style="margin-bottom: 0;">時計</label>
                     <input type="checkbox" id="toggle-clock" class="toggle-checkbox" checked>
                 </div>
                 <div class="toggle-row">
-                    <label for="toggle-weather" class="sidebar-label" style="margin-bottom: 0;">☀️ 天気</label>
+                    <label for="toggle-weather" class="sidebar-label" style="margin-bottom: 0;">天気</label>
                     <input type="checkbox" id="toggle-weather" class="toggle-checkbox" checked>
                 </div>
                 <div class="toggle-row">
-                    <label for="toggle-todo" class="sidebar-label" style="margin-bottom: 0;">📝 ToDoリスト</label>
+                    <label for="toggle-todo" class="sidebar-label" style="margin-bottom: 0;">ToDoリスト</label>
                     <input type="checkbox" id="toggle-todo" class="toggle-checkbox" checked>
                 </div>
                 <div class="toggle-row">
-                    <label for="toggle-spotify" class="sidebar-label" style="margin-bottom: 0;">🎵 Spotify</label>
+                    <label for="toggle-spotify" class="sidebar-label" style="margin-bottom: 0;">Spotify</label>
                     <input type="checkbox" id="toggle-spotify" class="toggle-checkbox" checked>
                 </div>
                 <div class="toggle-row">
-                    <label for="toggle-links" class="sidebar-label" style="margin-bottom: 0;">🔗 クイックリンク</label>
+                    <label for="toggle-links" class="sidebar-label" style="margin-bottom: 0;">クイックリンク</label>
                     <input type="checkbox" id="toggle-links" class="toggle-checkbox" checked>
                 </div>
                 <div class="toggle-row">
-                    <label for="toggle-ai-openai" class="sidebar-label" style="margin-bottom: 0;">🤖 ChatGPT (gpt-4o)</label>
+                    <label for="toggle-ai-openai" class="sidebar-label" style="margin-bottom: 0;">ChatGPT (gpt-4o)</label>
                     <input type="checkbox" id="toggle-ai-openai" class="toggle-checkbox" checked>
                 </div>
                 <div class="toggle-row">
-                    <label for="toggle-ai-anthropic" class="sidebar-label" style="margin-bottom: 0;">🤖 Claude (3.5 Sonnet)</label>
+                    <label for="toggle-ai-anthropic" class="sidebar-label" style="margin-bottom: 0;">Claude (3.5 Sonnet)</label>
                     <input type="checkbox" id="toggle-ai-anthropic" class="toggle-checkbox" checked>
                 </div>
                 <div class="toggle-row">
-                    <label for="toggle-ai-gemini" class="sidebar-label" style="margin-bottom: 0;">🤖 Gemini (3.5 Flash)</label>
+                    <label for="toggle-ai-gemini" class="sidebar-label" style="margin-bottom: 0;">Gemini (3.5 Flash)</label>
                     <input type="checkbox" id="toggle-ai-gemini" class="toggle-checkbox" checked>
                 </div>
             </div>
@@ -146,7 +146,7 @@
                 <div class="ai-input-group">
                     <span class="ai-icon"></span>
                     <input type="text" id="ai-global-input" class="memo-input" placeholder="AIに質問する...">
-                    <button id="ai-global-send-btn" class="send-btn">➤</button>
+                    <button id="ai-global-send-btn" class="send-btn">></button>
                 </div>
             </div>
 
@@ -171,12 +171,12 @@
             <!-- ToDoウィジェット -->
             <div id="todo-widget" class="todo-widget sortable-item" data-id="widget-todo">
                 <div class="widget-header todo-widget-header">
-                    <span>📝 ToDo List</span>
+                    <span>ToDo List</span>
                     <button id="calendar-import-btn" class="todo-calendar-btn" title="GoogleカレンダーからToDoを作成">予定を取込</button>
                 </div>
                 <div class="todo-input-container">
                     <input type="text" id="todo-input" placeholder="タスクを追加 (Enter)">
-                    <button id="todo-add-btn">＋</button>
+                    <button id="todo-add-btn">+</button>
                 </div>
                 <ul id="todo-list" class="todo-list"></ul>
             </div>
@@ -190,14 +190,14 @@
                         <div id="spotify-artist" class="spotify-artist-name">-</div>
                     </div>
                     <div class="spotify-controls">
-                        <button id="spotify-prev-btn" class="spotify-ctrl-btn">⏮</button>
-                        <button id="spotify-play-btn" class="spotify-ctrl-btn spotify-play-main">▶️</button>
-                        <button id="spotify-next-btn" class="spotify-ctrl-btn">⏭</button>
+                        <button id="spotify-prev-btn" class="spotify-ctrl-btn">◀◀</button>
+                        <button id="spotify-play-btn" class="spotify-ctrl-btn spotify-play-main">▶</button>
+                        <button id="spotify-next-btn" class="spotify-ctrl-btn">▶▶</button>
                     </div>
                     <button id="spotify-logout-btn" class="outline-btn spotify-logout-inline">解除</button>
                 </div>
                 <div id="spotify-auth-prompt" class="spotify-auth-row">
-                    <span class="spotify-label">🎵 Spotify</span>
+                    <span class="spotify-label">Spotify</span>
                     <button id="spotify-login-btn" class="outline-btn spotify-connect-btn">連携する</button>
                 </div>
             </div>
