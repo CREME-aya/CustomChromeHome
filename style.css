@@ -161,6 +161,11 @@ html.theme-minimal {
     position: absolute;
     transform: scale(0.99);
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    /* 編集モード時のみサイズ変更を可能にする */
+    resize: both;
+    overflow: auto !important; /* resizeに必須 */
+    min-width: 200px;
+    min-height: 80px;
   }
 
   .layout-edit-active .sortable-item:hover {

@@ -170,7 +170,7 @@ function initThemeSettings() {
 
 // ==========================================
 // ==========================================
-// initWidgetSortable — ウィジェットの自由配置（アブソリュート・ドラッグ）とピン留め
+// initWidgetSortable — ウィジェットの自由配置（アブソリュート・ドラッグ）とピン留め、リサイズ
 // ==========================================
 let activeDragElement = null;
 let dragStartX = 0;
@@ -198,9 +198,18 @@ function initWidgetSortable() {
 
     // 3. ウィンドウリサイズ時の境界制御
     window.addEventListener('resize', handleWindowResize);
+
+    // 4. 編集モード時のみサイズ変更の完了を検知して保存する処理
+    container.addEventListener('mouseup', (e) => {
+        if (!editModeToggle || !editModeToggle.checked) return;
+        const item = e.target.closest('.sortable-item');
+        if (item) {
+            saveWidgetState(item);
+        }
+    });
 }
 
-// 状態（座標、ピン留め）の保存
+// 状態（座標、ピン留め、サイズ）の保存
 function saveWidgetState(el) {
     const id = el.getAttribute('data-id');
     const states = readJsonFromStorage(STORAGE_KEY_WIDGET_STATES, {});
@@ -208,6 +217,8 @@ function saveWidgetState(el) {
     states[id] = {
         left: el.style.left,
         top: el.style.top,
+        width: el.style.width,
+        height: el.style.height,
         pinned: el.classList.contains('widget-pinned')
     };
     
@@ -230,10 +241,12 @@ function restoreWidgetStates(container) {
         const state = states[id];
         
         if (state && (state.left || state.top)) {
-            // 保存された位置・ピン留めを復元
+            // 保存された位置・ピン留め・サイズを復元
             el.style.position = state.pinned ? 'fixed' : 'absolute';
             el.style.left = state.left;
             el.style.top = state.top;
+            if (state.width) el.style.width = state.width;
+            if (state.height) el.style.height = state.height;
             if (state.pinned) {
                 el.classList.add('widget-pinned');
             }
