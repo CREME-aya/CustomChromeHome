@@ -34,6 +34,22 @@ const WEATHER_CHART_BAR_MIN_HEIGHT = 4;
 const WEATHER_CHART_EMPTY_BAR_HEIGHT = 2;
 const DEFAULT_CALENDAR_LOOKAHEAD_DAYS = 7;
 const MAX_CALENDAR_TODO_IMPORTS = 30;
+const WIDGET_WIDTH_NORMAL = 340;
+const WIDGET_WIDTH_WIDE = 700;
+const WIDGET_GAP = 24;
+const WIDGET_GROUP_GAP = 20;
+const WIDGET_AI_PANEL_GAP = 16;
+const WIDGET_TOP_MARGIN = 40;
+const WIDGET_SPOTIFY_RIGHT_OFFSET = 360;
+const WIDGET_SPOTIFY_TOP = 10;
+const WIDGET_CLOCK_WEATHER_HEIGHT = 170;
+const WIDGET_SEARCH_HEIGHT = 60;
+const WIDGET_AI_PANEL_HEIGHT = 240;
+const WIDGET_UTILITY_HEIGHT = 280;
+const WIDGET_THREE_COLUMN_MIN_WIDTH = (WIDGET_WIDTH_NORMAL * 3) + (WIDGET_AI_PANEL_GAP * 2);
+const WIDGET_TWO_COLUMN_MIN_WIDTH = WIDGET_WIDTH_WIDE;
+const RESIZE_ZONE_PX = 20;
+const FEED_MAX_ITEMS = 20;
 const SPOTIFY_STORAGE_KEYS = {
     accessToken: 'spotify_access_token',
     refreshToken: 'spotify_refresh_token',
@@ -89,6 +105,8 @@ let currentArticles = [];
 let favoriteArticles = readJsonFromStorage(STORAGE_KEY_FAVS, []);
 let currentFilter = 'all'; // 'all' or 'favorites'
 let currentSearchQuery = '';
+const STORAGE_KEY_FEED_MODE = 'custom_feed_display_mode';
+let feedDisplayMode = localStorage.getItem(STORAGE_KEY_FEED_MODE) || 'mixed';
 let todos = [];
 
 function readJsonFromStorage(key, fallback) {
@@ -102,6 +120,10 @@ function readJsonFromStorage(key, fallback) {
 
 function writeJsonToStorage(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
+}
+
+function toPx(value) {
+    return `${value}px`;
 }
 
 // ==========================================
@@ -157,10 +179,10 @@ function initInputFocusFix() {
 function initThemeSettings() {
     const themeSelect = document.getElementById('theme-select');
     if (!themeSelect) return;
-    
+
     const savedTheme = localStorage.getItem(STORAGE_KEY_THEME) || 'theme-glass-dark';
     themeSelect.value = savedTheme;
-    
+
     themeSelect.addEventListener('change', (e) => {
         const theme = e.target.value;
         document.documentElement.className = theme;
@@ -213,7 +235,7 @@ function initWidgetSortable() {
 function saveWidgetState(el) {
     const id = el.getAttribute('data-id');
     const states = readJsonFromStorage(STORAGE_KEY_WIDGET_STATES, {});
-    
+
     states[id] = {
         left: el.style.left,
         top: el.style.top,
@@ -221,27 +243,167 @@ function saveWidgetState(el) {
         height: el.style.height,
         pinned: el.classList.contains('widget-pinned')
     };
-    
+
     writeJsonToStorage(STORAGE_KEY_WIDGET_STATES, states);
+}
+
+// デフォルトのレイアウト配置の計算（変更前の配置を再現）
+function calculateDefaultWidgetPositions(containerWidth) {
+    const positions = {};
+    const normalWidthPx = toPx(WIDGET_WIDTH_NORMAL);
+    const wideWidthPx = toPx(WIDGET_WIDTH_WIDE);
+
+    // 1. Spotify (右上固定)
+    positions['widget-spotify'] = {
+        position: 'fixed',
+        left: `calc(100% - ${toPx(WIDGET_SPOTIFY_RIGHT_OFFSET)})`,
+        top: toPx(WIDGET_SPOTIFY_TOP),
+        width: normalWidthPx,
+        pinned: true
+    };
+
+    // 2. 時計と天気（横並びで中央）
+    const topRowWidth = (WIDGET_WIDTH_NORMAL * 2) + WIDGET_GROUP_GAP;
+    const topRowStartX = Math.max(0, (containerWidth - topRowWidth) / 2);
+    positions['widget-clock'] = {
+        position: 'absolute',
+        left: `${topRowStartX}px`,
+        top: toPx(WIDGET_TOP_MARGIN),
+        width: normalWidthPx
+    };
+    positions['widget-weather'] = {
+        position: 'absolute',
+        left: `${topRowStartX + WIDGET_WIDTH_NORMAL + WIDGET_GROUP_GAP}px`,
+        top: toPx(WIDGET_TOP_MARGIN),
+        width: normalWidthPx
+    };
+
+    // 3. マルチAI検索バー (全幅 700px)
+    const centerXWide = Math.max(0, (containerWidth - WIDGET_WIDTH_WIDE) / 2);
+    const searchTop = WIDGET_TOP_MARGIN + WIDGET_CLOCK_WEATHER_HEIGHT + WIDGET_GAP;
+    positions['widget-ai-search'] = {
+        position: 'absolute',
+        left: `${centerXWide}px`,
+        top: `${searchTop}px`,
+        width: wideWidthPx
+    };
+
+    // 4. AI回答パネル3つ (OpenAI, Anthropic, Gemini)
+    const aiTop = searchTop + WIDGET_SEARCH_HEIGHT + WIDGET_GAP;
+    if (containerWidth >= WIDGET_THREE_COLUMN_MIN_WIDTH) {
+        const aiStartX = Math.max(0, (containerWidth - WIDGET_THREE_COLUMN_MIN_WIDTH) / 2);
+        positions['widget-ai-openai'] = {
+            position: 'absolute',
+            left: `${aiStartX}px`,
+            top: `${aiTop}px`,
+            width: normalWidthPx
+        };
+        positions['widget-ai-anthropic'] = {
+            position: 'absolute',
+            left: `${aiStartX + WIDGET_WIDTH_NORMAL + WIDGET_AI_PANEL_GAP}px`,
+            top: `${aiTop}px`,
+            width: normalWidthPx
+        };
+        positions['widget-ai-gemini'] = {
+            position: 'absolute',
+            left: `${aiStartX + ((WIDGET_WIDTH_NORMAL + WIDGET_AI_PANEL_GAP) * 2)}px`,
+            top: `${aiTop}px`,
+            width: normalWidthPx
+        };
+    } else if (containerWidth >= WIDGET_TWO_COLUMN_MIN_WIDTH) {
+        // 2つ横並び + 1つ縦積み
+        const aiTwoColumnWidth = (WIDGET_WIDTH_NORMAL * 2) + WIDGET_AI_PANEL_GAP;
+        const aiStartX = Math.max(0, (containerWidth - aiTwoColumnWidth) / 2);
+        positions['widget-ai-openai'] = {
+            position: 'absolute',
+            left: `${aiStartX}px`,
+            top: `${aiTop}px`,
+            width: normalWidthPx
+        };
+        positions['widget-ai-anthropic'] = {
+            position: 'absolute',
+            left: `${aiStartX + WIDGET_WIDTH_NORMAL + WIDGET_AI_PANEL_GAP}px`,
+            top: `${aiTop}px`,
+            width: normalWidthPx
+        };
+        positions['widget-ai-gemini'] = {
+            position: 'absolute',
+            left: `${Math.max(0, (containerWidth - WIDGET_WIDTH_NORMAL) / 2)}px`,
+            top: `${aiTop + WIDGET_AI_PANEL_HEIGHT + WIDGET_GAP}px`,
+            width: normalWidthPx
+        };
+    } else {
+        // すべて縦積み
+        positions['widget-ai-openai'] = {
+            position: 'absolute',
+            left: `${Math.max(0, (containerWidth - WIDGET_WIDTH_NORMAL) / 2)}px`,
+            top: `${aiTop}px`,
+            width: normalWidthPx
+        };
+        positions['widget-ai-anthropic'] = {
+            position: 'absolute',
+            left: `${Math.max(0, (containerWidth - WIDGET_WIDTH_NORMAL) / 2)}px`,
+            top: `${aiTop + WIDGET_AI_PANEL_HEIGHT + WIDGET_GAP}px`,
+            width: normalWidthPx
+        };
+        positions['widget-ai-gemini'] = {
+            position: 'absolute',
+            left: `${Math.max(0, (containerWidth - WIDGET_WIDTH_NORMAL) / 2)}px`,
+            top: `${aiTop + ((WIDGET_AI_PANEL_HEIGHT + WIDGET_GAP) * 2)}px`,
+            width: normalWidthPx
+        };
+    }
+
+    // 5. ToDo と クイックリンク (横並び)
+    let nextTop = aiTop + WIDGET_AI_PANEL_HEIGHT + WIDGET_GAP;
+    if (containerWidth < WIDGET_THREE_COLUMN_MIN_WIDTH && containerWidth >= WIDGET_TWO_COLUMN_MIN_WIDTH) {
+        nextTop = aiTop + ((WIDGET_AI_PANEL_HEIGHT + WIDGET_GAP) * 2);
+    } else if (containerWidth < WIDGET_TWO_COLUMN_MIN_WIDTH) {
+        nextTop = aiTop + ((WIDGET_AI_PANEL_HEIGHT + WIDGET_GAP) * 3);
+    }
+
+    const utilRowWidth = (WIDGET_WIDTH_NORMAL * 2) + WIDGET_GROUP_GAP;
+    const utilStartX = Math.max(0, (containerWidth - utilRowWidth) / 2);
+    positions['widget-todo'] = {
+        position: 'absolute',
+        left: `${utilStartX}px`,
+        top: `${nextTop}px`,
+        width: normalWidthPx
+    };
+    positions['widget-quick-links'] = {
+        position: 'absolute',
+        left: `${utilStartX + WIDGET_WIDTH_NORMAL + WIDGET_GROUP_GAP}px`,
+        top: `${nextTop}px`,
+        width: normalWidthPx
+    };
+
+    // 6. Discover (全幅 700px)
+    const discoverTop = nextTop + WIDGET_UTILITY_HEIGHT + WIDGET_GAP;
+    positions['widget-discover'] = {
+        position: 'absolute',
+        left: `${centerXWide}px`,
+        top: `${discoverTop}px`,
+        width: wideWidthPx
+    };
+
+    return positions;
 }
 
 // 状態の復元および自動配置
 function restoreWidgetStates(container) {
     const states = readJsonFromStorage(STORAGE_KEY_WIDGET_STATES, {});
     const widgets = Array.from(container.querySelectorAll('.sortable-item'));
-    
-    // フリーレイアウト用の自動配置計算用
     const containerWidth = container.clientWidth || 1200;
-    const colWidth = 360; // カラム幅＋ギャップ
-    const cols = Math.max(1, Math.floor(containerWidth / colWidth));
-    const colHeights = new Array(cols).fill(0);
 
-    widgets.forEach((el, index) => {
+    // デフォルト位置の計算
+    const defaultPositions = calculateDefaultWidgetPositions(containerWidth);
+
+    widgets.forEach((el) => {
         const id = el.getAttribute('data-id');
         const state = states[id];
-        
+
         if (state && (state.left || state.top)) {
-            // 保存された位置・ピン留め・サイズを復元
+            // 保存された位置・サイズを復元
             el.style.position = state.pinned ? 'fixed' : 'absolute';
             el.style.left = state.left;
             el.style.top = state.top;
@@ -249,25 +411,26 @@ function restoreWidgetStates(container) {
             if (state.height) el.style.height = state.height;
             if (state.pinned) {
                 el.classList.add('widget-pinned');
+            } else {
+                el.classList.remove('widget-pinned');
             }
         } else {
-            // 保存座標がない場合は、重ならないようにグリッド上に自動配置
-            const minCol = colHeights.indexOf(Math.min(...colHeights));
-            const left = minCol * colWidth;
-            const top = colHeights[minCol];
-            
-            el.style.position = 'absolute';
-            el.style.left = `${left}px`;
-            el.style.top = `${top}px`;
-            
-            // 次の自動配置用に現在の高さを更新 (デフォルト高さを 200px 程度にする)
-            const elHeight = el.offsetHeight || 200;
-            colHeights[minCol] += elHeight + 24; // 24pxはギャップ
+            // 保存座標がない場合は、デフォルト配置を適用
+            const def = defaultPositions[id];
+            if (def) {
+                el.style.position = def.position;
+                el.style.left = def.left;
+                el.style.top = def.top;
+                el.style.width = def.width;
+                if (def.pinned) {
+                    el.classList.add('widget-pinned');
+                } else {
+                    el.classList.remove('widget-pinned');
+                }
+            }
         }
 
-        // ピン留めボタンの追加
         addPinButton(el);
-        // ドラッグイベントの登録
         makeElementDraggable(el, container);
     });
 }
@@ -286,11 +449,11 @@ function addPinButton(el) {
     btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const isPinned = el.classList.toggle('widget-pinned');
-        
+
         if (isPinned) {
             btn.innerHTML = '固定中';
             btn.classList.add('active');
-            
+
             // absoluteからfixedへ切り替え (ウィンドウ相対)
             const rect = el.getBoundingClientRect();
             el.style.position = 'fixed';
@@ -299,7 +462,7 @@ function addPinButton(el) {
         } else {
             btn.innerHTML = '固定する';
             btn.classList.remove('active');
-            
+
             // fixedからabsoluteへ切り替え (コンテナ相対)
             const rect = el.getBoundingClientRect();
             const containerRect = document.getElementById('dashboard-main').getBoundingClientRect();
@@ -307,7 +470,7 @@ function addPinButton(el) {
             el.style.left = `${rect.left - containerRect.left}px`;
             el.style.top = `${rect.top - containerRect.top}px`;
         }
-        
+
         saveWidgetState(el);
     });
 
@@ -318,11 +481,11 @@ function addPinButton(el) {
 function makeElementDraggable(el, container) {
     // 掴みやすくするため、ヘッダー領域またはウィジェット全体をドラッグ対象にする
     const handler = el.querySelector('.widget-header') || el.querySelector('.clock-widget') || el;
-    
+
     handler.addEventListener('mousedown', (e) => {
         const editModeToggle = document.getElementById('toggle-edit-mode');
         if (!editModeToggle || !editModeToggle.checked) return;
-        
+
         // 入力フォームやクリック可能な要素へのクリック時はドラッグをスキップ
         if (['INPUT', 'TEXTAREA', 'BUTTON', 'SELECT', 'A', 'SPAN'].includes(e.target.tagName)) {
             if (e.target.classList.contains('widget-pin-btn')) return; // ピン留め自体は許可
@@ -331,11 +494,10 @@ function makeElementDraggable(el, container) {
 
         // リサイズ領域（右下隅）のクリックかどうかをチェックして、リサイズ時はドラッグを開始しない
         const rect = el.getBoundingClientRect();
-        const resizeZone = 20; // 右下から20pxの範囲をリサイズ用の閾値にする
         const clickX = e.clientX - rect.left;
         const clickY = e.clientY - rect.top;
-        
-        if (clickX > rect.width - resizeZone && clickY > rect.height - resizeZone) {
+
+        if (clickX > rect.width - RESIZE_ZONE_PX && clickY > rect.height - RESIZE_ZONE_PX) {
             return; // リサイズ操作を優先
         }
 
@@ -343,7 +505,7 @@ function makeElementDraggable(el, container) {
         e.preventDefault();
 
         const containerRect = container.getBoundingClientRect();
-        
+
         if (el.classList.contains('widget-pinned')) {
             elementStartX = rect.left;
             elementStartY = rect.top;
@@ -383,21 +545,39 @@ function onMouseUp() {
     activeDragElement = null;
 }
 
-// ウィンドウリサイズ時の境界制御
+// ウィンドウリサイズ時の境界制御＆デフォルト配置ウィジェットの再計算
 function handleWindowResize() {
     const container = document.getElementById('dashboard-main');
     if (!container) return;
     const containerWidth = container.clientWidth;
 
+    const states = readJsonFromStorage(STORAGE_KEY_WIDGET_STATES, {});
+    const defaultPositions = calculateDefaultWidgetPositions(containerWidth);
+
     container.querySelectorAll('.sortable-item').forEach(el => {
-        if (el.classList.contains('widget-pinned')) return;
-        
-        const left = parseFloat(el.style.left) || 0;
-        const width = el.clientWidth;
-        
-        if (left + width > containerWidth) {
-            el.style.left = `${Math.max(0, containerWidth - width)}px`;
-            saveWidgetState(el);
+        const id = el.getAttribute('data-id');
+        const state = states[id];
+
+        // ユーザーがドラッグして位置が保存されている場合
+        if (state && (state.left || state.top)) {
+            if (el.classList.contains('widget-pinned')) return;
+
+            const left = parseFloat(el.style.left) || 0;
+            const width = el.clientWidth;
+
+            if (left + width > containerWidth) {
+                el.style.left = `${Math.max(0, containerWidth - width)}px`;
+                saveWidgetState(el);
+            }
+        } else {
+            // 位置が保存されていない（初期状態の）ウィジェットは、リサイズに合わせて再計算
+            const def = defaultPositions[id];
+            if (def) {
+                el.style.position = def.position;
+                el.style.left = def.left;
+                el.style.top = def.top;
+                el.style.width = def.width;
+            }
         }
     });
 }
@@ -432,12 +612,19 @@ function initFeed() {
     const presetRss = document.getElementById('preset-rss');
     const saveBtn = document.getElementById('save-rss-btn') || document.getElementById('save-url-btn');
 
-    // プリセットRSS選択時にURLを反映
+    // プリセットRSS選択時にURLを置き換えて即座に保存＆更新する
     if (presetRss && urlInput) {
         presetRss.addEventListener('change', () => {
-            if (presetRss.value !== '') {
-                urlInput.value = presetRss.value;
-            }
+            const selectedUrl = presetRss.value;
+            if (selectedUrl === '') return;
+
+            // 選択したフィードURLでテキストエリアを上書き
+            urlInput.value = selectedUrl;
+            presetRss.value = '';
+
+            // 即座に保存して読み込む
+            saveFeedUrls([selectedUrl]);
+            loadFeed([selectedUrl]);
         });
     }
 
@@ -455,6 +642,22 @@ function initFeed() {
             saveFeedUrls(feedUrls);
             loadFeed(feedUrls);
             window._toggleSidebar?.();
+        });
+    }
+
+    // 表示モード切り替えボタンの初期化
+    const toggleFeedModeBtn = document.getElementById('btn-toggle-feed-mode');
+    if (toggleFeedModeBtn) {
+        const updateFeedModeBtnText = () => {
+            toggleFeedModeBtn.textContent = feedDisplayMode === 'mixed' ? 'フィード別表示' : '混合表示';
+        };
+        updateFeedModeBtnText();
+
+        toggleFeedModeBtn.addEventListener('click', () => {
+            feedDisplayMode = feedDisplayMode === 'mixed' ? 'split' : 'mixed';
+            localStorage.setItem(STORAGE_KEY_FEED_MODE, feedDisplayMode);
+            updateFeedModeBtnText();
+            renderArticles();
         });
     }
 
@@ -1003,8 +1206,7 @@ function renderArticles() {
     }
 
     // 画面全体スクロールなので多めに表示
-    const MAX_ITEMS = 20;
-    targetArticles = targetArticles.slice(0, MAX_ITEMS);
+    targetArticles = targetArticles.slice(0, FEED_MAX_ITEMS);
 
     if (targetArticles.length === 0) {
         container.innerHTML = '<div class="loading">表示できる記事がありません。</div>';

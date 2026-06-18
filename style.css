@@ -1,38 +1,6 @@
 /*=========
   全体の設定
   =========*/
-:root {
-  --panel-bg: rgba(15, 23, 42, 0.7);
-  --panel-border: rgba(255, 255, 255, 0.2);
-  --panel-blur: blur(16px);
-  --text-color: #f8fafc;
-  --sidebar-bg: #1e293b;
-  --sidebar-border: #334155;
-  --input-bg: rgba(30, 41, 59, 0.8);
-  --input-border: rgba(255, 255, 255, 0.3);
-}
-html.theme-glass-light {
-  --panel-bg: rgba(255, 255, 255, 0.85);
-  --panel-border: rgba(0, 0, 0, 0.15);
-  --text-color: #1e293b;
-  --sidebar-bg: #f8fafc;
-  --sidebar-border: #e2e8f0;
-  --input-bg: rgba(255, 255, 255, 0.9);
-  --input-border: rgba(0, 0, 0, 0.2);
-}
-html.theme-solid-dark {
-  --panel-bg: #1e293b;
-  --panel-border: #334155;
-  --panel-blur: none;
-  --input-bg: #0f172a;
-  --input-border: #475569;
-}
-html.theme-minimal {
-  --panel-bg: transparent;
-  --panel-border: transparent;
-  --panel-blur: none;
-}
-
   body {
     margin: 0;
     padding: 40px 20px;
@@ -75,7 +43,7 @@ html.theme-minimal {
   /* 各ウィジェット（ドラッグ対象）の共通絶対配置・サイズ指定 */
   .dashboard-main > .sortable-item {
     position: absolute;
-    width: 340px; /* 基本ウィジェット幅 */
+    width: var(--widget-width); /* 基本ウィジェット幅 */
     box-sizing: border-box;
     cursor: default;
     transition: box-shadow 0.2s ease, transform 0.2s ease;
@@ -83,13 +51,13 @@ html.theme-minimal {
 
   /* 検索バー（幅広） */
   .ai-search-bar.search-bar-style {
-    width: 700px !important;
+    width: var(--widget-width-wide) !important;
     max-width: 100% !important;
   }
 
   /* Discoverセクション（幅広） */
   .discover-section {
-    width: 700px !important;
+    width: var(--widget-width-wide) !important;
     max-width: 100% !important;
     display: flex;
     flex-direction: column;
@@ -143,7 +111,7 @@ html.theme-minimal {
       left: 0 !important;
       top: 0 !important;
       width: 100% !important;
-      margin-bottom: 24px;
+      margin-bottom: var(--widget-gap);
     }
     .widget-pin-btn {
       display: none !important; /* モバイルでは固定表示を無効化 */
@@ -330,7 +298,7 @@ html.theme-minimal {
     color: #f8fafc;
     font-size: 1rem;
     outline: none;
-    transition: all 0.3s ease;
+    transition: var(--transition-default);
     user-select: auto !important;
     -webkit-user-select: auto !important;
     pointer-events: auto !important;
@@ -404,14 +372,14 @@ html.theme-minimal {
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: var(--transition-default);
   }
 
   .save-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 15px -3px rgba(139, 92, 246, 0.4);
   }
-  
+
   .save-btn:active {
     transform: translateY(0);
   }
@@ -425,7 +393,7 @@ html.theme-minimal {
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: var(--transition-default);
   }
 
   .outline-btn:hover {
@@ -445,7 +413,7 @@ html.theme-minimal {
     background: var(--panel-bg);
     backdrop-filter: var(--panel-blur);
     border: 1px solid var(--panel-border);
-    border-radius: 20px;
+    border-radius: var(--border-radius-widget);
     padding: 24px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.2);
     text-align: center;
@@ -456,7 +424,7 @@ html.theme-minimal {
     align-items: center;
     min-height: 150px;
     box-sizing: border-box;
-    transition: all 0.3s ease;
+    transition: var(--transition-default);
   }
 
   .clock-widget .time {
@@ -515,7 +483,7 @@ html.theme-minimal {
     justify-content: center;
     width: 60px;
     height: 60px;
-    border-radius: 12px;
+    border-radius: var(--border-radius-input);
     background: rgba(255, 255, 255, 0.05);
     text-decoration: none;
     color: #e2e8f0;
@@ -545,7 +513,7 @@ html.theme-minimal {
     text-overflow: ellipsis;
     max-width: 50px;
   }
-  
+
   .delete-link-btn {
     position: absolute;
     top: -6px;
@@ -600,8 +568,8 @@ html.theme-minimal {
     box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     display: flex;
     flex-direction: column;
-    margin-bottom: 24px;
-    transition: all 0.3s ease;
+    margin-bottom: var(--widget-gap);
+    transition: var(--transition-default);
   }
 
   .ai-search-bar.search-bar-style:focus-within {
@@ -658,14 +626,14 @@ html.theme-minimal {
     background: var(--panel-bg);
     backdrop-filter: var(--panel-blur);
     border: 1px solid var(--panel-border);
-    border-radius: 12px;
+    border-radius: var(--border-radius-input);
     padding: 16px;
     display: flex;
     flex-direction: column;
     min-height: 200px;
     max-height: 350px;
     box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-    transition: all 0.3s ease;
+    transition: var(--transition-default);
   }
 
   .ai-panel-header {
@@ -707,7 +675,7 @@ html.theme-minimal {
     background: rgba(15, 23, 42, 0.65);
     backdrop-filter: var(--panel-blur);
     border: 1px solid var(--panel-border);
-    border-radius: 20px;
+    border-radius: var(--border-radius-widget);
     padding: 24px;
     max-width: 400px;
     box-shadow: 0 10px 20px rgba(0,0,0,0.3);
@@ -792,7 +760,7 @@ html.theme-minimal {
 
   .chat-msg {
     padding: 10px 14px;
-    border-radius: 12px;
+    border-radius: var(--border-radius-input);
     font-size: 0.95rem;
     line-height: 1.5;
     max-width: 85%;
@@ -829,7 +797,7 @@ html.theme-minimal {
   .send-btn:hover {
     background: #2563eb;
   }
-  
+
   .send-btn:disabled {
     background: #64748b;
     cursor: not-allowed;
@@ -839,7 +807,7 @@ html.theme-minimal {
   .section-header {
     display: flex;
     align-items: center;
-    margin-bottom: 24px;
+    margin-bottom: var(--widget-gap);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     padding-bottom: 16px;
   }
@@ -860,7 +828,30 @@ html.theme-minimal {
     display: grid;
     gap: 16px;
   }
-  
+
+  /* フィード別表示グループ */
+  .feed-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: var(--widget-gap);
+    width: 100%;
+  }
+
+  .feed-group-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    padding-left: 10px;
+    border-left: 3px solid #55c500;
+    margin: 0;
+  }
+
+  .feed-group-items {
+    display: grid;
+    gap: 16px;
+  }
+
   .loading {
     color: #94a3b8;
     font-size: 0.9rem;
@@ -883,7 +874,7 @@ html.theme-minimal {
     background: rgba(15, 23, 42, 0.6);
     color: #f8fafc;
     outline: none;
-    transition: all 0.3s ease;
+    transition: var(--transition-default);
   }
 
   .search-input:focus {
@@ -892,12 +883,12 @@ html.theme-minimal {
 
   .tab-btn {
     padding: 8px 16px;
-    border-radius: 20px;
+    border-radius: var(--border-radius-widget);
     border: 1px solid var(--panel-border);
     background: transparent;
     color: #94a3b8;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: var(--transition-default);
   }
 
   .tab-btn.active, .tab-btn:hover {
@@ -915,7 +906,7 @@ html.theme-minimal {
     cursor: pointer;
     background: rgba(15, 23, 42, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
+    border-radius: var(--border-radius-input);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
@@ -930,7 +921,7 @@ html.theme-minimal {
     flex: 1;
     overflow: hidden;
   }
-  
+
   .item-title {
     font-size: 1.1rem;
     line-height: 1.5;
@@ -938,7 +929,7 @@ html.theme-minimal {
     color: #e2e8f0;
     transition: color 0.3s ease;
   }
-  
+
   .item:hover .item-title {
     color: #55c500;
   }
@@ -962,7 +953,7 @@ html.theme-minimal {
     cursor: pointer;
     border-radius: 8px;
     padding: 6px 10px;
-    transition: all 0.3s ease;
+    transition: var(--transition-default);
   }
 
   .ai-summary-btn:hover {
@@ -1013,7 +1004,7 @@ html.theme-minimal {
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 16px;
     width: 90%;
-    max-width: 700px;
+    max-width: var(--widget-width-wide);
     max-height: 80vh;
     padding: 30px;
     position: relative;
@@ -1091,7 +1082,7 @@ html.theme-minimal {
     background: var(--panel-bg);
     backdrop-filter: var(--panel-blur);
     border: 1px solid var(--panel-border);
-    border-radius: 20px;
+    border-radius: var(--border-radius-widget);
     padding: 16px 24px;
     display: flex;
     align-items: center;
@@ -1100,7 +1091,7 @@ html.theme-minimal {
     max-width: 450px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.2);
     color: #f8fafc;
-    transition: all 0.3s ease;
+    transition: var(--transition-default);
     margin-bottom: 20px;
   }
 
@@ -1135,9 +1126,9 @@ html.theme-minimal {
     color: #60a5fa;
     background: rgba(96, 165, 250, 0.1);
     padding: 2px 8px;
-    border-radius: 12px;
+    border-radius: var(--border-radius-input);
   }
-  
+
   .weather-icon-container {
     font-size: 3rem;
     line-height: 1;
@@ -1218,13 +1209,13 @@ html.theme-minimal {
     background: var(--panel-bg);
     backdrop-filter: var(--panel-blur);
     border: 1px solid var(--panel-border);
-    border-radius: 20px;
+    border-radius: var(--border-radius-widget);
     padding: 16px 24px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.2);
     color: #f8fafc;
     display: flex;
     flex-direction: column;
-    transition: all 0.3s ease;
+    transition: var(--transition-default);
   }
 
   .widget-header {
@@ -1280,13 +1271,13 @@ html.theme-minimal {
   .todo-input-container input {
     flex: 1;
     padding: 10px 16px;
-    border-radius: 12px;
+    border-radius: var(--border-radius-input);
     border: 1px solid rgba(255,255,255,0.2);
     background: rgba(0,0,0,0.2);
     color: #fff;
     outline: none;
     font-size: 0.95rem;
-    transition: all 0.3s ease;
+    transition: var(--transition-default);
   }
 
   .todo-input-container input:focus {
@@ -1298,7 +1289,7 @@ html.theme-minimal {
     background: #3b82f6;
     color: #fff;
     border: none;
-    border-radius: 12px;
+    border-radius: var(--border-radius-input);
     width: 40px;
     cursor: pointer;
     font-size: 1.2rem;
@@ -1513,5 +1504,3 @@ html.theme-minimal {
     border-color: #1DB954;
     color: #1DB954;
   }
-
-

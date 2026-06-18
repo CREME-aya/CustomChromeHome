@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nexus Dash</title>
+    <link rel="stylesheet" href="styles/variables.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -86,7 +87,19 @@
             <hr class="sidebar-divider">
 
             <div class="setting-block">
-                <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1rem; color: #e2e8f0;">RSS Feed URL (1行に1URL)</h3>
+                <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1rem; color: #e2e8f0;">RSS Feed 設定</h3>
+                <label for="preset-rss" class="sidebar-label">おすすめフィードから選択:</label>
+                <select id="preset-rss" class="url-input" style="cursor: pointer; padding: 10px; margin-bottom: 8px;">
+                    <option value="">-- カスタム入力 --</option>
+                    <option value="https://news.google.com/rss?hl=ja&gl=JP&ceid=JP:ja">Google ニュース (総合)</option>
+                    <option value="https://qiita.com/popular-items/feed">Qiita (トレンド)</option>
+                    <option value="https://zenn.dev/feed">Zenn (トレンド)</option>
+                    <option value="https://b.hatena.ne.jp/hotentry/it.rss">はてなブックマーク (IT・テクノロジー)</option>
+                    <option value="https://rss.itmedia.co.jp/rss/2.0/news_bursts.xml">ITmedia NEWS</option>
+                    <option value="https://www.publickey1.jp/atom.xml">Publickey (エンタープライズIT)</option>
+                    <option value="https://gigazine.net/news/rss_2.0/">GIGAZINE</option>
+                </select>
+                <label for="rss-url-input" class="sidebar-label">RSS Feed URL (1行に1URL):</label>
                 <textarea id="rss-url-input" class="rss-textarea" placeholder="https://news.yahoo.co.jp/rss/media/all/xml"></textarea>
                 <button id="save-rss-btn" class="save-btn" style="background: linear-gradient(135deg, #a855f7, #9333ea); margin-top: 10px;">フィードを保存＆更新</button>
             </div>
@@ -219,6 +232,7 @@
                             <input type="text" id="search-input" placeholder="記事を検索..." class="search-input">
                             <button id="tab-all" class="tab-btn active">すべて</button>
                             <button id="tab-favorites" class="tab-btn">お気に入り</button>
+                            <button id="btn-toggle-feed-mode" class="tab-btn">フィード別表示</button>
                         </div>
                     </div>
                     <div id="feed-container" class="feed-list">
