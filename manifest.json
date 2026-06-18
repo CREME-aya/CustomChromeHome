@@ -7,8 +7,6 @@
     "newtab": "index.html"
   },
   "permissions": [
-    "storage",
-    "geolocation",
     "identity"
   ],
   "host_permissions": [

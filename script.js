@@ -810,16 +810,11 @@ function initWeatherSettings() {
     const cityInput = document.getElementById('weather-city-input');
     const cityButton = document.getElementById('weather-city-btn');
     const status = document.getElementById('weather-city-status');
-    const locationButton = document.getElementById('weather-location-btn');
 
     updateWeatherCityStatus(status);
 
     if (cityButton && cityInput) {
         cityButton.addEventListener('click', () => handleWeatherCitySearch(cityInput, status));
-    }
-
-    if (locationButton) {
-        locationButton.addEventListener('click', () => handleWeatherCurrentLocation(status));
     }
 }
 
@@ -855,28 +850,6 @@ async function handleWeatherCitySearch(input, status) {
     }
 }
 
-async function handleWeatherCurrentLocation(status) {
-    if (!navigator.geolocation) {
-        setWeatherStatus(status, '位置情報に対応していません');
-        resetWeatherCityStatus(status);
-        return;
-    }
-
-    setWeatherStatus(status, '位置情報を取得中...');
-    navigator.geolocation.getCurrentPosition(async (position) => {
-        const lat = String(position.coords.latitude);
-        const lon = String(position.coords.longitude);
-        const name = await fetchReverseGeocodedLocationName(lat, lon);
-
-        saveWeatherLocation({ lat, lon, name });
-        updateWeatherCityStatus(status);
-        loadWeather();
-    }, () => {
-        setWeatherStatus(status, '位置情報の取得に失敗・拒否されました');
-        resetWeatherCityStatus(status);
-    });
-}
-
 function setWeatherStatus(status, message) {
     if (status) status.textContent = message;
 }
@@ -893,17 +866,6 @@ async function fetchWeatherLocationByCity(query) {
         lon: String(result.longitude),
         name: result.name + (result.admin1 ? `, ${result.admin1}` : '')
     };
-}
-
-async function fetchReverseGeocodedLocationName(lat, lon) {
-    try {
-        const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=ja`;
-        const res = await fetch(url);
-        const data = await res.json();
-        return data.locality || data.city || data.principalSubdivision || '現在地';
-    } catch (e) {
-        return '現在地';
-    }
 }
 
 function saveWeatherLocation({ lat, lon, name }) {

@@ -18,7 +18,6 @@ HTML / CSS / Vanilla JavaScript だけで構成しており、ビルド手順や
 
 - Open-Meteo API を使った現在天気、気温、降水確率の表示
 - 市区町村検索による地点設定
-- ブラウザの位置情報を使った現在地設定
 - 直近 6 時間の降水確率グラフ
 
 ### ToDo
@@ -67,6 +66,16 @@ OAuth 連携ではなく iCal URL 方式です。Google カレンダーの設定
 
 ローカル HTML として `index.html` を直接開くこともできます。ただし Spotify 認証や一部の外部 API 取得は、Chrome 拡張として読み込んだ場合の動作を前提にしています。
 
+## Chrome Web Store 掲載
+
+Chrome Web Store に掲載する場合は、`privacy.html` を GitHub Pages などの公開 URL に配置し、その URL をプライバシーポリシー欄に入力してください。
+
+例:
+
+```text
+https://<user-name>.github.io/<repository-name>/privacy.html
+```
+
 ## Google カレンダーの使い方
 
 1. Google カレンダーを開く
@@ -98,8 +107,6 @@ OAuth 連携ではなく iCal URL 方式です。Google カレンダーの設定
 
 `manifest.json` では以下の権限を使います。
 
-- `storage`: Chrome 拡張側の保存領域を使うため
-- `geolocation`: 天気の現在地取得に使うため
 - `identity`: Spotify 認証に使うため
 - `host_permissions`: RSS、天気、カレンダー、AI、Spotify API へアクセスするため
 
@@ -111,6 +118,7 @@ OAuth 連携ではなく iCal URL 方式です。Google カレンダーの設定
 ├── style.css      # 見た目とレイアウト
 ├── script.js      # 各ウィジェットの処理
 ├── manifest.json  # Chrome 拡張設定
+├── privacy.html   # Chrome Web Store 用プライバシーポリシー
 └── README.md
 ```
 
