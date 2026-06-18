@@ -60,8 +60,9 @@ html.theme-minimal {
 
   .dashboard-main {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 24px;
+    /* 1カラムの最小幅を160pxにし、スマホ等狭い画面では1カラム、広い画面では多カラム化 */
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 20px;
     flex: 1;
     overflow-y: auto; /* 画面全体でスクロールさせる */
     align-items: start;
@@ -86,27 +87,88 @@ html.theme-minimal {
     box-sizing: border-box;
   }
 
-  /* Gridスパン指定 */
+  /* Gridスパン指定（細分化に対応：基本は幅2カラム分） */
   .dashboard-main > .sortable-item {
+    grid-column: span 2;
     width: 100%;
     box-sizing: border-box;
+    cursor: default; /* デフォルトではドラッグ不可を示すカーソル */
   }
 
+  /* 検索バーは全幅 */
   .ai-search-bar.search-bar-style {
-    grid-column: 1 / -1;
+    grid-column: 1 / -1 !important;
     max-width: 100% !important;
   }
 
+  /* Discoverセクションもコンテンツが多いため広めに取る */
   @media (min-width: 768px) {
     .discover-section {
-      grid-column: span 2;
+      grid-column: span 4 !important;
     }
   }
 
   @media (min-width: 1200px) {
     .discover-section {
-      grid-column: span 3;
+      grid-column: span 6 !important;
     }
+  }
+
+  /* 狭いモバイル表示用のフォールバック */
+  @media (max-width: 480px) {
+    .dashboard-main {
+      grid-template-columns: 1fr;
+    }
+    .dashboard-main > .sortable-item {
+      grid-column: span 1 !important;
+    }
+  }
+
+  /* ==========================================
+     レイアウト編集モードがアクティブなときのデザイン演出
+     ========================================== */
+  .layout-edit-active .sortable-item {
+    cursor: grab !important;
+    border: 1.5px dashed #3b82f6 !important; /* 青い点線枠 */
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.25) !important;
+    position: relative;
+    transform: scale(0.99);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  .layout-edit-active .sortable-item:hover {
+    border-color: #60a5fa !important;
+    box-shadow: 0 8px 30px rgba(96, 165, 250, 0.4) !important;
+  }
+
+  .layout-edit-active .sortable-item:active {
+    cursor: grabbing !important;
+    transform: scale(0.98);
+  }
+
+  /* ドラッグ位置プレースホルダー（半透明のダミー表示） */
+  .layout-edit-active .sortable-ghost {
+    opacity: 0.3 !important;
+    border: 1.5px dashed #93c5fd !important;
+    background: rgba(59, 130, 246, 0.1) !important;
+  }
+
+  /* 編集用ドラッグハンドルのラベル演出 */
+  .layout-edit-active .sortable-item::before {
+    content: "⋮⋮ ドラッグして移動";
+    position: absolute;
+    top: -12px;
+    left: 14px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #ffffff;
+    background: #3b82f6;
+    padding: 2px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    pointer-events: none;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   }
 
   /* 記事リストコンテナ */
@@ -1421,6 +1483,4 @@ html.theme-minimal {
     color: #1DB954;
   }
 
-.sortable-ghost { opacity: 0.4; }
-.sortable-item { cursor: grab; }
-.sortable-item:active { cursor: grabbing; }
+

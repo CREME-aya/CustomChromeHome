@@ -157,6 +157,8 @@ function initThemeSettings() {
 // ==========================================
 // initWidgetSortable — ウィジェットのドラッグ＆ドロップ並び替え
 // ==========================================
+let widgetSortableInstance = null;
+
 function initWidgetSortable() {
     const container = document.getElementById('dashboard-main');
     if (!container || typeof Sortable === 'undefined') return;
@@ -177,13 +179,14 @@ function initWidgetSortable() {
         container.appendChild(fragment);
     }
 
-    // Sortable初期化
-    Sortable.create(container, {
+    // Sortable初期化 (初期状態は無効化しておく)
+    widgetSortableInstance = Sortable.create(container, {
         animation: 150,
         handle: '.sortable-item', // ウィジェット全体で掴めるようにする
         filter: 'input, textarea, select, button, a, .todo-list, .feed-list, .ai-chat-content', // 入力・スクロール可能な領域は除外
         preventOnFilter: false,
         ghostClass: 'sortable-ghost',
+        disabled: true, // デフォルトで並び替え無効
         onEnd: function () {
             const newOrder = Array.from(container.children)
                 .filter(el => el.classList.contains('sortable-item'))
@@ -191,6 +194,21 @@ function initWidgetSortable() {
             localStorage.setItem(STORAGE_KEY_WIDGET_ORDER, JSON.stringify(newOrder));
         }
     });
+
+    // 編集モードトグルの監視
+    const editModeToggle = document.getElementById('toggle-edit-mode');
+    if (editModeToggle) {
+        const applyEditMode = () => {
+            const isEnabled = editModeToggle.checked;
+            widgetSortableInstance.option('disabled', !isEnabled);
+            container.classList.toggle('layout-edit-active', isEnabled);
+        };
+        
+        // 初期ロード状態の反映
+        applyEditMode();
+
+        editModeToggle.addEventListener('change', applyEditMode);
+    }
 }
 // ==========================================
 // initSidebar — サイドバー開閉ロジック
