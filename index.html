@@ -2,39 +2,54 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nexus Dash</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- サイドバー表示時のオーバーレイ -->
-    <div id="sidebar-overlay" class="sidebar-overlay hidden"></div>
-
-    <!-- 折りたたみサイドバー（設定メニュー） -->
+    <!-- 設定用のサイドバー -->
     <aside id="sidebar" class="sidebar hidden">
         <div class="sidebar-header">
             <h2>設定</h2>
-            <button id="close-sidebar-btn" class="icon-btn">&times;</button>
+            <button id="close-sidebar-btn" class="icon-btn close-sidebar-btn">&times;</button>
         </div>
         <div class="sidebar-content">
             <div class="setting-block">
-                <label for="preset-rss" class="sidebar-label">おすすめフィードから選択:</label>
-                <select id="preset-rss" class="url-input" style="cursor: pointer; padding: 10px;">
-                    <option value="">-- カスタム入力 --</option>
-                    <option value="https://news.google.com/rss/headlines/section/topic/TECHNOLOGY?hl=ja&gl=JP&ceid=JP:ja">Google ニュース (テクノロジー)</option>
-                    <option value="https://news.google.com/rss?hl=ja&gl=JP&ceid=JP:ja">Google ニュース (トップ総合)</option>
-                    <option value="https://qiita.com/popular-items/feed">Qiita (トレンド)</option>
-                    <option value="https://zenn.dev/feed">Zenn (トレンド)</option>
-                    <option value="https://b.hatena.ne.jp/hotentry/it.rss">はてなブックマーク (IT・テクノロジー)</option>
-                    <option value="https://rss.itmedia.co.jp/rss/2.0/news_bursts.xml">ITmedia NEWS</option>
-                    <option value="https://www.publickey1.jp/atom.xml">Publickey (エンタープライズIT)</option>
-                    <option value="https://gigazine.net/news/rss_2.0/">GIGAZINE</option>
-                </select>
-                <div class="or-text" style="margin: 4px 0;">- またはURLを直接入力 -</div>
-                <label for="feed-url-input" class="sidebar-label">RSS/Atom URL:</label>
-                <input type="url" id="feed-url-input" placeholder="https://..." class="url-input">
-                <button id="save-url-btn" class="save-btn">フィードを更新</button>
+                <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1rem; color: #e2e8f0;">表示ウィジェットの選択</h3>
+                <div class="toggle-row">
+                    <label for="toggle-clock" class="sidebar-label" style="margin-bottom: 0;">⏱ 時計</label>
+                    <input type="checkbox" id="toggle-clock" class="toggle-checkbox" checked>
+                </div>
+                <div class="toggle-row">
+                    <label for="toggle-weather" class="sidebar-label" style="margin-bottom: 0;">☀️ 天気</label>
+                    <input type="checkbox" id="toggle-weather" class="toggle-checkbox" checked>
+                </div>
+                <div class="toggle-row">
+                    <label for="toggle-todo" class="sidebar-label" style="margin-bottom: 0;">📝 ToDoリスト</label>
+                    <input type="checkbox" id="toggle-todo" class="toggle-checkbox" checked>
+                </div>
+                <div class="toggle-row">
+                    <label for="toggle-spotify" class="sidebar-label" style="margin-bottom: 0;">🎵 Spotify</label>
+                    <input type="checkbox" id="toggle-spotify" class="toggle-checkbox" checked>
+                </div>
+                <div class="toggle-row">
+                    <label for="toggle-links" class="sidebar-label" style="margin-bottom: 0;">🔗 クイックリンク</label>
+                    <input type="checkbox" id="toggle-links" class="toggle-checkbox" checked>
+                </div>
+                <div class="toggle-row">
+                    <label for="toggle-ai-openai" class="sidebar-label" style="margin-bottom: 0;">🤖 ChatGPT (gpt-4o)</label>
+                    <input type="checkbox" id="toggle-ai-openai" class="toggle-checkbox" checked>
+                </div>
+                <div class="toggle-row">
+                    <label for="toggle-ai-anthropic" class="sidebar-label" style="margin-bottom: 0;">🤖 Claude (3.5 Sonnet)</label>
+                    <input type="checkbox" id="toggle-ai-anthropic" class="toggle-checkbox" checked>
+                </div>
+                <div class="toggle-row">
+                    <label for="toggle-ai-gemini" class="sidebar-label" style="margin-bottom: 0;">🤖 Gemini (3.5 Flash)</label>
+                    <input type="checkbox" id="toggle-ai-gemini" class="toggle-checkbox" checked>
+                </div>
             </div>
-            
+
             <hr class="sidebar-divider">
 
             <div class="setting-block">
@@ -52,47 +67,18 @@
             <div class="setting-block">
                 <label class="sidebar-label">背景画像の設定:</label>
                 <button id="random-bg-btn" class="outline-btn" style="border-color:#60a5fa; color:#60a5fa;">ランダムな風景（Chrome風）</button>
-                <div class="or-text">- または カスタム画像 -</div>
-                <input type="url" id="bg-url-input" placeholder="画像URL (https://...)" class="url-input">
-                <input type="file" id="bg-file-input" accept="image/*" class="file-input">
-                <div class="btn-group">
-                    <button id="save-bg-btn" class="save-btn">背景を適用</button>
-                    <button id="clear-bg-btn" class="outline-btn">クリア</button>
-                </div>
+                
+                <label class="sidebar-label" style="margin-top: 15px;">ローカル画像を設定 (PCから読み込み):</label>
+                <input type="file" id="local-bg-input" class="file-input" accept="image/*">
+                <button id="clear-bg-btn" class="outline-btn" style="border-color:#ef4444; color:#ef4444; margin-top: 10px;">背景画像をクリア</button>
             </div>
-
+            
             <hr class="sidebar-divider">
 
             <div class="setting-block">
-                <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1rem; color: #e2e8f0;">ウィジェット表示設定</h3>
-                <label style="display:flex; align-items:center; gap:8px; margin-bottom: 8px; color: #cbd5e1; cursor:pointer;"><input type="checkbox" id="toggle-clock" checked> 時計</label>
-                <label style="display:flex; align-items:center; gap:8px; margin-bottom: 8px; color: #cbd5e1; cursor:pointer;"><input type="checkbox" id="toggle-weather" checked> 天気・災害情報</label>
-                <label style="display:flex; align-items:center; gap:8px; margin-bottom: 8px; color: #cbd5e1; cursor:pointer;"><input type="checkbox" id="toggle-todo" checked> ToDoリスト</label>
-                <label style="display:flex; align-items:center; gap:8px; margin-bottom: 8px; color: #cbd5e1; cursor:pointer;"><input type="checkbox" id="toggle-spotify" checked> Spotify</label>
-                <label style="display:flex; align-items:center; gap:8px; margin-bottom: 8px; color: #cbd5e1; cursor:pointer;"><input type="checkbox" id="toggle-links" checked> クイックリンク</label>
-                <label style="display:flex; align-items:center; gap:8px; margin-bottom: 8px; color: #cbd5e1; cursor:pointer;"><input type="checkbox" id="toggle-ai-openai" checked> AI: ChatGPT (OpenAI)</label>
-                <label style="display:flex; align-items:center; gap:8px; margin-bottom: 8px; color: #cbd5e1; cursor:pointer;"><input type="checkbox" id="toggle-ai-anthropic" checked> AI: Claude (Anthropic)</label>
-                <label style="display:flex; align-items:center; gap:8px; margin-bottom: 8px; color: #cbd5e1; cursor:pointer;"><input type="checkbox" id="toggle-ai-gemini" checked> AI: Gemini (Google)</label>
-            </div>
-
-            <hr class="sidebar-divider">
-
-            <div class="setting-block">
-                <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1rem; color: #e2e8f0;">Googleカレンダー ToDo化</h3>
-                <label for="calendar-ical-url-input" class="sidebar-label">Googleカレンダーの iCal URL:</label>
-                <input type="url" id="calendar-ical-url-input" class="url-input" placeholder="https://calendar.google.com/calendar/ical/.../basic.ics">
-                <label for="calendar-lookahead-select" class="sidebar-label">取り込み範囲:</label>
-                <select id="calendar-lookahead-select" class="url-input" style="cursor: pointer; padding: 10px;">
-                    <option value="3">今後3日</option>
-                    <option value="7" selected>今後7日</option>
-                    <option value="14">今後14日</option>
-                    <option value="30">今後30日</option>
-                </select>
-                <div class="btn-group">
-                    <button id="calendar-save-btn" class="save-btn">保存</button>
-                    <button id="calendar-sync-btn" class="outline-btn">予定をToDo化</button>
-                </div>
-                <div id="calendar-import-status" class="sidebar-status">未設定</div>
+                <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1rem; color: #e2e8f0;">RSS Feed URL (1行に1URL)</h3>
+                <textarea id="rss-url-input" class="rss-textarea" placeholder="https://news.yahoo.co.jp/rss/media/all/xml"></textarea>
+                <button id="save-rss-btn" class="save-btn" style="background: linear-gradient(135deg, #a855f7, #9333ea); margin-top: 10px;">フィードを保存＆更新</button>
             </div>
 
             <hr class="sidebar-divider">
@@ -131,9 +117,62 @@
                 <button id="menu-btn" class="icon-btn menu-btn">☰</button>
                 <h1>Nexus Dash</h1>
             </div>
+        </header>
 
-            <!-- Spotify ウィジェット（ヘッダー右上固定） -->
-            <div id="spotify-widget" class="spotify-widget spotify-horizontal">
+        <div id="dashboard-main" class="dashboard-main">
+            <!-- 時計ウィジェット -->
+            <div id="clock-widget" class="clock-widget sortable-item" data-id="widget-clock">
+                <div id="time-display" class="time">--:--</div>
+                <div id="date-display" class="date">--月--日</div>
+            </div>
+
+            <!-- 天気ウィジェット -->
+            <div id="weather-widget" class="weather-widget sortable-item" data-id="widget-weather">
+                <div class="weather-loading">天気情報を取得中...</div>
+            </div>
+
+            <!-- マルチAI 検索バー -->
+            <div id="ai-search-widget" class="ai-search-bar search-bar-style sortable-item" data-id="widget-ai-search">
+                <div class="ai-input-group">
+                    <span class="ai-icon"></span>
+                    <input type="text" id="ai-global-input" class="memo-input" placeholder="AIに質問する...">
+                    <button id="ai-global-send-btn" class="send-btn">➤</button>
+                </div>
+            </div>
+
+            <!-- AI回答パネル (OpenAI) -->
+            <div id="ai-panel-openai" class="ai-panel sortable-item" data-id="widget-ai-openai" data-widget-id="toggle-ai-openai">
+                <div class="ai-panel-header">ChatGPT <span class="ai-model-name">(gpt-4o)</span></div>
+                <div id="chatbox-openai" class="ai-chat-content">APIキーを設定してください</div>
+            </div>
+
+            <!-- AI回答パネル (Anthropic) -->
+            <div id="ai-panel-anthropic" class="ai-panel sortable-item" data-id="widget-ai-anthropic" data-widget-id="toggle-ai-anthropic">
+                <div class="ai-panel-header">Claude <span class="ai-model-name">(3.5 Sonnet)</span></div>
+                <div id="chatbox-anthropic" class="ai-chat-content">APIキーを設定してください</div>
+            </div>
+
+            <!-- AI回答パネル (Gemini) -->
+            <div id="ai-panel-gemini" class="ai-panel sortable-item" data-id="widget-ai-gemini" data-widget-id="toggle-ai-gemini">
+                <div class="ai-panel-header">Gemini <span class="ai-model-name">(3.5 Flash)</span></div>
+                <div id="chatbox-gemini" class="ai-chat-content">APIキーを設定してください</div>
+            </div>
+
+            <!-- ToDoウィジェット -->
+            <div id="todo-widget" class="todo-widget sortable-item" data-id="widget-todo">
+                <div class="widget-header todo-widget-header">
+                    <span>📝 ToDo List</span>
+                    <button id="calendar-import-btn" class="todo-calendar-btn" title="GoogleカレンダーからToDoを作成">予定を取込</button>
+                </div>
+                <div class="todo-input-container">
+                    <input type="text" id="todo-input" placeholder="タスクを追加 (Enter)">
+                    <button id="todo-add-btn">＋</button>
+                </div>
+                <ul id="todo-list" class="todo-list"></ul>
+            </div>
+
+            <!-- Spotify ウィジェット -->
+            <div id="spotify-widget" class="spotify-widget sortable-item" data-id="widget-spotify">
                 <div id="spotify-player-container" class="spotify-player-row">
                     <img id="spotify-art" class="spotify-art" src="" alt="">
                     <div class="spotify-track-info">
@@ -152,68 +191,15 @@
                     <button id="spotify-login-btn" class="outline-btn spotify-connect-btn">連携する</button>
                 </div>
             </div>
-        </header>
-
-        <div id="dashboard-main" class="dashboard-main">
-            <!-- 上部セクション（時計・天気） -->
-            <div class="top-section sortable-item" data-id="widget-top-section">
-                <div class="clock-widget">
-                    <div id="time-display" class="time">--:--</div>
-                    <div id="date-display" class="date">--月--日</div>
-                </div>
-                <div id="weather-widget" class="weather-widget">
-                    <div class="weather-loading">天気情報を取得中...</div>
-                </div>
-            </div>
-
-            <!-- マルチAI 検索バー -->
-            <div class="ai-search-bar search-bar-style sortable-item" data-id="widget-ai-search">
-                <div class="ai-input-group">
-                    <span class="ai-icon"></span>
-                    <input type="text" id="ai-global-input" class="memo-input" placeholder="AIに質問する...">
-                    <button id="ai-global-send-btn" class="send-btn">➤</button>
-                </div>
-            </div>
-
-            <!-- 各AIの回答パネル -->
-            <div id="ai-panels-container" class="ai-panels-grid sortable-item" data-id="widget-ai-panels">
-                <div id="ai-panel-openai" class="ai-panel" data-widget-id="toggle-ai-openai">
-                    <div class="ai-panel-header">ChatGPT <span class="ai-model-name">(gpt-4o)</span></div>
-                    <div id="chatbox-openai" class="ai-chat-content">APIキーを設定してください</div>
-                </div>
-                <div id="ai-panel-anthropic" class="ai-panel" data-widget-id="toggle-ai-anthropic">
-                    <div class="ai-panel-header">Claude <span class="ai-model-name">(3.5 Sonnet)</span></div>
-                    <div id="chatbox-anthropic" class="ai-chat-content">APIキーを設定してください</div>
-                </div>
-                <div id="ai-panel-gemini" class="ai-panel" data-widget-id="toggle-ai-gemini">
-                    <div class="ai-panel-header">Gemini <span class="ai-model-name">(3.5 Flash)</span></div>
-                    <div id="chatbox-gemini" class="ai-chat-content">APIキーを設定してください</div>
-                </div>
-            </div>
-
-            <!-- ユーティリティウィジェット -->
-            <div class="utility-widgets-container sortable-item" data-id="widget-utility">
-                <div id="todo-widget" class="todo-widget">
-                    <div class="widget-header todo-widget-header">
-                        <span>📝 ToDo List</span>
-                        <button id="calendar-import-btn" class="todo-calendar-btn" title="GoogleカレンダーからToDoを作成">予定を取込</button>
-                    </div>
-                    <div class="todo-input-container">
-                        <input type="text" id="todo-input" placeholder="タスクを追加 (Enter)">
-                        <button id="todo-add-btn">＋</button>
-                    </div>
-                    <ul id="todo-list" class="todo-list"></ul>
-                </div>
-            </div>
 
             <!-- クイックリンク -->
-            <div class="quick-links-widget sortable-item" data-id="widget-quick-links">
+            <div id="quick-links-widget" class="quick-links-widget sortable-item" data-id="widget-quick-links">
                 <div id="quick-links-container" class="quick-links-grid"></div>
                 <button id="add-link-btn" class="add-link-btn" title="ショートカットを追加">+</button>
             </div>
 
             <!-- Discover 記事リスト -->
-            <div class="discover-section sortable-item" data-id="widget-discover">
+            <div id="discover-widget" class="discover-section sortable-item" data-id="widget-discover">
                 <section class="feed-section">
                     <div class="section-header">
                         <h2 id="feed-title">Discover</h2>
