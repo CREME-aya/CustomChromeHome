@@ -13,6 +13,8 @@ const STORAGE_KEY_CALENDAR_LOOKAHEAD_DAYS = 'custom_google_calendar_lookahead_da
 const STORAGE_KEY_OPENAI_API_KEY = 'custom_openai_api_key';
 const STORAGE_KEY_ANTHROPIC_API_KEY = 'custom_anthropic_api_key';
 const STORAGE_KEY_GEMINI_API_KEY = 'custom_gemini_api_key';
+const STORAGE_KEY_THEME = 'custom_ui_theme';
+const STORAGE_KEY_WIDGET_ORDER = 'custom_widget_order';
 const WEATHER_STORAGE_KEYS = {
     lat: 'custom_weather_lat',
     lon: 'custom_weather_lon',
@@ -101,6 +103,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initWidgetToggles();
     initApiKeys();
     initMultiAI();
+    initThemeSettings();
+    initWidgetSortable();
     initWeatherSettings();
     initSpotify();
     initTodo();
@@ -116,6 +120,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (savedBg) {
         document.body.style.backgroundImage = `url(${savedBg})`;
     }
+
+    // 保存済みテーマの適用
+    const savedTheme = localStorage.getItem(STORAGE_KEY_THEME) || 'theme-glass-dark';
+    document.documentElement.className = savedTheme;
 });
 
 // ==========================================
@@ -129,6 +137,61 @@ function initInputFocusFix() {
     });
 }
 
+// ==========================================
+// initThemeSettings — UIテーマの切り替え
+// ==========================================
+function initThemeSettings() {
+    const themeSelect = document.getElementById('theme-select');
+    if (!themeSelect) return;
+    
+    const savedTheme = localStorage.getItem(STORAGE_KEY_THEME) || 'theme-glass-dark';
+    themeSelect.value = savedTheme;
+    
+    themeSelect.addEventListener('change', (e) => {
+        const theme = e.target.value;
+        document.documentElement.className = theme;
+        localStorage.setItem(STORAGE_KEY_THEME, theme);
+    });
+}
+
+// ==========================================
+// initWidgetSortable — ウィジェットのドラッグ＆ドロップ並び替え
+// ==========================================
+function initWidgetSortable() {
+    const container = document.getElementById('dashboard-main');
+    if (!container || typeof Sortable === 'undefined') return;
+
+    // 保存された順番の復元
+    const savedOrder = JSON.parse(localStorage.getItem(STORAGE_KEY_WIDGET_ORDER) || '[]');
+    if (savedOrder.length > 0) {
+        const fragment = document.createDocumentFragment();
+        savedOrder.forEach(id => {
+            const el = container.querySelector(`[data-id="${id}"]`);
+            if (el) fragment.appendChild(el);
+        });
+        container.querySelectorAll('.sortable-item').forEach(el => {
+            if (!savedOrder.includes(el.getAttribute('data-id'))) {
+                fragment.appendChild(el);
+            }
+        });
+        container.appendChild(fragment);
+    }
+
+    // Sortable初期化
+    Sortable.create(container, {
+        animation: 150,
+        handle: '.sortable-item', // ウィジェット全体で掴めるようにする
+        filter: 'input, textarea, select, button, a, .todo-list, .feed-list, .ai-chat-content', // 入力・スクロール可能な領域は除外
+        preventOnFilter: false,
+        ghostClass: 'sortable-ghost',
+        onEnd: function () {
+            const newOrder = Array.from(container.children)
+                .filter(el => el.classList.contains('sortable-item'))
+                .map(el => el.getAttribute('data-id'));
+            localStorage.setItem(STORAGE_KEY_WIDGET_ORDER, JSON.stringify(newOrder));
+        }
+    });
+}
 // ==========================================
 // initSidebar — サイドバー開閉ロジック
 // ==========================================

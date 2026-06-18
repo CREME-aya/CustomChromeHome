@@ -38,6 +38,18 @@
             <hr class="sidebar-divider">
 
             <div class="setting-block">
+                <label for="theme-select" class="sidebar-label">UIテーマの選択:</label>
+                <select id="theme-select" class="url-input" style="cursor: pointer; padding: 10px;">
+                    <option value="theme-glass-dark">Glass Dark (デフォルト)</option>
+                    <option value="theme-glass-light">Glass Light</option>
+                    <option value="theme-solid-dark">Solid Dark</option>
+                    <option value="theme-minimal">Minimal</option>
+                </select>
+            </div>
+
+            <hr class="sidebar-divider">
+
+            <div class="setting-block">
                 <label class="sidebar-label">背景画像の設定:</label>
                 <button id="random-bg-btn" class="outline-btn" style="border-color:#60a5fa; color:#60a5fa;">ランダムな風景（Chrome風）</button>
                 <div class="or-text">- または カスタム画像 -</div>
@@ -142,9 +154,9 @@
             </div>
         </header>
 
-        <div class="dashboard-main">
+        <div id="dashboard-main" class="dashboard-main">
             <!-- 上部セクション（時計・天気） -->
-            <div class="top-section">
+            <div class="top-section sortable-item" data-id="widget-top-section">
                 <div class="clock-widget">
                     <div id="time-display" class="time">--:--</div>
                     <div id="date-display" class="date">--月--日</div>
@@ -155,7 +167,7 @@
             </div>
 
             <!-- マルチAI 検索バー -->
-            <div class="ai-search-bar search-bar-style">
+            <div class="ai-search-bar search-bar-style sortable-item" data-id="widget-ai-search">
                 <div class="ai-input-group">
                     <span class="ai-icon"></span>
                     <input type="text" id="ai-global-input" class="memo-input" placeholder="AIに質問する...">
@@ -164,7 +176,7 @@
             </div>
 
             <!-- 各AIの回答パネル -->
-            <div id="ai-panels-container" class="ai-panels-grid">
+            <div id="ai-panels-container" class="ai-panels-grid sortable-item" data-id="widget-ai-panels">
                 <div id="ai-panel-openai" class="ai-panel" data-widget-id="toggle-ai-openai">
                     <div class="ai-panel-header">ChatGPT <span class="ai-model-name">(gpt-4o)</span></div>
                     <div id="chatbox-openai" class="ai-chat-content">APIキーを設定してください</div>
@@ -180,7 +192,7 @@
             </div>
 
             <!-- ユーティリティウィジェット -->
-            <div class="utility-widgets-container">
+            <div class="utility-widgets-container sortable-item" data-id="widget-utility">
                 <div id="todo-widget" class="todo-widget">
                     <div class="widget-header todo-widget-header">
                         <span>📝 ToDo List</span>
@@ -195,13 +207,13 @@
             </div>
 
             <!-- クイックリンク -->
-            <div class="quick-links-widget">
+            <div class="quick-links-widget sortable-item" data-id="widget-quick-links">
                 <div id="quick-links-container" class="quick-links-grid"></div>
                 <button id="add-link-btn" class="add-link-btn" title="ショートカットを追加">+</button>
             </div>
 
             <!-- Discover 記事リスト -->
-            <div class="discover-section">
+            <div class="discover-section sortable-item" data-id="widget-discover">
                 <section class="feed-section">
                     <div class="section-header">
                         <h2 id="feed-title">Discover</h2>
@@ -231,6 +243,7 @@
         </div>
     </div>
 
+    <script src="Sortable.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

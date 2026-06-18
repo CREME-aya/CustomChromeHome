@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Nexus Dash",
-  "version": "1.0",
+  "version": "1.0.1",
   "description": "時計、天気、ToDo、カレンダー、AI、Spotify、RSSをまとめた新しいタブ用ダッシュボードです",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu71Hy3kpK/fR4GzXYr5MS2aLGd1DsDVTJf61Ca/weEP35/F9Dd8oP6JsxFSysPVY0Qjo9YASA4t+4OCRR+5H5pHUky43qB6l8JTIko7CU2FG5uTracDDaVI3Sy5ioeqautU9ao5HBUs5WgxR9P+AbTtD0FGbaCb8GpS1bw5RS+HyrmHGgGeLsvCxbgkxS9bkmgJGueSNNdkuC1nAQEVRtXFlPMw5Ipckv065JZqRr2xG0H3R+MKmEIs1op704foMDqdYAbu73b4mi7XCuK3kNr8+Z1zVns1F8T5Cc3r+RlbwuhfDar2cqRnXfmt6Ww00slrl0+2IEPl58cF7wtNVAQIDAQAB",
   "chrome_url_overrides": {
