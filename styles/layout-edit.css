@@ -1,0 +1,100 @@
+/* ピン留めボタンのスタイル */
+.widget-pin-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  transition: all 0.2s ease;
+  z-index: 15;
+  display: none; /* デフォルト非表示（通常モード時は完全非表示） */
+}
+
+/* 編集モード有効時（.layout-edit-active）のみ固定ボタンを表示する */
+.layout-edit-active .widget-pin-btn {
+  display: block;
+}
+
+.widget-pin-btn.active {
+  background: #3b82f6;
+  color: #ffffff;
+  border-color: #3b82f6;
+}
+
+.widget-pin-btn:hover {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+}
+
+/* モバイル対応：画面幅が極端に狭い時はabsoluteを縦並びにするための簡易スタイル */
+@media (max-width: 768px) {
+  .dashboard-main > .sortable-item {
+    position: relative !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin-bottom: var(--widget-gap);
+  }
+
+  .widget-pin-btn {
+    display: none !important; /* モバイルでは固定表示を無効化 */
+  }
+}
+
+/* ==========================================
+   レイアウト編集モードがアクティブなときのデザイン演出
+   ========================================== */
+.layout-edit-active .sortable-item {
+  cursor: grab !important;
+  outline: 1.5px dashed #3b82f6 !important; /* 青い点線枠 */
+  outline-offset: 2px;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.25) !important;
+  position: absolute;
+  transform: scale(0.99);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  /* 編集モード時のみサイズ変更を可能にする */
+  resize: both;
+  overflow: auto !important; /* resizeに必須 */
+  min-width: 200px;
+  min-height: 80px;
+}
+
+.layout-edit-active .sortable-item:hover {
+  box-shadow: 0 8px 30px rgba(96, 165, 250, 0.4) !important;
+}
+
+.layout-edit-active .sortable-item:active {
+  cursor: grabbing !important;
+  transform: scale(0.98);
+}
+
+/* ドラッグ位置プレースホルダー（半透明のダミー表示 - 今回は絶対配置なのでダミーはほぼ使いませんが残します） */
+.layout-edit-active .sortable-ghost {
+  opacity: 0.3 !important;
+  border: 1.5px dashed #93c5fd !important;
+  background: rgba(59, 130, 246, 0.1) !important;
+}
+
+/* 編集用ドラッグハンドルのラベル演出 */
+.layout-edit-active .sortable-item::before {
+  content: "⋮⋮ ドラッグして移動";
+  position: absolute;
+  top: -12px;
+  left: 14px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #ffffff;
+  background: #3b82f6;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  pointer-events: none;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
