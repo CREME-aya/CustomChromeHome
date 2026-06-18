@@ -15,6 +15,8 @@ const STORAGE_KEY_ANTHROPIC_API_KEY = 'custom_anthropic_api_key';
 const STORAGE_KEY_GEMINI_API_KEY = 'custom_gemini_api_key';
 const STORAGE_KEY_THEME = 'custom_ui_theme';
 const STORAGE_KEY_WIDGET_ORDER = 'custom_widget_order';
+const STORAGE_KEY_WIDGET_STATES = 'custom_widget_states_v2';
+const DEFAULT_FEED_URLS = [DEFAULT_URL];
 const WEATHER_STORAGE_KEYS = {
     lat: 'custom_weather_lat',
     lon: 'custom_weather_lon',
@@ -84,10 +86,23 @@ const PRESET_BACKGROUNDS = [
 // 状態変数
 // ==========================================
 let currentArticles = [];
-let favoriteArticles = JSON.parse(localStorage.getItem(STORAGE_KEY_FAVS) || '[]');
+let favoriteArticles = readJsonFromStorage(STORAGE_KEY_FAVS, []);
 let currentFilter = 'all'; // 'all' or 'favorites'
 let currentSearchQuery = '';
 let todos = [];
+
+function readJsonFromStorage(key, fallback) {
+    try {
+        const rawValue = localStorage.getItem(key);
+        return rawValue ? JSON.parse(rawValue) : fallback;
+    } catch (e) {
+        return fallback;
+    }
+}
+
+function writeJsonToStorage(key, value) {
+    localStorage.setItem(key, JSON.stringify(value));
+}
 
 // ==========================================
 // DOMContentLoaded
@@ -111,8 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initCalendarTodoImport();
 
     // 初期データ読み込み
-    const savedUrl = localStorage.getItem(STORAGE_KEY_URL) || DEFAULT_URL;
-    loadFeed(savedUrl);
+    loadFeed(getStoredFeedUrls());
     loadWeather();
 
     // 保存済み背景の適用
@@ -155,60 +169,215 @@ function initThemeSettings() {
 }
 
 // ==========================================
-// initWidgetSortable — ウィジェットのドラッグ＆ドロップ並び替え
 // ==========================================
-let widgetSortableInstance = null;
+// initWidgetSortable — ウィジェットの自由配置（アブソリュート・ドラッグ）とピン留め
+// ==========================================
+let activeDragElement = null;
+let dragStartX = 0;
+let dragStartY = 0;
+let elementStartX = 0;
+let elementStartY = 0;
 
 function initWidgetSortable() {
     const container = document.getElementById('dashboard-main');
-    if (!container || typeof Sortable === 'undefined') return;
+    if (!container) return;
 
-    // 保存された順番の復元
-    const savedOrder = JSON.parse(localStorage.getItem(STORAGE_KEY_WIDGET_ORDER) || '[]');
-    if (savedOrder.length > 0) {
-        const fragment = document.createDocumentFragment();
-        savedOrder.forEach(id => {
-            const el = container.querySelector(`[data-id="${id}"]`);
-            if (el) fragment.appendChild(el);
-        });
-        container.querySelectorAll('.sortable-item').forEach(el => {
-            if (!savedOrder.includes(el.getAttribute('data-id'))) {
-                fragment.appendChild(el);
-            }
-        });
-        container.appendChild(fragment);
-    }
+    // 1. 各ウィジェットの初期化（ドラッグ有効化、ピン留めボタン追加、状態復元）
+    restoreWidgetStates(container);
 
-    // Sortable初期化 (初期状態は無効化しておく)
-    widgetSortableInstance = Sortable.create(container, {
-        animation: 150,
-        handle: '.sortable-item', // ウィジェット全体で掴めるようにする
-        filter: 'input, textarea, select, button, a, .todo-list, .feed-list, .ai-chat-content', // 入力・スクロール可能な領域は除外
-        preventOnFilter: false,
-        ghostClass: 'sortable-ghost',
-        disabled: true, // デフォルトで並び替え無効
-        onEnd: function () {
-            const newOrder = Array.from(container.children)
-                .filter(el => el.classList.contains('sortable-item'))
-                .map(el => el.getAttribute('data-id'));
-            localStorage.setItem(STORAGE_KEY_WIDGET_ORDER, JSON.stringify(newOrder));
-        }
-    });
-
-    // 編集モードトグルの監視
+    // 2. 編集モードトグルの監視
     const editModeToggle = document.getElementById('toggle-edit-mode');
     if (editModeToggle) {
         const applyEditMode = () => {
             const isEnabled = editModeToggle.checked;
-            widgetSortableInstance.option('disabled', !isEnabled);
             container.classList.toggle('layout-edit-active', isEnabled);
         };
-        
-        // 初期ロード状態の反映
         applyEditMode();
-
         editModeToggle.addEventListener('change', applyEditMode);
     }
+
+    // 3. ウィンドウリサイズ時の境界制御
+    window.addEventListener('resize', handleWindowResize);
+}
+
+// 状態（座標、ピン留め）の保存
+function saveWidgetState(el) {
+    const id = el.getAttribute('data-id');
+    const states = readJsonFromStorage(STORAGE_KEY_WIDGET_STATES, {});
+    
+    states[id] = {
+        left: el.style.left,
+        top: el.style.top,
+        pinned: el.classList.contains('widget-pinned')
+    };
+    
+    writeJsonToStorage(STORAGE_KEY_WIDGET_STATES, states);
+}
+
+// 状態の復元および自動配置
+function restoreWidgetStates(container) {
+    const states = readJsonFromStorage(STORAGE_KEY_WIDGET_STATES, {});
+    const widgets = Array.from(container.querySelectorAll('.sortable-item'));
+    
+    // フリーレイアウト用の自動配置計算用
+    const containerWidth = container.clientWidth || 1200;
+    const colWidth = 360; // カラム幅＋ギャップ
+    const cols = Math.max(1, Math.floor(containerWidth / colWidth));
+    const colHeights = new Array(cols).fill(0);
+
+    widgets.forEach((el, index) => {
+        const id = el.getAttribute('data-id');
+        const state = states[id];
+        
+        if (state && (state.left || state.top)) {
+            // 保存された位置・ピン留めを復元
+            el.style.position = state.pinned ? 'fixed' : 'absolute';
+            el.style.left = state.left;
+            el.style.top = state.top;
+            if (state.pinned) {
+                el.classList.add('widget-pinned');
+            }
+        } else {
+            // 保存座標がない場合は、重ならないようにグリッド上に自動配置
+            const minCol = colHeights.indexOf(Math.min(...colHeights));
+            const left = minCol * colWidth;
+            const top = colHeights[minCol];
+            
+            el.style.position = 'absolute';
+            el.style.left = `${left}px`;
+            el.style.top = `${top}px`;
+            
+            // 次の自動配置用に現在の高さを更新 (デフォルト高さを 200px 程度にする)
+            const elHeight = el.offsetHeight || 200;
+            colHeights[minCol] += elHeight + 24; // 24pxはギャップ
+        }
+
+        // ピン留めボタンの追加
+        addPinButton(el);
+        // ドラッグイベントの登録
+        makeElementDraggable(el, container);
+    });
+}
+
+// ピン留めボタンの自動生成・制御
+function addPinButton(el) {
+    if (el.querySelector('.widget-pin-btn')) return;
+
+    const btn = document.createElement('button');
+    btn.className = 'widget-pin-btn';
+    btn.innerHTML = el.classList.contains('widget-pinned') ? '📌 固定中' : '📌 固定する';
+    if (el.classList.contains('widget-pinned')) {
+        btn.classList.add('active');
+    }
+
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isPinned = el.classList.toggle('widget-pinned');
+        
+        if (isPinned) {
+            btn.innerHTML = '📌 固定中';
+            btn.classList.add('active');
+            
+            // absoluteからfixedへ切り替え (ウィンドウ相対)
+            const rect = el.getBoundingClientRect();
+            el.style.position = 'fixed';
+            el.style.left = `${rect.left}px`;
+            el.style.top = `${rect.top}px`;
+        } else {
+            btn.innerHTML = '📌 固定する';
+            btn.classList.remove('active');
+            
+            // fixedからabsoluteへ切り替え (コンテナ相対)
+            const rect = el.getBoundingClientRect();
+            const containerRect = document.getElementById('dashboard-main').getBoundingClientRect();
+            el.style.position = 'absolute';
+            el.style.left = `${rect.left - containerRect.left}px`;
+            el.style.top = `${rect.top - containerRect.top}px`;
+        }
+        
+        saveWidgetState(el);
+    });
+
+    el.appendChild(btn);
+}
+
+// ウィジェットをドラッグ可能にする
+function makeElementDraggable(el, container) {
+    // 掴みやすくするため、ヘッダー領域またはウィジェット全体をドラッグ対象にする
+    const handler = el.querySelector('.widget-header') || el.querySelector('.clock-widget') || el;
+    
+    handler.addEventListener('mousedown', (e) => {
+        const editModeToggle = document.getElementById('toggle-edit-mode');
+        if (!editModeToggle || !editModeToggle.checked) return;
+        
+        // 入力フォームやクリック可能な要素へのクリック時はドラッグをスキップ
+        if (['INPUT', 'TEXTAREA', 'BUTTON', 'SELECT', 'A', 'SPAN'].includes(e.target.tagName)) {
+            if (e.target.classList.contains('widget-pin-btn')) return; // ピン留め自体は許可
+            return;
+        }
+
+        activeDragElement = el;
+        e.preventDefault();
+
+        const rect = el.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        
+        if (el.classList.contains('widget-pinned')) {
+            elementStartX = rect.left;
+            elementStartY = rect.top;
+        } else {
+            elementStartX = rect.left - containerRect.left;
+            elementStartY = rect.top - containerRect.top;
+        }
+
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    });
+}
+
+function onMouseMove(e) {
+    if (!activeDragElement) return;
+
+    const dx = e.clientX - dragStartX;
+    const dy = e.clientY - dragStartY;
+
+    const newX = elementStartX + dx;
+    const newY = elementStartY + dy;
+
+    activeDragElement.style.left = `${newX}px`;
+    activeDragElement.style.top = `${newY}px`;
+}
+
+function onMouseUp() {
+    if (!activeDragElement) return;
+
+    saveWidgetState(activeDragElement);
+
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+    activeDragElement = null;
+}
+
+// ウィンドウリサイズ時の境界制御
+function handleWindowResize() {
+    const container = document.getElementById('dashboard-main');
+    if (!container) return;
+    const containerWidth = container.clientWidth;
+
+    container.querySelectorAll('.sortable-item').forEach(el => {
+        if (el.classList.contains('widget-pinned')) return;
+        
+        const left = parseFloat(el.style.left) || 0;
+        const width = el.clientWidth;
+        
+        if (left + width > containerWidth) {
+            el.style.left = `${Math.max(0, containerWidth - width)}px`;
+            saveWidgetState(el);
+        }
+    });
 }
 // ==========================================
 // initSidebar — サイドバー開閉ロジック
@@ -218,15 +387,16 @@ function initSidebar() {
     const closeSidebarBtn = document.getElementById('close-sidebar-btn');
     const sidebar = document.getElementById('sidebar');
     const sidebarOverlay = document.getElementById('sidebar-overlay');
+    if (!menuBtn || !closeSidebarBtn || !sidebar) return;
 
     function toggleSidebar() {
         sidebar.classList.toggle('hidden');
-        sidebarOverlay.classList.toggle('hidden');
+        sidebarOverlay?.classList.toggle('hidden');
     }
 
     menuBtn.addEventListener('click', toggleSidebar);
     closeSidebarBtn.addEventListener('click', toggleSidebar);
-    sidebarOverlay.addEventListener('click', toggleSidebar);
+    sidebarOverlay?.addEventListener('click', toggleSidebar);
 
     // 他のinit関数からサイドバーを閉じるために公開
     window._toggleSidebar = toggleSidebar;
@@ -236,12 +406,12 @@ function initSidebar() {
 // initFeed — フィードURL読み込みと保存ボタン
 // ==========================================
 function initFeed() {
-    const urlInput = document.getElementById('feed-url-input');
+    const urlInput = document.getElementById('rss-url-input') || document.getElementById('feed-url-input');
     const presetRss = document.getElementById('preset-rss');
-    const saveBtn = document.getElementById('save-url-btn');
+    const saveBtn = document.getElementById('save-rss-btn') || document.getElementById('save-url-btn');
 
     // プリセットRSS選択時にURLを反映
-    if (presetRss) {
+    if (presetRss && urlInput) {
         presetRss.addEventListener('change', () => {
             if (presetRss.value !== '') {
                 urlInput.value = presetRss.value;
@@ -250,24 +420,27 @@ function initFeed() {
     }
 
     // 初期URL設定
-    const savedUrl = localStorage.getItem(STORAGE_KEY_URL) || DEFAULT_URL;
-    urlInput.value = savedUrl;
+    if (urlInput) {
+        urlInput.value = getStoredFeedUrls().join('\n');
+    }
 
     // フィードURL保存
-    saveBtn.addEventListener('click', () => {
-        const url = urlInput.value.trim();
-        if (url) {
-            localStorage.setItem(STORAGE_KEY_URL, url);
-            loadFeed(url);
-            window._toggleSidebar();
-        }
-    });
+    if (saveBtn && urlInput) {
+        saveBtn.addEventListener('click', () => {
+            const feedUrls = parseFeedUrls(urlInput.value);
+            if (feedUrls.length === 0) return;
+
+            saveFeedUrls(feedUrls);
+            loadFeed(feedUrls);
+            window._toggleSidebar?.();
+        });
+    }
 
     // モーダル閉じる
     const closeModalBtn = document.getElementById('close-modal-btn');
     const modal = document.getElementById('article-modal');
-    closeModalBtn.addEventListener('click', closeModal);
-    modal.addEventListener('click', (e) => {
+    closeModalBtn?.addEventListener('click', closeModal);
+    modal?.addEventListener('click', (e) => {
         if (e.target === modal) closeModal(); // 背景クリックで閉じる
     });
 }
@@ -277,7 +450,7 @@ function initFeed() {
 // ==========================================
 function initBackground() {
     const bgUrlInput = document.getElementById('bg-url-input');
-    const bgFileInput = document.getElementById('bg-file-input');
+    const bgFileInput = document.getElementById('local-bg-input') || document.getElementById('bg-file-input');
     const saveBgBtn = document.getElementById('save-bg-btn');
     const clearBgBtn = document.getElementById('clear-bg-btn');
     const randomBgBtn = document.getElementById('random-bg-btn');
@@ -294,16 +467,14 @@ function initBackground() {
     }
 
     // ランダム背景（Chrome風）
-    randomBgBtn.addEventListener('click', () => {
+    randomBgBtn?.addEventListener('click', () => {
         const randomUrl = PRESET_BACKGROUNDS[Math.floor(Math.random() * PRESET_BACKGROUNDS.length)];
         applyBackground(randomUrl);
     });
 
-    // 背景の適用
-    saveBgBtn.addEventListener('click', () => {
-        const file = bgFileInput.files[0];
-        const bgUrl = bgUrlInput.value.trim();
-
+    function applySelectedBackground() {
+        const file = bgFileInput?.files?.[0];
+        const bgUrl = bgUrlInput?.value?.trim();
         if (file) {
             // ファイルが選択されている場合はFile APIでBase64として読み込む
             const reader = new FileReader();
@@ -316,14 +487,18 @@ function initBackground() {
             // URLが入力されている場合
             applyBackground(bgUrl);
         }
-    });
+    }
+
+    // 背景の適用
+    saveBgBtn?.addEventListener('click', applySelectedBackground);
+    bgFileInput?.addEventListener('change', applySelectedBackground);
 
     // 背景のクリア
-    clearBgBtn.addEventListener('click', () => {
+    clearBgBtn?.addEventListener('click', () => {
         localStorage.removeItem(STORAGE_KEY_BG);
         document.body.style.backgroundImage = '';
-        bgUrlInput.value = '';
-        bgFileInput.value = '';
+        if (bgUrlInput) bgUrlInput.value = '';
+        if (bgFileInput) bgFileInput.value = '';
     });
 }
 
@@ -390,10 +565,10 @@ function initQuickLinks() {
         { title: 'GitHub', url: 'https://github.com' }
     ];
 
-    let quickLinks = JSON.parse(localStorage.getItem(STORAGE_KEY_LINKS));
+    let quickLinks = readJsonFromStorage(STORAGE_KEY_LINKS, null);
     if (!quickLinks) {
         quickLinks = defaultLinks;
-        localStorage.setItem(STORAGE_KEY_LINKS, JSON.stringify(quickLinks));
+        writeJsonToStorage(STORAGE_KEY_LINKS, quickLinks);
     }
 
     function renderQuickLinks() {
@@ -421,7 +596,7 @@ function initQuickLinks() {
                 e.stopPropagation();
                 if (confirm(`ショートカット「${link.title}」を削除しますか？`)) {
                     quickLinks.splice(index, 1);
-                    localStorage.setItem(STORAGE_KEY_LINKS, JSON.stringify(quickLinks));
+                    writeJsonToStorage(STORAGE_KEY_LINKS, quickLinks);
                     renderQuickLinks();
                 }
             });
@@ -440,7 +615,7 @@ function initQuickLinks() {
             if (!title) title = new URL(url).hostname.replace('www.', '');
 
             quickLinks.push({ title, url });
-            localStorage.setItem(STORAGE_KEY_LINKS, JSON.stringify(quickLinks));
+            writeJsonToStorage(STORAGE_KEY_LINKS, quickLinks);
             renderQuickLinks();
         } catch (e) {
             alert('正しいURLを入力してください (必ず https://... から始めてください)。');
@@ -539,7 +714,7 @@ function initApiKeys() {
             });
             updateBoxStatus();
             alert('APIキーを保存しました！');
-            window._toggleSidebar();
+            window._toggleSidebar?.();
         });
     }
 
@@ -708,51 +883,84 @@ function initMultiAI() {
 // ==========================================
 // フィードの取得と解析
 // ==========================================
-async function loadFeed(url) {
+function parseFeedUrls(value) {
+    return value
+        .split('\n')
+        .map(url => url.trim())
+        .filter(Boolean);
+}
+
+function getStoredFeedUrls() {
+    const savedValue = localStorage.getItem(STORAGE_KEY_URL) || '';
+    const feedUrls = parseFeedUrls(savedValue);
+    return feedUrls.length > 0 ? feedUrls : DEFAULT_FEED_URLS;
+}
+
+function saveFeedUrls(feedUrls) {
+    localStorage.setItem(STORAGE_KEY_URL, feedUrls.join('\n'));
+}
+
+async function loadFeed(feedUrlInput) {
     const container = document.getElementById('feed-container');
     container.innerHTML = '<div class="loading">記事を読み込み中...</div>';
+    const feedUrls = Array.isArray(feedUrlInput) ? feedUrlInput : parseFeedUrls(String(feedUrlInput || ''));
 
     try {
-        // RSS/AtomフィードをJSONに変換して返してくれる安定した公式API (rss2json) を使用
-        const apiUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(url);
+        const results = await Promise.allSettled(feedUrls.map(fetchFeedArticles));
+        currentArticles = results
+            .filter(result => result.status === 'fulfilled')
+            .flatMap(result => result.value);
 
-        const res = await fetch(apiUrl);
-        if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
-
-        const data = await res.json();
-
-        if (data.status !== 'ok') {
-            throw new Error(data.message || 'フィードの解析に失敗しました。URLが正しいか確認してください。');
+        if (currentArticles.length === 0) {
+            const firstError = results.find(result => result.status === 'rejected')?.reason;
+            throw firstError || new Error('フィードURLが設定されていません。');
         }
 
-        currentArticles = []; // リセット
-        // RSSデータの解析と成形
-        currentArticles = data.items.map(item => {
-            const dateStr = item.pubDate ? new Date(item.pubDate.replace(/-/g, '/')).toLocaleDateString('ja-JP') : '';
-
-            // サムネイル画像の取得（thumbnail, enclosure, または description内のimgタグから）
-            let thumb = item.thumbnail || (item.enclosure && item.enclosure.link) || '';
-            if (!thumb && item.description) {
-                const match = item.description.match(/<img[^>]+src="([^">]+)"/);
-                if (match) thumb = match[1];
-            }
-
-            return {
-                id: item.link,
-                title: item.title || 'No Title',
-                url: item.link || '#',
-                dateStr: dateStr,
-                summaryHTML: item.description || item.content || '<p>プレビュー内容がありません。</p>',
-                thumbnail: thumb
-            };
-        });
-
+        results
+            .filter(result => result.status === 'rejected')
+            .forEach(result => console.warn('Feed load failed:', result.reason));
         renderArticles();
 
     } catch(err) {
         console.error(err);
         container.innerHTML = `<div class="error-msg">フィードの取得に失敗しました。<br><small>${err.message}</small></div>`;
     }
+}
+
+async function fetchFeedArticles(url) {
+    // RSS/AtomフィードをJSONに変換して返す API を使用する。
+    const apiUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(url);
+    const res = await fetch(apiUrl);
+    if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+
+    const data = await res.json();
+    if (data.status !== 'ok') {
+        throw new Error(data.message || 'フィードの解析に失敗しました。URLが正しいか確認してください。');
+    }
+
+    return data.items.map(item => normalizeFeedItem(item, url));
+}
+
+function normalizeFeedItem(item, sourceFeedUrl) {
+    const dateStr = item.pubDate ? new Date(item.pubDate.replace(/-/g, '/')).toLocaleDateString('ja-JP') : '';
+    const description = item.description || item.content || '';
+    let thumbnail = item.thumbnail || (item.enclosure && item.enclosure.link) || '';
+    if (!thumbnail && description) {
+        const match = description.match(/<img[^>]+src="([^">]+)"/);
+        if (match) thumbnail = match[1];
+    }
+
+    return {
+        id: item.link || `${sourceFeedUrl}:${item.title || 'No Title'}:${item.pubDate || ''}`,
+        title: item.title || 'No Title',
+        url: item.link || '#',
+        link: item.link || '#',
+        dateStr,
+        description,
+        summaryHTML: description || '<p>プレビュー内容がありません。</p>',
+        thumbnail,
+        sourceFeedUrl
+    };
 }
 
 // ==========================================
@@ -844,7 +1052,7 @@ function toggleFavorite(article) {
     } else {
         favoriteArticles.splice(index, 1);
     }
-    localStorage.setItem(STORAGE_KEY_FAVS, JSON.stringify(favoriteArticles));
+    writeJsonToStorage(STORAGE_KEY_FAVS, favoriteArticles);
 }
 
 // ==========================================
@@ -1491,22 +1699,25 @@ function initCalendarTodoImport() {
     const widgetImportButton = document.getElementById('calendar-import-btn');
     const status = document.getElementById('calendar-import-status');
 
-    if (!urlInput || !lookaheadSelect || !saveButton || !syncButton) return;
-
-    urlInput.value = localStorage.getItem(STORAGE_KEY_CALENDAR_ICAL_URL) || '';
-    lookaheadSelect.value = localStorage.getItem(STORAGE_KEY_CALENDAR_LOOKAHEAD_DAYS) || String(DEFAULT_CALENDAR_LOOKAHEAD_DAYS);
+    if (urlInput) {
+        urlInput.value = localStorage.getItem(STORAGE_KEY_CALENDAR_ICAL_URL) || '';
+    }
+    if (lookaheadSelect) {
+        lookaheadSelect.value = localStorage.getItem(STORAGE_KEY_CALENDAR_LOOKAHEAD_DAYS) || String(DEFAULT_CALENDAR_LOOKAHEAD_DAYS);
+    }
     updateCalendarImportStatus(status);
 
-    saveButton.addEventListener('click', () => {
-        saveCalendarImportSettings(urlInput.value, lookaheadSelect.value);
+    saveButton?.addEventListener('click', () => {
+        saveCalendarImportSettings(
+            urlInput?.value || '',
+            lookaheadSelect?.value || String(DEFAULT_CALENDAR_LOOKAHEAD_DAYS)
+        );
         updateCalendarImportStatus(status, '保存しました');
     });
 
-    syncButton.addEventListener('click', () => importCalendarEventsToTodos(status));
+    syncButton?.addEventListener('click', () => importCalendarEventsToTodos(status));
 
-    if (widgetImportButton) {
-        widgetImportButton.addEventListener('click', () => importCalendarEventsToTodos(status));
-    }
+    widgetImportButton?.addEventListener('click', () => importCalendarEventsToTodos(status));
 }
 
 function saveCalendarImportSettings(icalUrl, lookaheadDays) {
@@ -1530,6 +1741,7 @@ async function importCalendarEventsToTodos(status) {
     const icalUrl = getCalendarIcalUrlFromSettings();
     if (!icalUrl) {
         updateCalendarImportStatus(status, 'iCal URLを設定してください');
+        if (!status) alert('Googleカレンダーの iCal URLを設定してください。');
         return;
     }
 
@@ -1753,11 +1965,7 @@ function unescapeIcsText(text) {
 }
 
 function readTodos() {
-    try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY_TODOS) || '[]');
-    } catch (e) {
-        return [];
-    }
+    return readJsonFromStorage(STORAGE_KEY_TODOS, []);
 }
 
 function renderTodos() {
@@ -1822,5 +2030,5 @@ function addTodo(text) {
 }
 
 function saveTodos() {
-    localStorage.setItem(STORAGE_KEY_TODOS, JSON.stringify(todos));
+    writeJsonToStorage(STORAGE_KEY_TODOS, todos);
 }
