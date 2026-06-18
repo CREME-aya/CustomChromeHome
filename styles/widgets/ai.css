@@ -1,0 +1,240 @@
+/* ========== マルチAI ウィジェット ========== */
+.ai-search-bar.search-bar-style {
+  width: 100%;
+  background: var(--panel-bg);
+  backdrop-filter: var(--panel-blur);
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  padding: 10px 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  margin-bottom: var(--widget-gap);
+  transition: var(--transition-default);
+}
+
+.ai-search-bar.search-bar-style:focus-within {
+  background: var(--input-bg);
+  border-color: rgba(16, 185, 129, 0.5);
+  box-shadow: 0 8px 30px rgba(16, 185, 129, 0.2);
+}
+
+.ai-search-bar .ai-input-group {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background: transparent;
+}
+
+.ai-search-bar .ai-icon {
+  font-size: 1.2rem;
+  margin-right: 12px;
+  opacity: 0.8;
+}
+
+.ai-search-bar input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #f8fafc;
+  font-size: 1.1rem;
+  outline: none;
+  padding: 8px 0;
+}
+
+.ai-search-bar .send-btn {
+  background: transparent;
+  border: none;
+  color: #10b981;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.ai-search-bar .send-btn:hover {
+  transform: scale(1.1);
+}
+
+/* 3連AIパネル */
+.ai-panels-grid {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  margin-top: 0;
+}
+
+.ai-panel {
+  flex: 1;
+  background: var(--panel-bg);
+  backdrop-filter: var(--panel-blur);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--border-radius-input);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
+  max-height: 350px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+  transition: var(--transition-default);
+}
+
+.ai-panel-header {
+  font-size: 1rem;
+  color: #f8fafc;
+  font-weight: 600;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 8px;
+}
+
+.ai-model-name {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: normal;
+}
+
+.ai-chat-content {
+  flex: 1;
+  overflow-y: auto;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-right: 4px;
+}
+
+/* 表示オフ用クラス */
+.hidden-widget {
+  display: none !important;
+}
+
+/* メモ（タスク）ウィジェット */
+.memo-widget {
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: var(--panel-blur);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--border-radius-widget);
+  padding: 24px;
+  max-width: 400px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
+
+.memo-widget h3 {
+  margin: 0 0 16px 0;
+  font-size: 1.2rem;
+  color: #e2e8f0;
+  font-weight: 600;
+}
+
+.memo-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.memo-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  margin-bottom: 8px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.memo-list li:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.memo-text {
+  flex: 1;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.memo-text.completed {
+  text-decoration: line-through;
+  color: #64748b;
+}
+
+.delete-memo-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 1.2rem;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.memo-list li:hover .delete-memo-btn {
+  opacity: 1;
+}
+
+.memo-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.2);
+  color: #fff;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+.memo-input:focus {
+  border-color: #a78bfa;
+}
+
+.chat-msg {
+  padding: 10px 14px;
+  border-radius: var(--border-radius-input);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  max-width: 85%;
+  word-wrap: break-word;
+}
+
+.chat-msg.ai-msg {
+  background: rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  align-self: flex-start;
+  border-bottom-left-radius: 2px;
+}
+
+.chat-msg.user-msg {
+  background: #3b82f6;
+  color: #fff;
+  align-self: flex-end;
+  border-bottom-right-radius: 2px;
+}
+
+.send-btn {
+  background: #3b82f6;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  width: 44px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.send-btn:hover {
+  background: #2563eb;
+}
+
+.send-btn:disabled {
+  background: #64748b;
+  cursor: not-allowed;
+}

@@ -1,0 +1,113 @@
+/* クイックリンク（ショートカット）ウィジェット */
+.quick-links-widget {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: var(--panel-bg);
+  backdrop-filter: var(--panel-blur);
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  padding: 12px 24px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+  max-width: 600px;
+}
+
+.quick-links-grid {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  flex: 1;
+  padding-bottom: 4px;
+}
+
+/* Webkit系（Chrome等）のスクロールバーを非表示にする（見た目重視） */
+.quick-links-grid::-webkit-scrollbar {
+  height: 4px;
+}
+
+.quick-links-grid::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.quick-link-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: var(--border-radius-input);
+  background: rgba(255, 255, 255, 0.05);
+  text-decoration: none;
+  color: #e2e8f0;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  position: relative;
+  border: 1px solid transparent;
+}
+
+.quick-link-item:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.quick-link-icon {
+  width: 24px;
+  height: 24px;
+  margin-bottom: 4px;
+  border-radius: 4px;
+}
+
+.quick-link-title {
+  font-size: 0.7rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 50px;
+}
+
+.delete-link-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 12px;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.quick-link-item:hover .delete-link-btn {
+  display: flex;
+}
+
+.add-link-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+  color: #fff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.add-link-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #fff;
+}
