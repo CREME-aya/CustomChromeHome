@@ -19,7 +19,7 @@ function initBackground() {
             localStorage.setItem(STORAGE_KEY_BG, imgUrl);
             document.body.style.backgroundImage = `url(${imgUrl})`;
         } catch (e) {
-            alert('画像の保存に失敗しました。ファイルサイズが大きすぎる可能性があります（推奨: 数百KB以下）。');
+            window.showNotification('画像の保存に失敗しました。ファイルサイズが大きすぎる可能性があります。', 'error');
         }
     }
 

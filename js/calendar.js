@@ -54,7 +54,7 @@ async function importCalendarEventsToTodos(status) {
     const icalUrl = getCalendarIcalUrlFromSettings();
     if (!icalUrl) {
         updateCalendarImportStatus(status, 'iCal URLを設定してください');
-        if (!status) alert('Googleカレンダーの iCal URLを設定してください。');
+        if (!status) window.showNotification('Googleカレンダーの iCal URLを設定してください。', 'error');
         return;
     }
 
@@ -68,6 +68,7 @@ async function importCalendarEventsToTodos(status) {
     } catch (e) {
         console.error(e);
         updateCalendarImportStatus(status, '予定の取得に失敗しました');
+        window.showNotification('予定の取得に失敗しました。iCal URLを確認してください。', 'error');
     }
 }
 

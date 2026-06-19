@@ -43,7 +43,7 @@ function initApiKeys() {
                 }
             });
             updateBoxStatus();
-            alert('APIキーを保存しました！');
+            window.showNotification('APIキーを保存しました', 'success');
             window._toggleSidebar?.();
         });
     }
@@ -175,7 +175,7 @@ function initMultiAI() {
         const isGeminiVisible = document.getElementById('toggle-ai-gemini')?.checked;
 
         if (!isOpenAIVisible && !isAnthropicVisible && !isGeminiVisible) {
-            alert('表示されているAIモデルがありません。設定から表示をONにしてください。');
+            window.showNotification('表示されているAIモデルがありません。設定から表示をONにしてください。', 'error');
             return;
         }
 

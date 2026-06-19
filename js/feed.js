@@ -236,7 +236,7 @@ function renderArticles() {
             e.stopPropagation();
             const apiKey = localStorage.getItem('custom_gemini_api_key');
             if (!apiKey) {
-                alert('左上のメニュー(☰)から Gemini API Key を設定してください。');
+                window.showNotification('左上のメニューから Gemini API Key を設定してください。', 'error');
                 return;
             }
             const prompt = `以下の記事の内容を推測し、その魅力や要点を日本語で3行以内で簡潔に要約してください。\nタイトル: ${article.title}\nリンク: ${article.link}\n概要: ${article.description || 'なし'}`;

@@ -63,7 +63,7 @@ function initQuickLinks() {
             writeJsonToStorage(STORAGE_KEY_LINKS, quickLinks);
             renderQuickLinks();
         } catch (e) {
-            alert('正しいURLを入力してください (必ず https://... から始めてください)。');
+            window.showNotification('正しいURLを入力してください。必ず https:// から始めてください。', 'error');
         }
     });
 
