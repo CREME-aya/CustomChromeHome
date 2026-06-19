@@ -1,3 +1,6 @@
+(function() {
+window.initWidgetSortable = initWidgetSortable;
+
 function toPx(value) {
     return `${value}px`;
 }
@@ -392,3 +395,4 @@ function handleWindowResize() {
         }
     });
 }
+})();

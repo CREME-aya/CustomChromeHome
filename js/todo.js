@@ -1,7 +1,13 @@
 // ==========================================
 // Todo 機能
 // ==========================================
+(function() {
 let todos = [];
+
+window.initTodo = initTodo;
+window.addTodoItem = addTodoItem;
+window.hasTodo = hasTodo;
+window.persistAndRenderTodos = persistAndRenderTodos;
 
 function initTodo() {
     todos = readTodos();
@@ -98,3 +104,4 @@ function persistAndRenderTodos() {
 function saveTodos() {
     writeJsonToStorage(STORAGE_KEY_TODOS, todos);
 }
+})();

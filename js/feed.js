@@ -1,11 +1,17 @@
 // ==========================================
 // Feed 機能
 // ==========================================
+(function() {
 let currentArticles = [];
 let favoriteArticles = readJsonFromStorage(STORAGE_KEY_FAVS, []);
 let currentFilter = 'all'; // 'all' or 'favorites'
 let currentSearchQuery = '';
 let feedDisplayMode = localStorage.getItem(STORAGE_KEY_FEED_MODE) || 'mixed';
+
+window.initFeed = initFeed;
+window.initSearch = initSearch;
+window.getStoredFeedUrls = getStoredFeedUrls;
+window.loadFeed = loadFeed;
 
 // ==========================================
 // initFeed — フィードURL読み込みと保存ボタン
@@ -286,3 +292,4 @@ function closeModal() {
         document.getElementById('modal-body').innerHTML = '';
     }, 300);
 }
+})();

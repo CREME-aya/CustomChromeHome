@@ -1,11 +1,14 @@
 // ==========================================
 // Spotify 機能
 // ==========================================
+(function() {
 const SPOTIFY_CLIENT_ID = '3ed94377fd3840f2b3f3e88967a2ed78';
 const SPOTIFY_SCOPES = 'user-read-playback-state user-modify-playback-state user-read-currently-playing';
 const SPOTIFY_REDIRECT_PATH = 'spotify';
 
 let spotifyPollInterval = null;
+
+window.initSpotify = initSpotify;
 
 async function initSpotify() {
     const loginBtn = document.getElementById('spotify-login-btn');
@@ -415,3 +418,4 @@ function isSpotifyTokenExpiring() {
     if (!expiresAt) return false;
     return Date.now() + SPOTIFY_TOKEN_REFRESH_MARGIN_MS >= expiresAt;
 }
+})();
