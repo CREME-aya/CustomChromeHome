@@ -9,7 +9,7 @@
   justify-content: center;
   z-index: 1000;
   opacity: 1;
-  transition: opacity 0.3s ease;
+  transition: var(--transition-default);
 }
 
 .modal.hidden {
@@ -20,7 +20,7 @@
 .modal-content {
   background: #1e293b;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
+  border-radius: var(--border-radius-lg);
   width: 90%;
   max-width: var(--widget-width-wide);
   max-height: 80vh;
@@ -40,11 +40,11 @@
 .close-btn {
   position: absolute;
   top: 16px;
-  right: 20px;
+  right: var(--space-xl);
   font-size: 2rem;
   color: #94a3b8;
   cursor: pointer;
-  transition: color 0.3s ease;
+  transition: var(--transition-default);
   line-height: 1;
 }
 
@@ -64,14 +64,14 @@
   overflow-y: auto;
   color: #cbd5e1;
   line-height: 1.6;
-  margin-bottom: 20px;
+  margin-bottom: var(--space-xl);
   padding-right: 10px;
 }
 
 .modal-body img {
   max-width: 100%;
   height: auto;
-  border-radius: 8px;
+  border-radius: var(--border-radius-md);
 }
 
 .modal-footer {
@@ -82,13 +82,13 @@
 }
 
 .read-more-btn {
-  padding: 10px 20px;
-  border-radius: 8px;
+  padding: 10px var(--space-xl);
+  border-radius: var(--border-radius-md);
   background: #55c500;
   color: #fff;
   text-decoration: none;
   font-weight: 600;
-  transition: background 0.3s ease;
+  transition: var(--transition-default);
 }
 
 .read-more-btn:hover {

@@ -3,7 +3,7 @@
   backdrop-filter: var(--panel-blur);
   border: 1px solid var(--panel-border);
   border-radius: var(--border-radius-widget);
-  padding: 24px;
+  padding: var(--space-2xl);
   box-shadow: 0 4px 20px rgba(0,0,0,0.2);
   text-align: center;
   text-shadow: 0 2px 10px rgba(0,0,0,0.3);
@@ -29,6 +29,6 @@
   font-weight: 700;
   line-height: 1.1;
   color: #f8fafc;
-  margin-top: 4px;
+  margin-top: var(--space-xs);
   text-shadow: 0 2px 8px rgba(0,0,0,0.6);
 }

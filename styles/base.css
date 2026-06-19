@@ -3,7 +3,7 @@
   =========*/
 body {
   margin: 0;
-  padding: 40px 20px;
+  padding: 40px var(--space-xl);
   background-color: #0f172a;
   background-size: cover;
   background-position: center;
@@ -28,7 +28,7 @@ body {
   position: relative; /* 絶対配置要素の親の基準にする */
   flex: 1;
   overflow-y: auto; /* スクロール可能にする */
-  padding: 40px 20px 60px 20px;
+  padding: 40px var(--space-xl) 60px var(--space-xl);
   width: 100%;
   box-sizing: border-box;
   /* 子要素が絶対配置になるため、高さが0にならないよう最低の高さを確保 */

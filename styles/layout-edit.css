@@ -5,7 +5,7 @@
   right: 10px;
   background: rgba(15, 23, 42, 0.6);
   border: 1px solid var(--panel-border);
-  border-radius: 6px;
+  border-radius: var(--border-radius-sm);
   color: var(--text-color);
   cursor: pointer;
   font-size: 0.75rem;
@@ -92,7 +92,7 @@
   color: #ffffff;
   background: #3b82f6;
   padding: 2px 8px;
-  border-radius: 6px;
+  border-radius: var(--border-radius-sm);
   border: 1px solid rgba(255, 255, 255, 0.2);
   pointer-events: none;
   z-index: 1000;

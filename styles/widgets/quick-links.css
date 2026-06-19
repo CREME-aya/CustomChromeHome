@@ -3,22 +3,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: var(--space-md);
   background: var(--panel-bg);
   backdrop-filter: var(--panel-blur);
   border: 1px solid var(--panel-border);
-  border-radius: 16px;
-  padding: 12px 24px;
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-md) var(--space-2xl);
   box-shadow: 0 10px 20px rgba(0,0,0,0.3);
   max-width: 600px;
 }
 
 .quick-links-grid {
   display: flex;
-  gap: 12px;
+  gap: var(--space-md);
   overflow-x: auto;
   flex: 1;
-  padding-bottom: 4px;
+  padding-bottom: var(--space-xs);
 }
 
 /* Webkit系（Chrome等）のスクロールバーを非表示にする（見た目重視） */
@@ -57,7 +57,7 @@
 .quick-link-icon {
   width: 24px;
   height: 24px;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-xs);
   border-radius: 4px;
 }
 

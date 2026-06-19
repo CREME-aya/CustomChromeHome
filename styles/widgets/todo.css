@@ -1,9 +1,9 @@
 /* ========== ユーティリティウィジェット群 ========== */
 .utility-widgets-container {
   display: flex;
-  gap: 20px;
+  gap: var(--space-xl);
   width: 100%;
-  margin-bottom: 20px;
+  margin-bottom: var(--space-xl);
 }
 
 @media (max-width: 768px) {
@@ -18,7 +18,7 @@
   backdrop-filter: var(--panel-blur);
   border: 1px solid var(--panel-border);
   border-radius: var(--border-radius-widget);
-  padding: 16px 24px;
+  padding: var(--space-lg) var(--space-2xl);
   box-shadow: 0 4px 20px rgba(0,0,0,0.2);
   color: #f8fafc;
   display: flex;
@@ -29,7 +29,7 @@
 .widget-header {
   font-size: 1.1rem;
   font-weight: bold;
-  margin-bottom: 12px;
+  margin-bottom: var(--space-md);
   color: #e2e8f0;
   text-shadow: 0 1px 3px rgba(0,0,0,0.5);
 }
@@ -37,7 +37,7 @@
 .sidebar-status {
   font-size: 0.85rem;
   color: #94a3b8;
-  margin-top: 8px;
+  margin-top: var(--space-sm);
   line-height: 1.4;
 }
 
@@ -46,7 +46,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-md);
 }
 
 .todo-calendar-btn {
@@ -54,7 +54,7 @@
   border: 1px solid rgba(96, 165, 250, 0.55);
   background: rgba(59, 130, 246, 0.14);
   color: #bfdbfe;
-  border-radius: 8px;
+  border-radius: var(--border-radius-md);
   padding: 6px 10px;
   cursor: pointer;
   font-size: 0.78rem;
@@ -72,13 +72,13 @@
 
 .todo-input-container {
   display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
 }
 
 .todo-input-container input {
   flex: 1;
-  padding: 10px 16px;
+  padding: 10px var(--space-lg);
   border-radius: var(--border-radius-input);
   border: 1px solid rgba(255,255,255,0.2);
   background: rgba(0,0,0,0.2);
@@ -116,7 +116,7 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-sm);
   max-height: 152px;
   overflow-y: auto;
 }
@@ -139,10 +139,10 @@
 .todo-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
   background: rgba(255,255,255,0.05);
-  border-radius: 8px;
+  border-radius: var(--border-radius-md);
   transition: all 0.2s;
 }
 

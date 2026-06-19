@@ -4,7 +4,7 @@
   backdrop-filter: var(--panel-blur);
   border: 1px solid var(--panel-border);
   border-radius: var(--border-radius-widget);
-  padding: 16px 24px;
+  padding: var(--space-lg) var(--space-2xl);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -13,13 +13,13 @@
   box-shadow: 0 4px 20px rgba(0,0,0,0.2);
   color: #f8fafc;
   transition: var(--transition-default);
-  margin-bottom: 20px;
+  margin-bottom: var(--space-xl);
 }
 
 .weather-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 
 .weather-area {
@@ -32,7 +32,7 @@
 .weather-temp-container {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: var(--space-sm);
 }
 
 .weather-desc {
@@ -46,7 +46,7 @@
   font-size: 0.85rem;
   color: #60a5fa;
   background: rgba(96, 165, 250, 0.1);
-  padding: 2px 8px;
+  padding: 2px var(--space-sm);
   border-radius: var(--border-radius-input);
 }
 
@@ -73,10 +73,10 @@
 /* 降水確率グラフ */
 .weather-chart-container {
   display: flex;
-  gap: 8px;
-  margin-left: 16px;
+  gap: var(--space-sm);
+  margin-left: var(--space-lg);
   border-left: 1px solid rgba(255,255,255,0.1);
-  padding-left: 16px;
+  padding-left: var(--space-lg);
   height: 60px;
   align-items: flex-end;
 }
@@ -88,7 +88,7 @@
   justify-content: flex-end;
   height: 100%;
   width: 24px;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 
 .weather-chart-bar {

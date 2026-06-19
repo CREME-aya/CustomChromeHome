@@ -6,7 +6,7 @@
   backdrop-filter: blur(2px);
   z-index: 900;
   opacity: 1;
-  transition: opacity 0.3s ease;
+  transition: var(--transition-default);
 }
 
 .sidebar-overlay.hidden {
@@ -17,7 +17,7 @@
 .sidebar {
   position: fixed;
   top: 0; left: 0; bottom: 0;
-  width: 320px;
+  width: var(--sidebar-width);
   background: var(--sidebar-bg);
   backdrop-filter: var(--panel-blur);
   border-right: 1px solid var(--sidebar-border);
@@ -37,7 +37,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px;
+  padding: var(--space-2xl);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -48,10 +48,10 @@
 }
 
 .sidebar-content {
-  padding: 24px;
+  padding: var(--space-2xl);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-lg);
   flex: 1;
   overflow-y: auto;
 }
@@ -66,8 +66,8 @@
 .url-input {
   width: 100%;
   box-sizing: border-box;
-  padding: 12px 16px;
-  border-radius: 8px;
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--border-radius-md);
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(15, 23, 42, 0.6);
   color: #f8fafc;
@@ -94,7 +94,7 @@ input, textarea, select {
 .setting-block {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-md);
 }
 
 .sidebar-divider {
@@ -117,14 +117,14 @@ input, textarea, select {
 }
 
 .file-input::file-selector-button {
-  padding: 8px 12px;
-  border-radius: 6px;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius-sm);
   border: 1px solid var(--panel-border);
   background: var(--input-bg);
   color: #f8fafc;
   cursor: pointer;
-  margin-right: 12px;
-  transition: background 0.3s ease;
+  margin-right: var(--space-md);
+  transition: var(--transition-default);
 }
 
 .file-input::file-selector-button:hover {
@@ -139,8 +139,8 @@ input, textarea, select {
 
 .save-btn {
   flex: 1;
-  padding: 12px;
-  border-radius: 8px;
+  padding: var(--space-md);
+  border-radius: var(--border-radius-md);
   border: none;
   background: linear-gradient(135deg, #3b82f6, #8b5cf6);
   color: #fff;
@@ -160,8 +160,8 @@ input, textarea, select {
 }
 
 .outline-btn {
-  padding: 12px;
-  border-radius: 8px;
+  padding: var(--space-md);
+  border-radius: var(--border-radius-md);
   border: 1px solid #ef4444;
   background: transparent;
   color: #ef4444;
@@ -178,8 +178,8 @@ input, textarea, select {
 .error-msg {
   color: #f87171;
   text-align: center;
-  padding: 20px;
+  padding: var(--space-xl);
   background: rgba(248, 113, 113, 0.1);
-  border-radius: 8px;
+  border-radius: var(--border-radius-md);
   border: 1px solid rgba(248, 113, 113, 0.2);
 }
