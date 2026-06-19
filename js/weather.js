@@ -11,6 +11,7 @@ async function loadWeather() {
 
     try {
         const location = getStoredWeatherLocation();
+        // 保存済み位置をOpen-Meteoの予報APIへ渡し、現在天気と降水確率をまとめて取得する。
         const meteoRes = await fetch(buildWeatherForecastUrl(location));
         if (!meteoRes.ok) throw new Error('HTTP Error');
         const meteoData = await meteoRes.json();
@@ -48,6 +49,7 @@ async function handleWeatherCitySearch(input, status) {
 
     setWeatherStatus(status, '検索中...');
     try {
+        // 都市名は緯度経度へ変換してから、以後の天気取得に使う。
         const location = await fetchWeatherLocationByCity(query);
         if (!location) {
             setWeatherStatus(status, '見つかりませんでした');
@@ -70,6 +72,7 @@ function setWeatherStatus(status, message) {
 }
 
 async function fetchWeatherLocationByCity(query) {
+    // Open-Meteo Geocoding APIは日本語名を返せるため、設定表示にもそのまま使う。
     const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=ja&format=json`;
     const res = await fetch(url);
     const data = await res.json();
@@ -98,6 +101,7 @@ function getStoredWeatherLocation() {
 }
 
 function buildWeatherForecastUrl({ lat, lon }) {
+    // Chrome新規タブで使うため、タイムゾーンは日本時間に固定する。
     const params = new URLSearchParams({
         latitude: lat,
         longitude: lon,
@@ -137,6 +141,7 @@ function renderWeatherChart(times, precipitationProbabilities) {
     const startIndex = findForecastStartIndex(times);
     const chartItems = [];
 
+    // 現在時刻に近い予報から数時間分だけを小さな棒グラフで表示する。
     for (let i = 0; i < WEATHER_CHART_HOURS; i++) {
         const index = startIndex + i;
         if (index >= times.length) break;
@@ -159,6 +164,7 @@ function renderWeatherChart(times, precipitationProbabilities) {
 }
 
 function findForecastStartIndex(times) {
+    // APIの時刻配列が現在時刻より少し前から始まるケースを吸収する。
     const oneHourAgo = Date.now() - 3600000;
     const index = times.findIndex(time => new Date(time).getTime() >= oneHourAgo);
     return index === -1 ? 0 : index;

@@ -1,6 +1,7 @@
 // ==========================================
 // 定数の定義
 // ==========================================
+// localStorageキーはここへ集約し、各モジュールで文字列を重複させない。
 const DEFAULT_URL = 'https://qiita.com/popular-items/feed';
 const STORAGE_KEY_URL = 'custom_feed_url';
 const STORAGE_KEY_FAVS = 'custom_feed_favorites';
@@ -18,6 +19,8 @@ const STORAGE_KEY_WIDGET_ORDER = 'custom_widget_order';
 const STORAGE_KEY_WIDGET_STATES = 'custom_widget_states_v2';
 const STORAGE_KEY_FEED_MODE = 'custom_feed_display_mode';
 const DEFAULT_FEED_URLS = [DEFAULT_URL];
+
+// 天気ウィジェットの保存値と描画パラメータ。
 const WEATHER_STORAGE_KEYS = {
     lat: 'custom_weather_lat',
     lon: 'custom_weather_lon',
@@ -35,6 +38,8 @@ const WEATHER_CHART_BAR_MIN_HEIGHT = 4;
 const WEATHER_CHART_EMPTY_BAR_HEIGHT = 2;
 const DEFAULT_CALENDAR_LOOKAHEAD_DAYS = 7;
 const MAX_CALENDAR_TODO_IMPORTS = 30;
+
+// ウィジェット配置の基準値。初期配置とリサイズ時の再計算で共有する。
 const WIDGET_WIDTH_NORMAL = 340;
 const WIDGET_WIDTH_WIDE = 700;
 const WIDGET_GAP = 24;
@@ -51,12 +56,16 @@ const WIDGET_THREE_COLUMN_MIN_WIDTH = (WIDGET_WIDTH_NORMAL * 3) + (WIDGET_AI_PAN
 const WIDGET_TWO_COLUMN_MIN_WIDTH = WIDGET_WIDTH_WIDE;
 const RESIZE_ZONE_PX = 20;
 const FEED_MAX_ITEMS = 20;
+
+// Spotify認証トークンの保存先と、期限前更新の余裕時間。
 const SPOTIFY_STORAGE_KEYS = {
     accessToken: 'spotify_access_token',
     refreshToken: 'spotify_refresh_token',
     expiresAt: 'spotify_token_expires_at'
 };
 const SPOTIFY_TOKEN_REFRESH_MARGIN_MS = 60000;
+
+// Open-MeteoのWMO weather codeを日本語表示へ変換する。
 const WMO_WEATHER = {
     0: { emoji: '☀️', text: '快晴' },
     1: { emoji: '🌤️', text: '晴れ' },

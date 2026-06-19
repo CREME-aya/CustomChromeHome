@@ -1,5 +1,9 @@
+// ==========================================
+// iCal パーサーのブラウザ実行テスト
+// ==========================================
 (function() {
 function runIcalParserTests() {
+    // 代表的なiCal形式だけを小さく確認し、拡張画面でも実行できるようにする。
     const tests = [
         {
             name: 'parses timed UTC events',
@@ -82,6 +86,7 @@ function runIcalParserTests() {
     ];
 
     const results = tests.map((test) => {
+        // 失敗したテストだけメッセージを残し、一覧表示で原因を追えるようにする。
         try {
             test.run();
             return { name: test.name, passed: true };
@@ -106,6 +111,7 @@ function assertEqual(actual, expected) {
 }
 
 function parseIcsEvents(icsText) {
+    // ブラウザと単体実行の両方で、公開済みのparseIcsEventsを探す。
     if (typeof window !== 'undefined' && typeof window.parseIcsEvents === 'function') {
         return window.parseIcsEvents(icsText);
     }
@@ -116,6 +122,7 @@ function parseIcsEvents(icsText) {
 }
 
 function renderResults(summary) {
+    // HTMLテストページでは、総合結果と各ケースの結果を画面へ描画する。
     const status = document.getElementById('test-status');
     const list = document.getElementById('test-results');
     if (!status || !list) return;
@@ -137,6 +144,7 @@ function renderResults(summary) {
 window.runIcalParserTests = runIcalParserTests;
 
 if (typeof document !== 'undefined') {
+    // HTMLで開いた場合はロード完了後に自動でテストを走らせる。
     document.addEventListener('DOMContentLoaded', () => {
         renderResults(runIcalParserTests());
     });

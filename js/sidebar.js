@@ -12,6 +12,7 @@ function initSidebar() {
     if (!menuBtn || !closeSidebarBtn || !sidebar) return;
 
     function toggleSidebar() {
+        // サイドバー本体とオーバーレイを同じタイミングで開閉する。
         sidebar.classList.toggle('hidden');
         sidebarOverlay?.classList.toggle('hidden');
     }

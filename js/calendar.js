@@ -12,6 +12,7 @@ function initCalendarTodoImport() {
     const widgetImportButton = document.getElementById('calendar-import-btn');
     const status = document.getElementById('calendar-import-status');
 
+    // 保存済みのiCal URLと取り込み範囲を設定画面へ復元する。
     if (urlInput) {
         urlInput.value = localStorage.getItem(STORAGE_KEY_CALENDAR_ICAL_URL) || '';
     }
@@ -61,6 +62,7 @@ async function importCalendarEventsToTodos(status) {
     updateCalendarImportStatus(status, '予定を取得中...');
 
     try {
+        // 取得、期間フィルタ、Todo追加を分けて失敗箇所を追いやすくする。
         const events = await fetchGoogleCalendarEvents(icalUrl);
         const importableEvents = filterImportableCalendarEvents(events);
         const result = addCalendarEventsToTodos(importableEvents);
@@ -76,6 +78,7 @@ function getCalendarIcalUrlFromSettings() {
     const input = document.getElementById('calendar-ical-url-input');
     const select = document.getElementById('calendar-lookahead-select');
 
+    // 設定画面で編集途中の値があれば、同期実行前に保存へ反映する。
     if (input || select) {
         saveCalendarImportSettings(input?.value || '', select?.value || String(DEFAULT_CALENDAR_LOOKAHEAD_DAYS));
     }
@@ -97,6 +100,7 @@ function filterImportableCalendarEvents(events) {
     const rangeEnd = new Date(rangeStart);
     rangeEnd.setDate(rangeEnd.getDate() + lookaheadDays);
 
+    // 今日から指定日数以内の予定だけを、Todo化しやすい開始時刻順に絞る。
     return events
         .filter(event => event.start && event.start >= rangeStart && event.start < rangeEnd)
         .sort((a, b) => a.start - b.start)
@@ -108,6 +112,7 @@ function addCalendarEventsToTodos(events) {
     let skipped = 0;
 
     events.forEach(event => {
+        // 同じカレンダーイベントを何度同期してもTodoを重複作成しない。
         if (hasTodo(todo => todo.source === 'google-calendar' && todo.calendarEventId === event.id)) {
             skipped += 1;
             return;

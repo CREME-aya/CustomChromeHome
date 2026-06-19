@@ -107,11 +107,6 @@
   padding-right: 4px;
 }
 
-/* 表示オフ用クラス */
-.hidden-widget {
-  display: none !important;
-}
-
 /* メモ（タスク）ウィジェット */
 .memo-widget {
   background: rgba(15, 23, 42, 0.65);

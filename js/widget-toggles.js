@@ -20,11 +20,11 @@ function initWidgetToggles() {
         const checkbox = document.getElementById(t.id);
         if (!checkbox) return;
 
-        // Load state
+        // 保存済みの表示状態をチェックボックスへ復元する。
         const stored = localStorage.getItem(t.id);
         if (stored !== null) checkbox.checked = stored === 'true';
 
-        // Apply state function
+        // id指定とclass指定の両方に対応し、単体/複数ウィジェットを同じ処理で扱う。
         const applyToggle = () => {
             const isVisible = checkbox.checked;
             if (t.targetClass) {
@@ -36,7 +36,7 @@ function initWidgetToggles() {
         };
         applyToggle();
 
-        // Event listener
+        // 変更時は表示状態を保存して、次回起動時にも同じ状態を再現する。
         checkbox.addEventListener('change', () => {
             localStorage.setItem(t.id, checkbox.checked);
             applyToggle();

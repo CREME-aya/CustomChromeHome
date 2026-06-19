@@ -1,5 +1,5 @@
 // ==========================================
-// iCal parser
+// iCal 予定パーサー
 // ==========================================
 (function() {
 window.parseIcsEvents = parseIcsEvents;
@@ -8,6 +8,7 @@ function parseIcsEvents(icsText) {
     const events = [];
     let currentEvent = null;
 
+    // iCalの折り返し行を先に復元してから、VEVENT単位でプロパティを集める。
     unfoldIcsLines(icsText).forEach(line => {
         if (line === 'BEGIN:VEVENT') {
             currentEvent = {};
@@ -33,6 +34,7 @@ function parseIcsEvents(icsText) {
 }
 
 function unfoldIcsLines(icsText) {
+    // RFC 5545 の folded line は先頭スペースまたはタブを前行へ連結する。
     return icsText
         .replace(/\r\n/g, '\n')
         .replace(/\r/g, '\n')
@@ -51,6 +53,7 @@ function parseIcsProperty(line) {
     const separatorIndex = line.indexOf(':');
     if (separatorIndex === -1) return null;
 
+    // NAME;PARAM=VALUE:VALUE 形式を、名前・パラメータ・値に分解する。
     const rawName = line.slice(0, separatorIndex);
     const value = line.slice(separatorIndex + 1);
     const [name, ...paramParts] = rawName.split(';');
@@ -73,6 +76,7 @@ function parseIcsParams(paramParts) {
 function normalizeIcsEvent(rawEvent) {
     if (!rawEvent?.DTSTART) return null;
 
+    // Todo取り込みで必要な最小フィールドだけに正規化する。
     const start = parseIcsDate(rawEvent.DTSTART);
     if (!start.date) return null;
 
@@ -91,6 +95,7 @@ function parseIcsDate(property) {
     const isDateOnly = property.params.VALUE === 'DATE' || /^\d{8}$/.test(value);
 
     if (isDateOnly) {
+        // 終日予定は利用者のローカル日付として扱う。
         const year = Number(value.slice(0, 4));
         const month = Number(value.slice(4, 6)) - 1;
         const day = Number(value.slice(6, 8));
@@ -101,6 +106,7 @@ function parseIcsDate(property) {
     if (!match) return { date: null, isAllDay: false };
 
     const [, year, month, day, hour, minute, second, utcSuffix] = match;
+    // Z付きはUTC、Zなしはローカル時刻としてDateへ変換する。
     const date = utcSuffix
         ? new Date(Date.UTC(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute), Number(second)))
         : new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute), Number(second));
@@ -109,6 +115,7 @@ function parseIcsDate(property) {
 }
 
 function unescapeIcsText(text) {
+    // iCal内のエスケープ表現を画面表示向けの通常文字列へ戻す。
     return text
         .replace(/\\n/gi, ' ')
         .replace(/\\,/g, ',')

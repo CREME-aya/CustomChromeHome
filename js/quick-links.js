@@ -14,6 +14,7 @@ function initQuickLinks() {
         { title: 'GitHub', url: 'https://github.com' }
     ];
 
+    // 初回起動時はよく使うリンクを保存し、以後はユーザー編集を優先する。
     let quickLinks = readJsonFromStorage(STORAGE_KEY_LINKS, null);
     if (!quickLinks) {
         quickLinks = defaultLinks;
@@ -27,7 +28,7 @@ function initQuickLinks() {
             a.href = link.url;
             a.className = 'quick-link-item';
 
-            // アイコンにはGoogleのFavicon APIを利用
+            // アイコンにはGoogleのFavicon APIを利用する。
             let hostname = 'localhost';
             try { hostname = new URL(link.url).hostname; } catch(e){}
             const iconUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
@@ -54,6 +55,7 @@ function initQuickLinks() {
     }
 
     addLinkBtn.addEventListener('click', () => {
+        // prompt ベースの簡易追加にして、拡張の設定画面を増やさずに済ませる。
         const url = prompt('追加するサイトのURLを入力してください (例: https://qiita.com):');
         if (!url) return;
 

@@ -1,9 +1,8 @@
+// ==========================================
+// ウィジェット配置編集
+// ==========================================
 (function() {
 window.initWidgetSortable = initWidgetSortable;
-
-function toPx(value) {
-    return `${value}px`;
-}
 
 // ==========================================
 // initWidgetSortable — ウィジェットの自由配置（アブソリュート・ドラッグ）とピン留め、リサイズ
@@ -61,148 +60,6 @@ function saveWidgetState(el) {
     writeJsonToStorage(STORAGE_KEY_WIDGET_STATES, states);
 }
 
-// デフォルトのレイアウト配置の計算（変更前の配置を再現）
-function calculateDefaultWidgetPositions(containerWidth) {
-    const positions = {};
-    const normalWidthPx = toPx(WIDGET_WIDTH_NORMAL);
-    const wideWidthPx = toPx(WIDGET_WIDTH_WIDE);
-
-    // 1. Spotify (右上固定)
-    positions['widget-spotify'] = {
-        position: 'fixed',
-        left: `calc(100% - ${toPx(WIDGET_SPOTIFY_RIGHT_OFFSET)})`,
-        top: toPx(WIDGET_SPOTIFY_TOP),
-        width: normalWidthPx,
-        pinned: true
-    };
-
-    // 2. 時計と天気（横並びで中央）
-    const topRowWidth = (WIDGET_WIDTH_NORMAL * 2) + WIDGET_GROUP_GAP;
-    const topRowStartX = Math.max(0, (containerWidth - topRowWidth) / 2);
-    positions['widget-clock'] = {
-        position: 'absolute',
-        left: `${topRowStartX}px`,
-        top: toPx(WIDGET_TOP_MARGIN),
-        width: normalWidthPx
-    };
-    positions['widget-weather'] = {
-        position: 'absolute',
-        left: `${topRowStartX + WIDGET_WIDTH_NORMAL + WIDGET_GROUP_GAP}px`,
-        top: toPx(WIDGET_TOP_MARGIN),
-        width: normalWidthPx
-    };
-
-    // 3. マルチAI検索バー (全幅 700px)
-    const centerXWide = Math.max(0, (containerWidth - WIDGET_WIDTH_WIDE) / 2);
-    const searchTop = WIDGET_TOP_MARGIN + WIDGET_CLOCK_WEATHER_HEIGHT + WIDGET_GAP;
-    positions['widget-ai-search'] = {
-        position: 'absolute',
-        left: `${centerXWide}px`,
-        top: `${searchTop}px`,
-        width: wideWidthPx
-    };
-
-    // 4. AI回答パネル3つ (OpenAI, Anthropic, Gemini)
-    const aiTop = searchTop + WIDGET_SEARCH_HEIGHT + WIDGET_GAP;
-    if (containerWidth >= WIDGET_THREE_COLUMN_MIN_WIDTH) {
-        const aiStartX = Math.max(0, (containerWidth - WIDGET_THREE_COLUMN_MIN_WIDTH) / 2);
-        positions['widget-ai-openai'] = {
-            position: 'absolute',
-            left: `${aiStartX}px`,
-            top: `${aiTop}px`,
-            width: normalWidthPx
-        };
-        positions['widget-ai-anthropic'] = {
-            position: 'absolute',
-            left: `${aiStartX + WIDGET_WIDTH_NORMAL + WIDGET_AI_PANEL_GAP}px`,
-            top: `${aiTop}px`,
-            width: normalWidthPx
-        };
-        positions['widget-ai-gemini'] = {
-            position: 'absolute',
-            left: `${aiStartX + ((WIDGET_WIDTH_NORMAL + WIDGET_AI_PANEL_GAP) * 2)}px`,
-            top: `${aiTop}px`,
-            width: normalWidthPx
-        };
-    } else if (containerWidth >= WIDGET_TWO_COLUMN_MIN_WIDTH) {
-        // 2つ横並び + 1つ縦積み
-        const aiTwoColumnWidth = (WIDGET_WIDTH_NORMAL * 2) + WIDGET_AI_PANEL_GAP;
-        const aiStartX = Math.max(0, (containerWidth - aiTwoColumnWidth) / 2);
-        positions['widget-ai-openai'] = {
-            position: 'absolute',
-            left: `${aiStartX}px`,
-            top: `${aiTop}px`,
-            width: normalWidthPx
-        };
-        positions['widget-ai-anthropic'] = {
-            position: 'absolute',
-            left: `${aiStartX + WIDGET_WIDTH_NORMAL + WIDGET_AI_PANEL_GAP}px`,
-            top: `${aiTop}px`,
-            width: normalWidthPx
-        };
-        positions['widget-ai-gemini'] = {
-            position: 'absolute',
-            left: `${Math.max(0, (containerWidth - WIDGET_WIDTH_NORMAL) / 2)}px`,
-            top: `${aiTop + WIDGET_AI_PANEL_HEIGHT + WIDGET_GAP}px`,
-            width: normalWidthPx
-        };
-    } else {
-        // すべて縦積み
-        positions['widget-ai-openai'] = {
-            position: 'absolute',
-            left: `${Math.max(0, (containerWidth - WIDGET_WIDTH_NORMAL) / 2)}px`,
-            top: `${aiTop}px`,
-            width: normalWidthPx
-        };
-        positions['widget-ai-anthropic'] = {
-            position: 'absolute',
-            left: `${Math.max(0, (containerWidth - WIDGET_WIDTH_NORMAL) / 2)}px`,
-            top: `${aiTop + WIDGET_AI_PANEL_HEIGHT + WIDGET_GAP}px`,
-            width: normalWidthPx
-        };
-        positions['widget-ai-gemini'] = {
-            position: 'absolute',
-            left: `${Math.max(0, (containerWidth - WIDGET_WIDTH_NORMAL) / 2)}px`,
-            top: `${aiTop + ((WIDGET_AI_PANEL_HEIGHT + WIDGET_GAP) * 2)}px`,
-            width: normalWidthPx
-        };
-    }
-
-    // 5. ToDo と クイックリンク (横並び)
-    let nextTop = aiTop + WIDGET_AI_PANEL_HEIGHT + WIDGET_GAP;
-    if (containerWidth < WIDGET_THREE_COLUMN_MIN_WIDTH && containerWidth >= WIDGET_TWO_COLUMN_MIN_WIDTH) {
-        nextTop = aiTop + ((WIDGET_AI_PANEL_HEIGHT + WIDGET_GAP) * 2);
-    } else if (containerWidth < WIDGET_TWO_COLUMN_MIN_WIDTH) {
-        nextTop = aiTop + ((WIDGET_AI_PANEL_HEIGHT + WIDGET_GAP) * 3);
-    }
-
-    const utilRowWidth = (WIDGET_WIDTH_NORMAL * 2) + WIDGET_GROUP_GAP;
-    const utilStartX = Math.max(0, (containerWidth - utilRowWidth) / 2);
-    positions['widget-todo'] = {
-        position: 'absolute',
-        left: `${utilStartX}px`,
-        top: `${nextTop}px`,
-        width: normalWidthPx
-    };
-    positions['widget-quick-links'] = {
-        position: 'absolute',
-        left: `${utilStartX + WIDGET_WIDTH_NORMAL + WIDGET_GROUP_GAP}px`,
-        top: `${nextTop}px`,
-        width: normalWidthPx
-    };
-
-    // 6. Discover (全幅 700px)
-    const discoverTop = nextTop + WIDGET_UTILITY_HEIGHT + WIDGET_GAP;
-    positions['widget-discover'] = {
-        position: 'absolute',
-        left: `${centerXWide}px`,
-        top: `${discoverTop}px`,
-        width: wideWidthPx
-    };
-
-    return positions;
-}
-
 // 状態の復元および自動配置
 function restoreWidgetStates(container) {
     const states = readJsonFromStorage(STORAGE_KEY_WIDGET_STATES, {});
@@ -210,7 +67,7 @@ function restoreWidgetStates(container) {
     const containerWidth = container.clientWidth || 1200;
 
     // デフォルト位置の計算
-    const defaultPositions = calculateDefaultWidgetPositions(containerWidth);
+    const defaultPositions = window.LayoutDefaults.calculateWidgetPositions(containerWidth);
 
     widgets.forEach((el) => {
         const id = el.getAttribute('data-id');
@@ -366,7 +223,7 @@ function handleWindowResize() {
     const containerWidth = container.clientWidth;
 
     const states = readJsonFromStorage(STORAGE_KEY_WIDGET_STATES, {});
-    const defaultPositions = calculateDefaultWidgetPositions(containerWidth);
+    const defaultPositions = window.LayoutDefaults.calculateWidgetPositions(containerWidth);
 
     container.querySelectorAll('.sortable-item').forEach(el => {
         const id = el.getAttribute('data-id');

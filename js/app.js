@@ -1,7 +1,8 @@
 // ==========================================
-// App entry point
+// アプリ全体のエントリーポイント
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
+    // 各モジュールは DOM 構築後に必要な要素へイベントを配線する。
     initInputFocusFix();
     initSidebar();
     initFeed();
@@ -19,11 +20,11 @@ document.addEventListener('DOMContentLoaded', () => {
     initTodo();
     initCalendarTodoImport();
 
-    // Initial data loading
+    // 起動時に保存済み設定を使って外部データを読み込む。
     loadFeed(getStoredFeedUrls());
     loadWeather();
 
-    // Apply saved theme.
+    // 保存済みテーマがなければ標準のガラス風ダークテーマを使う。
     const savedTheme = localStorage.getItem(STORAGE_KEY_THEME) || 'theme-glass-dark';
     document.documentElement.className = savedTheme;
 });

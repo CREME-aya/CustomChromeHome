@@ -1,5 +1,5 @@
 // ==========================================
-// Spotify auth and token storage
+// Spotify 認証とトークン保存
 // ==========================================
 (function() {
 const SPOTIFY_CLIENT_ID = '3ed94377fd3840f2b3f3e88967a2ed78';
@@ -15,7 +15,7 @@ window.SpotifyAuth = {
 };
 
 async function authenticate() {
-    // chrome.identity.launchWebAuthFlow が使える環境（Chrome拡張）かチェック
+    // chrome.identity.launchWebAuthFlow が使える環境（Chrome拡張）かチェックする。
     if (typeof chrome === 'undefined' || !chrome.identity || !chrome.identity.launchWebAuthFlow) {
         window.showNotification("Chrome拡張機能として動作していないか、identity権限がありません。", 'error');
         return false;
@@ -24,6 +24,7 @@ async function authenticate() {
     const redirectUri = getSpotifyRedirectUri();
     console.log("Spotify Redirect URI:", redirectUri);
 
+    // クライアントシークレットを持たない拡張なので、PKCEで認証コードを受け取る。
     const codeVerifier = generateRandomString(64);
     const codeChallenge = await generateCodeChallenge(codeVerifier);
     const state = generateRandomString(32);
@@ -87,12 +88,14 @@ async function authenticate() {
 }
 
 function generateRandomString(length) {
+    // state と code_verifier は予測しづらい値にする必要がある。
     const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     const values = crypto.getRandomValues(new Uint8Array(length));
     return values.reduce((acc, x) => acc + possible[x % possible.length], "");
 }
 
 async function generateCodeChallenge(codeVerifier) {
+    // SpotifyのPKCE要件に合わせて SHA-256 + base64url へ変換する。
     const data = new TextEncoder().encode(codeVerifier);
     const digest = await crypto.subtle.digest('SHA-256', data);
     return btoa(String.fromCharCode.apply(null, [...new Uint8Array(digest)]))
@@ -109,6 +112,7 @@ async function launchSpotifyAuthFlow(authUrl, redirectUri) {
     try {
         return await launchSpotifyAuthFlowWithIdentity(authUrl);
     } catch(e) {
+        // 一部環境ではidentityフローが失敗するため、通常タブ監視へフォールバックする。
         console.warn("chrome.identity.launchWebAuthFlow failed. Falling back to a normal tab.", e);
         return launchSpotifyAuthFlowInTab(authUrl, redirectUri);
     }
@@ -138,6 +142,7 @@ function launchSpotifyAuthFlowInTab(authUrl, redirectUri) {
         let authTabId = null;
         let timeoutId = null;
 
+        // 認証完了・失敗・タイムアウトのどの場合でもリスナーを残さない。
         const cleanup = () => {
             chrome.tabs.onUpdated.removeListener(handleUpdated);
             chrome.tabs.onRemoved.removeListener(handleRemoved);
@@ -154,6 +159,7 @@ function launchSpotifyAuthFlowInTab(authUrl, redirectUri) {
 
         const handleUpdated = (tabId, changeInfo) => {
             if (tabId !== authTabId || !changeInfo.url) return;
+            // redirect URI へ戻った瞬間に認証コード付きURLを回収する。
             if (changeInfo.url.startsWith(redirectUri)) {
                 finish(changeInfo.url);
             }
@@ -185,6 +191,7 @@ function launchSpotifyAuthFlowInTab(authUrl, redirectUri) {
 }
 
 async function requestToken(params) {
+    // 認証コード交換とリフレッシュの両方で同じtoken endpointを使う。
     const body = new URLSearchParams({
         client_id: SPOTIFY_CLIENT_ID,
         ...params
@@ -215,6 +222,7 @@ async function parseTokenResponse(res) {
 }
 
 function saveToken(data) {
+    // refresh_token は返らない場合があるため、存在する値だけ上書きする。
     if (data.access_token) {
         localStorage.setItem(SPOTIFY_STORAGE_KEYS.accessToken, data.access_token);
     }
@@ -245,6 +253,7 @@ async function getValidAccessToken() {
         return token;
     }
 
+    // 期限切れ間近ならAPI呼び出し前に更新して、401の発生を減らす。
     const refreshedToken = await refreshAccessToken();
     if (refreshedToken) {
         return refreshedToken;

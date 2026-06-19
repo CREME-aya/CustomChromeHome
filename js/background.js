@@ -11,6 +11,7 @@ function initBackground() {
     const clearBgBtn = document.getElementById('clear-bg-btn');
     const randomBgBtn = document.getElementById('random-bg-btn');
 
+    // 保存済み背景があれば、起動時にbodyへ直接適用する。
     const savedBg = localStorage.getItem(STORAGE_KEY_BG);
     if (savedBg) {
         document.body.style.backgroundImage = `url(${savedBg})`;
@@ -27,6 +28,7 @@ function initBackground() {
     }
 
     randomBgBtn?.addEventListener('click', () => {
+        // プリセット背景はURLだけ保存し、拡張サイズを増やさない。
         const randomUrl = PRESET_BACKGROUNDS[Math.floor(Math.random() * PRESET_BACKGROUNDS.length)];
         applyBackground(randomUrl);
     });
@@ -35,6 +37,7 @@ function initBackground() {
         const file = bgFileInput?.files?.[0];
         const bgUrl = bgUrlInput?.value?.trim();
         if (file) {
+            // ローカル画像はFileReaderでData URL化して、拡張内だけで完結させる。
             const reader = new FileReader();
             reader.onload = (e) => {
                 const dataUrl = e.target.result;

@@ -4,7 +4,7 @@
 (function() {
 let currentArticles = [];
 let favoriteArticles = readJsonFromStorage(STORAGE_KEY_FAVS, []);
-let currentFilter = 'all'; // 'all' or 'favorites'
+let currentFilter = 'all'; // 記事一覧の表示対象。'all' または 'favorites'。
 let currentSearchQuery = '';
 let feedDisplayMode = localStorage.getItem(STORAGE_KEY_FEED_MODE) || 'mixed';
 
@@ -23,6 +23,7 @@ function initFeed() {
 
     if (presetRss && urlInput) {
         presetRss.addEventListener('change', () => {
+            // プリセット選択は入力欄へ反映し、すぐ保存・再読み込みまで行う。
             const selectedUrl = presetRss.value;
             if (selectedUrl === '') return;
 
@@ -128,6 +129,7 @@ async function loadFeed(feedUrlInput) {
     const feedUrls = Array.isArray(feedUrlInput) ? feedUrlInput : parseFeedUrls(String(feedUrlInput || ''));
 
     try {
+        // 複数フィードのうち一部が失敗しても、成功した記事は表示する。
         const results = await Promise.allSettled(feedUrls.map(fetchFeedArticles));
         currentArticles = results
             .filter(result => result.status === 'fulfilled')
@@ -167,6 +169,7 @@ function normalizeFeedItem(item, sourceFeedUrl) {
     const description = item.description || item.content || '';
     let thumbnail = item.thumbnail || (item.enclosure && item.enclosure.link) || '';
     if (!thumbnail && description) {
+        // RSSにサムネイルがない場合は、本文HTML内の先頭画像を代替として使う。
         const match = description.match(/<img[^>]+src="([^">]+)"/);
         if (match) thumbnail = match[1];
     }
@@ -195,6 +198,7 @@ function renderArticles() {
     let targetArticles = currentFilter === 'all' ? currentArticles : favoriteArticles;
 
     if (currentSearchQuery) {
+        // 検索は記事タイトルのみを対象にして、本文HTMLの誤一致を避ける。
         targetArticles = targetArticles.filter(a =>
             a.title.toLowerCase().includes(currentSearchQuery)
         );
@@ -234,6 +238,7 @@ function renderArticles() {
         const aiBtn = div.querySelector('.ai-summary-btn');
         aiBtn.addEventListener('click', (e) => {
             e.stopPropagation();
+            // 要約はGemini APIキーがある場合だけ、既存のAI送信経路を再利用する。
             const apiKey = localStorage.getItem('custom_gemini_api_key');
             if (!apiKey) {
                 window.showNotification('左上のメニューから Gemini API Key を設定してください。', 'error');
@@ -273,6 +278,7 @@ function toggleFavorite(article) {
 // モーダルで記事プレビューを開く
 // ==========================================
 function openModal(article) {
+    // RSS本文のプレビューHTMLはモーダル内に限定して挿入する。
     document.getElementById('modal-title').textContent = article.title;
     document.getElementById('modal-body').innerHTML = article.summaryHTML;
     document.getElementById('modal-link').href = article.url;

@@ -10,6 +10,7 @@ window.hasTodo = hasTodo;
 window.persistAndRenderTodos = persistAndRenderTodos;
 
 function initTodo() {
+    // 保存済みTodoを先に描画してから、入力フォームのイベントを接続する。
     todos = readTodos();
     renderTodos();
 
@@ -32,6 +33,7 @@ function renderTodos() {
     if (!list) return;
     list.innerHTML = '';
 
+    // Todoの状態をDOMから逆算せず、配列を唯一の描画元として扱う。
     todos.forEach((todo, index) => {
         const li = document.createElement('li');
         li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
@@ -54,6 +56,7 @@ function renderTodos() {
         textWrap.appendChild(span);
 
         if (todo.source === 'google-calendar') {
+            // カレンダー由来のTodoは手入力Todoと区別できるように出所を表示する。
             const meta = document.createElement('span');
             meta.className = 'todo-meta';
             meta.textContent = 'Googleカレンダー';
@@ -80,6 +83,7 @@ function addTodo(text) {
     const todoText = text.trim();
     if (!todoText) return;
 
+    // 手入力のTodoは直近の入力が見つけやすいよう先頭へ追加する。
     todos.unshift({ text: todoText, completed: false });
     saveTodos();
     renderTodos();
@@ -89,6 +93,7 @@ function addTodo(text) {
 }
 
 function addTodoItem(todo) {
+    // 外部連携からの追加は呼び出し側でまとめて保存・再描画できるようにする。
     todos.push(todo);
 }
 

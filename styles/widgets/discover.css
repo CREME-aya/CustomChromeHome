@@ -33,24 +33,6 @@
   -webkit-text-fill-color: transparent;
 }
 
-/* アイコンボタン汎用 */
-.icon-btn {
-  background: none;
-  border: none;
-  color: #cbd5e1;
-  font-size: 1.8rem;
-  cursor: pointer;
-  transition: var(--transition-default);
-  padding: 0;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-}
-
-.icon-btn:hover {
-  color: #55c500;
-}
-
 /* セクションヘッダー */
 .section-header {
   display: flex;

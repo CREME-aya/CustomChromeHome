@@ -1,5 +1,5 @@
 // ==========================================
-// Spotify UI
+// Spotify プレイヤーUI
 // ==========================================
 (function() {
 let spotifyPollInterval = null;
@@ -11,6 +11,7 @@ async function initSpotify() {
     const logoutBtn = document.getElementById('spotify-logout-btn');
     if (!loginBtn) return;
 
+    // 保存済みセッションがある場合だけ、起動時にプレイヤー表示へ復帰する。
     if (window.SpotifyAuth.hasStoredSession()) {
         const token = await window.SpotifyAuth.getValidAccessToken();
         if (token) {
@@ -53,6 +54,7 @@ function showSpotifyPlayer(isLoggedIn) {
 }
 
 function startSpotifyPolling() {
+    // Spotify側の再生状態はpushされないため、短い間隔でポーリングする。
     if (spotifyPollInterval) clearInterval(spotifyPollInterval);
     fetchSpotifyCurrentlyPlaying();
     spotifyPollInterval = setInterval(fetchSpotifyCurrentlyPlaying, 5000);
@@ -74,7 +76,7 @@ async function fetchSpotifyCurrentlyPlaying() {
         }
 
         if (res.status === 204 || res.status === 202) {
-            // 再生されていない
+            // 再生されていない状態も正常応答としてUIへ反映する。
             updateSpotifyUI(null);
             return;
         }
@@ -93,6 +95,7 @@ function updateSpotifyUI(data) {
     const playBtn = document.getElementById('spotify-play-btn');
 
     if (!data || !data.item) {
+        // アクティブデバイスがない場合は操作対象がないことを明示する。
         trackEl.textContent = 'デバイスで再生されていません';
         artistEl.textContent = '-';
         artEl.src = '';
@@ -119,10 +122,12 @@ async function controlSpotify(action, method = 'PUT') {
         if (!res) return;
 
         if (res.status === 401) {
+            // 認証が失効した場合は、操作を続けずログアウト表示へ戻す。
             logoutSpotify();
             return;
         }
-        setTimeout(fetchSpotifyCurrentlyPlaying, 500); // すぐに状態を更新
+        // Spotify側の反映に少し遅れがあるため、短い待機後に状態を取り直す。
+        setTimeout(fetchSpotifyCurrentlyPlaying, 500);
     } catch(e) {
         console.error(e);
     }

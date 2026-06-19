@@ -10,6 +10,7 @@ function initApiKeys() {
     const apiKeys = {};
 
     function updateBoxStatus() {
+        // APIキー保存後は、各チャット欄の初期メッセージを準備完了表示へ更新する。
         if (apiKeys.openai) {
             const b = document.getElementById('chatbox-openai');
             if (b && b.innerHTML.includes('APIキーを設定してください')) b.innerHTML = '<div class="chat-msg ai-msg">OpenAIの準備が完了しました！<br><small style="color:#94a3b8;">※質問は上部の検索バーから入力してください</small></div>';
@@ -25,6 +26,7 @@ function initApiKeys() {
     }
 
     keys.forEach(k => {
+        // 入力欄と実行時参照用オブジェクトの両方に保存済みキーを復元する。
         const input = document.getElementById(`${k}-api-key`);
         if (input) {
             const val = localStorage.getItem(`custom_${k}_api_key`) || '';
@@ -64,6 +66,7 @@ function initMultiAI() {
     const aiGlobalSendBtn = document.getElementById('ai-global-send-btn');
 
     function formatMarkdown(text) {
+        // AI応答の最低限のMarkdownだけを、チャット欄で読めるHTMLに変換する。
         return text.replace(/\n/g, '<br>')
                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     }
@@ -93,6 +96,7 @@ function initMultiAI() {
         }
         const loadingDiv = addChatMessageToBox(boxId, '考え中...', 'ai');
         try {
+            // ブラウザから直接呼び出すため、ユーザー保存のAPIキーをAuthorizationに使う。
             const res = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
                 headers: {
@@ -122,6 +126,7 @@ function initMultiAI() {
         }
         const loadingDiv = addChatMessageToBox(boxId, '考え中...', 'ai');
         try {
+            // Anthropicのブラウザ直呼び出しに必要なヘッダーを明示する。
             const res = await fetch('https://api.anthropic.com/v1/messages', {
                 method: 'POST',
                 headers: {
@@ -154,6 +159,7 @@ function initMultiAI() {
         }
         const loadingDiv = addChatMessageToBox(boxId, '考え中...', 'ai');
         try {
+            // GeminiはAPIキーをクエリパラメータで渡す仕様に合わせる。
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKeys.gemini}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -174,6 +180,7 @@ function initMultiAI() {
     window.sendToAI = async function(prompt) {
         if (!prompt) return;
 
+        // 非表示のAIパネルには送信せず、画面上で比較できるモデルだけに投げる。
         const isOpenAIVisible = document.getElementById('toggle-ai-openai')?.checked;
         const isAnthropicVisible = document.getElementById('toggle-ai-anthropic')?.checked;
         const isGeminiVisible = document.getElementById('toggle-ai-gemini')?.checked;
@@ -190,6 +197,7 @@ function initMultiAI() {
         aiGlobalInput.value = '';
         aiGlobalSendBtn.disabled = true;
 
+        // 複数モデルの応答を待ち合わせ、全完了後に送信ボタンを戻す。
         const promises = [];
         if (isOpenAIVisible) promises.push(fetchOpenAI(prompt, 'chatbox-openai'));
         if (isAnthropicVisible) promises.push(fetchAnthropic(prompt, 'chatbox-anthropic'));
