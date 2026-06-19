@@ -1,0 +1,112 @@
+/* ========== 天気ウィジェット ========== */
+.weather-widget {
+  background: var(--panel-bg);
+  backdrop-filter: var(--panel-blur);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--border-radius-widget);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  color: #f8fafc;
+  transition: var(--transition-default);
+  margin-bottom: 20px;
+}
+
+.weather-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.weather-area {
+  font-size: 0.95rem;
+  color: #e2e8f0;
+  font-weight: bold;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+.weather-temp-container {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.weather-desc {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #f8fafc;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+}
+
+.weather-rain {
+  font-size: 0.85rem;
+  color: #60a5fa;
+  background: rgba(96, 165, 250, 0.1);
+  padding: 2px 8px;
+  border-radius: var(--border-radius-input);
+}
+
+.weather-icon-container {
+  font-size: 3rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
+}
+
+.weather-loading {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  text-align: center;
+  width: 100%;
+}
+
+.weather-error {
+  font-size: 0.9rem;
+  color: #ef4444;
+  text-align: center;
+  width: 100%;
+}
+
+/* 降水確率グラフ */
+.weather-chart-container {
+  display: flex;
+  gap: 8px;
+  margin-left: 16px;
+  border-left: 1px solid rgba(255,255,255,0.1);
+  padding-left: 16px;
+  height: 60px;
+  align-items: flex-end;
+}
+
+.weather-chart-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  width: 24px;
+  gap: 4px;
+}
+
+.weather-chart-bar {
+  width: 12px;
+  background: linear-gradient(to top, #3b82f6, #60a5fa);
+  border-radius: 4px 4px 0 0;
+  transition: height 0.5s ease;
+}
+
+.weather-chart-label {
+  font-size: 0.65rem;
+  color: #cbd5e1;
+  white-space: nowrap;
+}
+
+.weather-chart-val {
+  font-size: 0.7rem;
+  color: #f8fafc;
+  font-weight: bold;
+  margin-bottom: -2px;
+}
