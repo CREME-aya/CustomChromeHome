@@ -44,6 +44,10 @@
                     <input type="checkbox" id="toggle-clock" class="toggle-checkbox" checked>
                 </div>
                 <div class="toggle-row">
+                    <label for="toggle-clock-glass" class="sidebar-label" style="margin-bottom: 0;">時計の背景（すりガラス）</label>
+                    <input type="checkbox" id="toggle-clock-glass" class="toggle-checkbox">
+                </div>
+                <div class="toggle-row">
                     <label for="toggle-weather" class="sidebar-label" style="margin-bottom: 0;">天気</label>
                     <input type="checkbox" id="toggle-weather" class="toggle-checkbox" checked>
                 </div>
@@ -212,17 +216,21 @@
                     <span>Spotify</span>
                 </div>
                 <div id="spotify-player-container" class="spotify-player-row">
-                    <img id="spotify-art" class="spotify-art" src="" alt="">
-                    <div class="spotify-track-info">
-                        <div id="spotify-track" class="spotify-track-name">再生されていません</div>
-                        <div id="spotify-artist" class="spotify-artist-name">-</div>
+                    <div class="spotify-now-playing">
+                        <img id="spotify-art" class="spotify-art" src="" alt="">
+                        <div class="spotify-track-info">
+                            <div id="spotify-track" class="spotify-track-name">再生されていません</div>
+                            <div id="spotify-artist" class="spotify-artist-name">-</div>
+                        </div>
                     </div>
-                    <div class="spotify-controls">
-                        <button id="spotify-prev-btn" class="spotify-ctrl-btn">◀◀</button>
-                        <button id="spotify-play-btn" class="spotify-ctrl-btn spotify-play-main">▶</button>
-                        <button id="spotify-next-btn" class="spotify-ctrl-btn">▶▶</button>
+                    <div class="spotify-player-actions">
+                        <div class="spotify-controls">
+                            <button id="spotify-prev-btn" class="spotify-ctrl-btn" type="button" aria-label="前の曲" title="前の曲"><span class="spotify-btn-icon" aria-hidden="true">⏮︎</span></button>
+                            <button id="spotify-play-btn" class="spotify-ctrl-btn spotify-play-main" type="button" aria-label="再生" title="再生" data-playing="false"><span id="spotify-play-icon" class="spotify-btn-icon" aria-hidden="true">▶︎</span></button>
+                            <button id="spotify-next-btn" class="spotify-ctrl-btn" type="button" aria-label="次の曲" title="次の曲"><span class="spotify-btn-icon" aria-hidden="true">⏭︎</span></button>
+                        </div>
+                        <button id="spotify-logout-btn" class="outline-btn spotify-logout-inline" type="button">解除</button>
                     </div>
-                    <button id="spotify-logout-btn" class="outline-btn spotify-logout-inline">解除</button>
                 </div>
                 <div id="spotify-auth-prompt" class="spotify-auth-row" style="justify-content: center; padding: 10px 0;">
                     <button id="spotify-login-btn" class="outline-btn spotify-connect-btn">連携する</button>

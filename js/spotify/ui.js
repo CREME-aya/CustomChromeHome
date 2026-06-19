@@ -172,12 +172,15 @@ function updateSpotifyUI(data) {
         // アクティブデバイスがない場合は操作対象がないことを明示する。
         // 詳細: 画面に表示するテキストを安全に更新する。
         trackEl.textContent = 'デバイスで再生されていません';
+        trackEl.title = '';
         // 詳細: 画面に表示するテキストを安全に更新する。
         artistEl.textContent = '-';
+        artistEl.title = '';
         // 詳細: 次の処理行「artEl.src = '';」の役割を、その場の制御フローに組み込む。
         artEl.src = '';
+        artEl.alt = '';
         // 詳細: 画面に表示するテキストを安全に更新する。
-        playBtn.textContent = '▶️';
+        setSpotifyPlaybackButtonState(playBtn, false);
         // 詳細: 呼び出し元へ処理結果を返して、この関数の流れを終える。
         return;
     // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
@@ -185,23 +188,66 @@ function updateSpotifyUI(data) {
 
     // 詳細: 画面に表示するテキストを安全に更新する。
     trackEl.textContent = data.item.name;
+    trackEl.title = data.item.name;
     // 詳細: 画面に表示するテキストを安全に更新する。
-    artistEl.textContent = data.item.artists.map(a => a.name).join(', ');
+    artistEl.textContent = getSpotifyCreatorLabel(data.item);
+    artistEl.title = artistEl.textContent;
     // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
     if (data.item.album && data.item.album.images.length > 0) {
         // 詳細: 次の処理行「artEl.src = data.item.album.images[0].url;」の役割を、その場の制御フローに組み込む。
         artEl.src = data.item.album.images[0].url;
+        artEl.alt = `${data.item.name} のアートワーク`;
+    // 詳細: オブジェクトまたはブロックの境界を定義する。
+    } else {
+        // 詳細: 次の処理行「artEl.src = '';」の役割を、その場の制御フローに組み込む。
+        artEl.src = '';
+        artEl.alt = '';
+    // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
+    }
+
+    // 詳細: 次の処理行「setSpotifyPlaybackButtonState(playBtn, Boolean(data.is_playing));」の役割を、その場の制御フローに組み込む。
+    setSpotifyPlaybackButtonState(playBtn, Boolean(data.is_playing));
+// 詳細: 現在のオブジェクト定義または関数代入を閉じる。
+}
+
+// 詳細: 関数「getSpotifyCreatorLabel」の処理ブロックを開始する。
+function getSpotifyCreatorLabel(item) {
+    // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
+    if (Array.isArray(item.artists) && item.artists.length > 0) {
+        // 詳細: 呼び出し元へ処理結果を返して、この関数の流れを終える。
+        return item.artists.map(artist => artist.name).filter(Boolean).join(', ');
     // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
     }
 
     // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
-    if (data.is_playing) {
+    if (item.show && item.show.name) {
+        // 詳細: 呼び出し元へ処理結果を返して、この関数の流れを終える。
+        return item.show.name;
+    // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
+    }
+
+    // 詳細: 呼び出し元へ処理結果を返して、この関数の流れを終える。
+    return '-';
+// 詳細: 現在のオブジェクト定義または関数代入を閉じる。
+}
+
+// 詳細: 関数「setSpotifyPlaybackButtonState」の処理ブロックを開始する。
+function setSpotifyPlaybackButtonState(playBtn, isPlaying) {
+    // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
+    if (!playBtn) return;
+
+    // 詳細: 変数「playIcon」を、この後の処理で使う値として用意する。
+    const playIcon = document.getElementById('spotify-play-icon');
+    // 詳細: 次の処理行「playBtn.dataset.playing = isPlaying ? 'true' : 'false';」の役割を、その場の制御フローに組み込む。
+    playBtn.dataset.playing = isPlaying ? 'true' : 'false';
+    // 詳細: 次の処理行「playBtn.setAttribute('aria-label', isPlaying ? '一時停止' : '再生');」の役割を、その場の制御フローに組み込む。
+    playBtn.setAttribute('aria-label', isPlaying ? '一時停止' : '再生');
+    // 詳細: 次の処理行「playBtn.title = isPlaying ? '一時停止' : '再生';」の役割を、その場の制御フローに組み込む。
+    playBtn.title = isPlaying ? '一時停止' : '再生';
+    // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
+    if (playIcon) {
         // 詳細: 画面に表示するテキストを安全に更新する。
-        playBtn.textContent = '⏸';
-    // 詳細: オブジェクトまたはブロックの境界を定義する。
-    } else {
-        // 詳細: 画面に表示するテキストを安全に更新する。
-        playBtn.textContent = '▶️';
+        playIcon.textContent = isPlaying ? '⏸︎' : '▶︎';
     // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
     }
 // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
@@ -242,7 +288,7 @@ async function toggleSpotifyPlay() {
     // 詳細: 変数「playBtn」を、この後の処理で使う値として用意する。
     const playBtn = document.getElementById('spotify-play-btn');
     // 詳細: 変数「isPlaying」を、この後の処理で使う値として用意する。
-    const isPlaying = playBtn.textContent === '⏸';
+    const isPlaying = playBtn.dataset.playing === 'true';
     // 詳細: 非同期処理の完了を待ってから、次の処理へ進める。
     await controlSpotify(isPlaying ? 'pause' : 'play', 'PUT');
 // 詳細: 現在のオブジェクト定義または関数代入を閉じる。

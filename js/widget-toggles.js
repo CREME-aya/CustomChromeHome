@@ -75,6 +75,27 @@ function initWidgetToggles() {
         });
     // 詳細: 現在の関数呼び出しまたは即時実行関数のブロックを閉じる。
     });
+
+    // 時計の背景（すりガラス）のトグル処理
+    const clockGlassCheckbox = document.getElementById('toggle-clock-glass');
+    if (clockGlassCheckbox) {
+        const storedGlass = localStorage.getItem('toggle-clock-glass');
+        if (storedGlass !== null) {
+            clockGlassCheckbox.checked = storedGlass === 'true';
+        }
+        const applyClockGlass = () => {
+            const isVisible = clockGlassCheckbox.checked;
+            document.querySelectorAll('.clock-widget').forEach(el => {
+                el.classList.toggle('no-glass-bg', !isVisible);
+            });
+        };
+        applyClockGlass();
+        clockGlassCheckbox.addEventListener('change', () => {
+            localStorage.setItem('toggle-clock-glass', clockGlassCheckbox.checked);
+            applyClockGlass();
+        });
+    }
+
 // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
 }
 // 詳細: オブジェクトまたはブロックの境界を定義する。
