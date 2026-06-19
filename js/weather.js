@@ -1,6 +1,10 @@
 // ==========================================
 // Open-Meteo APIから天気・降水確率情報を取得して描画する
 // ==========================================
+(function() {
+window.initWeatherSettings = initWeatherSettings;
+window.loadWeather = loadWeather;
+
 async function loadWeather() {
     const weatherWidget = document.getElementById('weather-widget');
     if (!weatherWidget) return;
@@ -171,3 +175,4 @@ function getWeatherChartBarHeight(probability) {
 function formatWeatherLocationName(name) {
     return name.split(',')[0];
 }
+})();

@@ -1,6 +1,9 @@
 // ==========================================
 // initThemeSettings — UIテーマの切り替え
 // ==========================================
+(function() {
+window.initThemeSettings = initThemeSettings;
+
 function initThemeSettings() {
     const themeSelect = document.getElementById('theme-select');
     if (!themeSelect) return;
@@ -14,3 +17,4 @@ function initThemeSettings() {
         localStorage.setItem(STORAGE_KEY_THEME, theme);
     });
 }
+})();

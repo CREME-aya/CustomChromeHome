@@ -1,6 +1,9 @@
 // ==========================================
 // initQuickLinks — クイックリンクウィジェット
 // ==========================================
+(function() {
+window.initQuickLinks = initQuickLinks;
+
 function initQuickLinks() {
     const quickLinksContainer = document.getElementById('quick-links-container');
     const addLinkBtn = document.getElementById('add-link-btn');
@@ -69,3 +72,4 @@ function initQuickLinks() {
 
     renderQuickLinks();
 }
+})();

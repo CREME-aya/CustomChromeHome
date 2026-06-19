@@ -1,6 +1,9 @@
 // ==========================================
 // initClock — 時計ウィジェット
 // ==========================================
+(function() {
+window.initClock = initClock;
+
 function initClock() {
     const timeDisplay = document.getElementById('time-display');
     const dateDisplay = document.getElementById('date-display');
@@ -18,3 +21,4 @@ function initClock() {
     setInterval(updateClock, 1000);
     updateClock();
 }
+})();

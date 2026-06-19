@@ -1,6 +1,9 @@
 // ==========================================
 // initWidgetToggles — ウィジェット表示トグル
 // ==========================================
+(function() {
+window.initWidgetToggles = initWidgetToggles;
+
 function initWidgetToggles() {
     const toggles = [
         { id: 'toggle-clock', targetClass: 'clock-widget' },
@@ -40,3 +43,4 @@ function initWidgetToggles() {
         });
     });
 }
+})();

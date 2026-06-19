@@ -1,6 +1,9 @@
 // ==========================================
 // initSidebar — サイドバー開閉ロジック
 // ==========================================
+(function() {
+window.initSidebar = initSidebar;
+
 function initSidebar() {
     const menuBtn = document.getElementById('menu-btn');
     const closeSidebarBtn = document.getElementById('close-sidebar-btn');
@@ -20,3 +23,4 @@ function initSidebar() {
     // 他のinit関数からサイドバーを閉じるために公開
     window._toggleSidebar = toggleSidebar;
 }
+})();

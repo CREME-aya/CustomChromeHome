@@ -1,6 +1,9 @@
 // ==========================================
 // initBackground — 背景画像設定（ランダム、カスタム、クリア）
 // ==========================================
+(function() {
+window.initBackground = initBackground;
+
 function initBackground() {
     const bgUrlInput = document.getElementById('bg-url-input');
     const bgFileInput = document.getElementById('local-bg-input') || document.getElementById('bg-file-input');
@@ -53,3 +56,4 @@ function initBackground() {
         if (bgFileInput) bgFileInput.value = '';
     });
 }
+})();

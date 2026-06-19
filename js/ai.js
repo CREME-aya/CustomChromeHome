@@ -1,6 +1,10 @@
 // ==========================================
 // initApiKeys — APIキー管理
 // ==========================================
+(function() {
+window.initApiKeys = initApiKeys;
+window.initMultiAI = initMultiAI;
+
 function initApiKeys() {
     const keys = ['openai', 'anthropic', 'gemini'];
     const apiKeys = {};
@@ -209,3 +213,4 @@ function initMultiAI() {
         });
     }
 }
+})();
