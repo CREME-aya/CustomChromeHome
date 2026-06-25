@@ -43,6 +43,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.GoogleTasks) window.GoogleTasks.init();
     if (window.Gmail) window.Gmail.init();
     if (window.GitHub) window.GitHub.init();
+    if (window.initGoogleFit) window.initGoogleFit();
+    if (window.initGithubGrass) window.initGithubGrass();
+    if (window.initMediaController) window.initMediaController();
 
     // 起動時に保存済み設定を使って外部データを読み込む。
     // 詳細: 次の処理行「loadFeed(getStoredFeedUrls());」の役割を、その場の制御フローに組み込む。

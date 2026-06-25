@@ -23,6 +23,8 @@
     <link rel="stylesheet" href="styles/widgets/gmail.css">
     <link rel="stylesheet" href="styles/widgets/github.css">
     <link rel="stylesheet" href="styles/widgets/stocks.css">
+    <link rel="stylesheet" href="styles/widgets/google-fit.css">
+    <link rel="stylesheet" href="styles/widgets/github-grass.css">
 </head>
 <body>
     <!-- 設定用のサイドバー -->
@@ -100,6 +102,14 @@
                     <label for="toggle-stocks" class="sidebar-label" style="margin-bottom: 0;">株価・市場</label>
                     <input type="checkbox" id="toggle-stocks" class="toggle-checkbox" checked>
                 </div>
+                <div class="toggle-row">
+                    <label for="toggle-google-fit" class="sidebar-label" style="margin-bottom: 0;">Google Fit (万歩計)</label>
+                    <input type="checkbox" id="toggle-google-fit" class="toggle-checkbox" checked>
+                </div>
+                <div class="toggle-row">
+                    <label for="toggle-github-grass" class="sidebar-label" style="margin-bottom: 0;">GitHub 芝生</label>
+                    <input type="checkbox" id="toggle-github-grass" class="toggle-checkbox" checked>
+                </div>
             </div>
 
             <hr class="sidebar-divider">
@@ -112,6 +122,18 @@
                     <option value="theme-solid-dark">Solid Dark</option>
                     <option value="theme-minimal">Minimal</option>
                 </select>
+            </div>
+
+            <div class="setting-block">
+                <label class="sidebar-label">メディア制御対象:</label>
+                <div class="radio-group" style="display: flex; gap: 15px; margin-top: 5px;">
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.9rem;">
+                        <input type="radio" name="media-mode" value="spotify" checked style="cursor: pointer;"> Spotify
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.9rem;">
+                        <input type="radio" name="media-mode" value="youtube" style="cursor: pointer;"> YouTube
+                    </label>
+                </div>
             </div>
 
             <hr class="sidebar-divider">
@@ -287,7 +309,7 @@
                 <ul id="todo-list" class="todo-list"></ul>
             </div>
 
-            <!-- Spotify ウィジェット -->
+            <!-- Spotify / YouTube ウィジェット -->
             <div id="spotify-widget" class="spotify-widget sortable-item" data-id="widget-spotify">
                 <div class="widget-header">
                     <span>Spotify</span>
@@ -311,6 +333,63 @@
                 </div>
                 <div id="spotify-auth-prompt" class="spotify-auth-row" style="justify-content: center; padding: 10px 0;">
                     <button id="spotify-login-btn" class="outline-btn spotify-connect-btn">連携する</button>
+                </div>
+            </div>
+
+            <!-- Google Fit ウィジェット -->
+            <div id="google-fit-widget" class="google-fit-widget sortable-item" data-id="widget-google-fit" data-widget-id="toggle-google-fit">
+                <div class="widget-header">
+                    <span>Google Fit 歩数計</span>
+                    <button id="google-fit-sync-btn" class="todo-calendar-btn" type="button">同期</button>
+                </div>
+                <div id="google-fit-error" class="hidden" style="color: var(--text-muted); font-size: 0.85rem; padding: 10px 0; text-align: center;"></div>
+                <div id="google-fit-content" class="google-fit-container">
+                    <div class="fit-progress-wrapper">
+                        <svg class="fit-svg" viewBox="0 0 100 100">
+                            <circle class="fit-bg-circle" cx="50" cy="50" r="40"></circle>
+                            <circle id="google-fit-progress-circle" class="fit-progress-circle" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
+                        </svg>
+                        <div class="fit-steps-center">
+                            <div class="fit-icon">🚶</div>
+                        </div>
+                    </div>
+                    <div class="fit-stats">
+                        <div id="google-fit-steps-value" class="fit-steps-value">0</div>
+                        <div class="fit-steps-label">今日の歩数</div>
+                    </div>
+                    <div class="fit-goal-container">
+                        <span>目標:</span>
+                        <input type="number" id="google-fit-goal-input" class="fit-goal-input" value="8000" min="1000" step="500">
+                        <span>歩</span>
+                    </div>
+                    <div id="google-fit-progress-text" class="fit-progress-text"></div>
+                </div>
+            </div>
+
+            <!-- GitHub 芝生ウィジェット -->
+            <div id="github-grass-widget" class="github-grass-widget sortable-item" data-id="widget-github-grass" data-widget-id="toggle-github-grass">
+                <div class="widget-header">
+                    <span>GitHub コントリビューション</span>
+                    <button id="github-grass-sync-btn" class="todo-calendar-btn" type="button">同期</button>
+                </div>
+                <div id="github-grass-error" class="hidden" style="color: var(--text-muted); font-size: 0.85rem; padding: 10px 0; text-align: center;"></div>
+                <div id="github-grass-content" class="github-grass-container">
+                    <div class="github-grass-meta">
+                        <div>過去1年間のコントリビューション: <strong id="github-grass-total">0</strong></div>
+                        <div id="github-grass-username" class="github-grass-username"></div>
+                    </div>
+                    <div class="grass-grid-wrapper">
+                        <div id="github-grass-grid-container" class="github-grass-grid" role="grid"></div>
+                    </div>
+                    <div class="grass-legend">
+                        <span>Less</span>
+                        <div class="grass-legend-box l0"></div>
+                        <div class="grass-legend-box l1"></div>
+                        <div class="grass-legend-box l2"></div>
+                        <div class="grass-legend-box l3"></div>
+                        <div class="grass-legend-box l4"></div>
+                        <span>More</span>
+                    </div>
                 </div>
             </div>
 
@@ -465,6 +544,9 @@
     <script src="js/spotify/auth.js?v=20260625"></script>
     <script src="js/spotify/api.js?v=20260619"></script>
     <script src="js/spotify/ui.js?v=20260625"></script>
+    <script src="js/google-fit.js?v=20260625"></script>
+    <script src="js/github-grass.js?v=20260625"></script>
+    <script src="js/media-controller.js?v=20260625"></script>
     <script src="js/app.js?v=20260619"></script>
 </body>
 </html>

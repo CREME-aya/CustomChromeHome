@@ -1,0 +1,108 @@
+/* GitHub Contribution Grass (芝生) ウィジェット */
+.github-grass-widget {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--border-radius-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  color: var(--text-color);
+  box-sizing: border-box;
+  backdrop-filter: blur(10px);
+}
+
+.github-grass-sync-btn.rotating {
+  animation: spin 0.6s linear;
+}
+
+.github-grass-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  margin-top: 10px;
+}
+
+.github-grass-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.github-grass-username {
+  font-weight: 600;
+  color: #30a14e;
+}
+
+.grass-grid-wrapper {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 8px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.grass-grid-wrapper::-webkit-scrollbar {
+  height: 6px;
+}
+
+.grass-grid-wrapper::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.grass-grid-wrapper::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.github-grass-grid {
+  display: grid;
+  grid-template-rows: repeat(7, 10px);
+  grid-auto-flow: column;
+  grid-auto-columns: 10px;
+  gap: 3px;
+  padding: 2px;
+}
+
+.grass-cell {
+  width: 100%;
+  height: 100%;
+  border-radius: 2px;
+  transition: transform 0.1s ease, outline 0.1s ease;
+  cursor: pointer;
+}
+
+.grass-cell:hover {
+  transform: scale(1.2);
+  outline: 1px solid var(--text-color);
+  z-index: 10;
+}
+
+.grass-legend {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+.grass-legend-box {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.grass-legend-box.l0 { background-color: rgba(255, 255, 255, 0.05); }
+.grass-legend-box.l1 { background-color: #9be9a8; }
+.grass-legend-box.l2 { background-color: #40c463; }
+.grass-legend-box.l3 { background-color: #30a14e; }
+.grass-legend-box.l4 { background-color: #216e39; }
