@@ -34,6 +34,8 @@ const STORAGE_KEY_WIDGET_ORDER = 'custom_widget_order';
 const STORAGE_KEY_WIDGET_STATES = 'custom_widget_states_v2';
 // 詳細: 変数「STORAGE_KEY_FEED_MODE」を、この後の処理で使う値として用意する。
 const STORAGE_KEY_FEED_MODE = 'custom_feed_display_mode';
+// 障害時に直前の記事を表示するため、フィード単位のキャッシュを保存する。
+const STORAGE_KEY_FEED_CACHE = 'custom_feed_cache_v1';
 // 詳細: 変数「DEFAULT_FEED_URLS」を、この後の処理で使う値として用意する。
 const DEFAULT_FEED_URLS = [DEFAULT_URL];
 
@@ -106,6 +108,15 @@ const WIDGET_TWO_COLUMN_MIN_WIDTH = WIDGET_WIDTH_WIDE;
 const RESIZE_ZONE_PX = 20;
 // 詳細: 変数「FEED_MAX_ITEMS」を、この後の処理で使う値として用意する。
 const FEED_MAX_ITEMS = 20;
+const FEED_SPLIT_MAX_ITEMS_PER_FEED = 10;
+const FEED_SPLIT_MAX_TOTAL_ITEMS = 40;
+const FEED_REQUEST_TIMEOUT_MS = 10000;
+const FEED_MAX_CONCURRENT_REQUESTS = 4;
+const FEED_MAX_RETRIES = 1;
+const FEED_RETRY_DELAY_MS = 400;
+const FEED_SEARCH_DEBOUNCE_MS = 150;
+const FEED_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const FEED_CACHE_ITEMS_PER_FEED = 20;
 
 // Spotify認証トークンの保存先と、期限前更新の余裕時間。
 // 詳細: 変数「SPOTIFY_STORAGE_KEYS」を、この後の処理で使う値として用意する。

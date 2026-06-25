@@ -144,6 +144,60 @@
   border-color: #fff;
 }
 
+.feed-mode-control {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--border-radius-md);
+}
+
+.feed-mode-control .tab-btn {
+  border: 0;
+  border-radius: var(--border-radius-sm);
+}
+
+.feed-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.feed-status {
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.feed-status.success {
+  color: #86efac;
+}
+
+.feed-status.warning {
+  color: #fcd34d;
+}
+
+.feed-status.error {
+  color: #fca5a5;
+}
+
+.feed-empty-state,
+.feed-source-error {
+  padding: var(--space-xl);
+  color: #94a3b8;
+  text-align: center;
+}
+
+.feed-source-error {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-md);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  border-radius: var(--border-radius-md);
+  color: #fca5a5;
+}
+
 /* 記事アイテム内部のレイアウト */
 .item {
   display: flex;
@@ -167,6 +221,12 @@
 }
 
 .item-content {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  padding: 0;
+  cursor: pointer;
   flex: 1;
   min-width: 0;
   overflow: hidden;

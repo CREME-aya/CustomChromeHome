@@ -46,10 +46,17 @@
   cursor: pointer;
   transition: var(--transition-default);
   line-height: 1;
+  background: transparent;
+  border: 0;
+  padding: 0;
 }
 
-.close-btn:hover {
+.close-btn:hover,
+.close-btn:focus-visible {
   color: #fff;
+  outline: 2px solid #55c500;
+  outline-offset: 4px;
+  border-radius: var(--border-radius-sm);
 }
 
 #modal-title {
