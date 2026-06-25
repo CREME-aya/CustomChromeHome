@@ -87,6 +87,9 @@ async function loadEvents(force = false) {
                 }
             } catch(err) {
                 console.warn(`Failed to fetch events for calendar: ${calendarId}`, err);
+                if (err.message === "Unauthorized") {
+                    throw err; // 401エラーの場合は外側のcatchに再スローして認証エラー処理を行う
+                }
             }
         }
 

@@ -100,8 +100,9 @@ async function fetchFitSteps() {
                     dataSourceId: 'derived:com.google.step_count.delta:com.google.android.gms:estimated_steps'
                 }],
                 bucketByTime: { durationMillis: 86400000 },
-                startTimeMillis: startOfDay.getTime(),
-                endTimeMillis: endOfDay.getTime()
+                // Google Fit APIはタイムスタンプを文字列形式で要求するため、Stringにキャストして送信する
+                startTimeMillis: String(startOfDay.getTime()),
+                endTimeMillis: String(endOfDay.getTime())
             })
         });
 
@@ -138,7 +139,13 @@ async function fetchFitSteps() {
 
     } catch (err) {
         console.error("Failed to fetch Google Fit steps:", err);
-        renderFromCache();
+        const cached = readJsonFromStorage(STORAGE_KEY_GOOGLE_FIT_CACHE, null);
+        if (cached !== null) {
+            renderFromCache();
+            window.showNotification("Google Fit の歩数同期に失敗しました。キャッシュを表示しています。", "warning");
+        } else {
+            showFitError(`歩数の取得に失敗しました。(${err.message})`);
+        }
     }
 }
 

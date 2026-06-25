@@ -68,12 +68,20 @@ async function loadEmails(force = false) {
                 const detailRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
+                
+                if (detailRes.status === 401) {
+                    throw new Error("Unauthorized");
+                }
+                
                 if (!detailRes.ok) continue;
 
                 const detail = await detailRes.json();
                 emailDetails.push(parseEmailData(detail));
             } catch(err) {
                 console.warn(`Failed to fetch email details for id: ${msg.id}`, err);
+                if (err.message === "Unauthorized") {
+                    throw err;
+                }
             }
         }
 
