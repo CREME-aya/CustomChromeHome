@@ -96,40 +96,48 @@ function calculateWidgetPositions(containerWidth) {
     // 詳細: 次の処理行「Object.assign(positions, calculateAiPanelPositions(containerWidth, aiTop, normalWidthPx));」の役割を、その場の制御フローに組み込む。
     Object.assign(positions, calculateAiPanelPositions(containerWidth, aiTop, normalWidthPx));
 
-    // TodoとクイックリンクはAIパネルの段数に合わせて下へ逃がす。
+    // ノーマル幅ウィジェット（Todo、リンク、新ウィジェット）のグリッド配置
     // 詳細: 変数「nextTop」を、この後の処理で使う値として用意する。
     const nextTop = calculateUtilityTop(containerWidth, aiTop);
-    // 詳細: 変数「utilRowWidth」を、この後の処理で使う値として用意する。
-    const utilRowWidth = (WIDGET_WIDTH_NORMAL * 2) + WIDGET_GROUP_GAP;
-    // 詳細: 変数「utilStartX」を、この後の処理で使う値として用意する。
-    const utilStartX = Math.max(0, (containerWidth - utilRowWidth) / 2);
-    // 詳細: 次の処理行「positions['widget-todo'] = {」の役割を、その場の制御フローに組み込む。
-    positions['widget-todo'] = {
-        // 詳細: オブジェクトのプロパティ値を定義する。
-        position: 'absolute',
-        // 詳細: オブジェクトのプロパティ値を定義する。
-        left: `${utilStartX}px`,
-        // 詳細: オブジェクトのプロパティ値を定義する。
-        top: `${nextTop}px`,
-        // 詳細: 次の処理行「width: normalWidthPx」の役割を、その場の制御フローに組み込む。
-        width: normalWidthPx
-    // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
-    };
-    // 詳細: 次の処理行「positions['widget-quick-links'] = {」の役割を、その場の制御フローに組み込む。
-    positions['widget-quick-links'] = {
-        // 詳細: オブジェクトのプロパティ値を定義する。
-        position: 'absolute',
-        // 詳細: オブジェクトのプロパティ値を定義する。
-        left: `${utilStartX + WIDGET_WIDTH_NORMAL + WIDGET_GROUP_GAP}px`,
-        // 詳細: オブジェクトのプロパティ値を定義する。
-        top: `${nextTop}px`,
-        // 詳細: 次の処理行「width: normalWidthPx」の役割を、その場の制御フローに組み込む。
-        width: normalWidthPx
-    // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
-    };
 
-    // 詳細: 変数「discoverTop」を、この後の処理で使う値として用意する。
-    const discoverTop = nextTop + WIDGET_UTILITY_HEIGHT + WIDGET_GAP;
+    // グリッド配置対象のノーマル幅ウィジェット一覧
+    const normalWidgets = [
+        'widget-todo',
+        'widget-quick-links',
+        'widget-google-calendar',
+        'widget-google-tasks',
+        'widget-gmail',
+        'widget-github',
+        'widget-stocks',
+        'widget-google-fit',
+        'widget-github-grass'
+    ];
+
+    // 利用可能な幅に応じて列数を動的に決定 (1列から最大3列)
+    const colWidth = WIDGET_WIDTH_NORMAL + WIDGET_GROUP_GAP;
+    let cols = Math.floor((containerWidth + WIDGET_GROUP_GAP) / colWidth);
+    cols = Math.max(1, Math.min(cols, 3)); // 画面配置上、最大3列に制限
+
+    const rowHeight = WIDGET_UTILITY_HEIGHT + WIDGET_GAP;
+    const gridWidth = (cols * WIDGET_WIDTH_NORMAL) + ((cols - 1) * WIDGET_GROUP_GAP);
+    const startX = Math.max(0, (containerWidth - gridWidth) / 2);
+
+    normalWidgets.forEach((widgetId, index) => {
+        const col = index % cols;
+        const row = Math.floor(index / cols);
+
+        positions[widgetId] = {
+            position: 'absolute',
+            left: `${startX + (col * colWidth)}px`,
+            top: `${nextTop + (row * rowHeight)}px`,
+            width: normalWidthPx
+        };
+    });
+
+    // Discover (RSSフィードなど) はグリッドの段の最下部へ配置する
+    const numRows = Math.ceil(normalWidgets.length / cols);
+    const discoverTop = nextTop + (numRows * rowHeight);
+
     // 詳細: 次の処理行「positions['widget-discover'] = {」の役割を、その場の制御フローに組み込む。
     positions['widget-discover'] = {
         // 詳細: オブジェクトのプロパティ値を定義する。

@@ -1,0 +1,68 @@
+/* Gmail ウィジェット */
+.gmail-widget {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--border-radius-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  color: var(--text-color);
+  box-sizing: border-box;
+}
+
+.gmail-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+.gmail-item {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: var(--space-sm);
+}
+
+.gmail-item:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.gmail-item-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.gmail-item-from {
+  font-weight: 600;
+  color: #818cf8;
+}
+
+.gmail-item-subject {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #f1f5f9;
+  text-decoration: none;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: var(--transition-default);
+}
+
+.gmail-item-subject:hover {
+  color: #818cf8;
+  text-decoration: underline;
+}
+
+.gmail-item-snippet {
+  font-size: 0.8rem;
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

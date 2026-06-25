@@ -18,6 +18,11 @@
     <link rel="stylesheet" href="styles/widgets/weather.css">
     <link rel="stylesheet" href="styles/widgets/todo.css">
     <link rel="stylesheet" href="styles/widgets/spotify.css">
+    <link rel="stylesheet" href="styles/widgets/google-calendar.css">
+    <link rel="stylesheet" href="styles/widgets/google-tasks.css">
+    <link rel="stylesheet" href="styles/widgets/gmail.css">
+    <link rel="stylesheet" href="styles/widgets/github.css">
+    <link rel="stylesheet" href="styles/widgets/stocks.css">
 </head>
 <body>
     <!-- 設定用のサイドバー -->
@@ -75,6 +80,26 @@
                     <label for="toggle-ai-gemini" class="sidebar-label" style="margin-bottom: 0;">Gemini (3.5 Flash)</label>
                     <input type="checkbox" id="toggle-ai-gemini" class="toggle-checkbox" checked>
                 </div>
+                <div class="toggle-row">
+                    <label for="toggle-google-calendar" class="sidebar-label" style="margin-bottom: 0;">Google カレンダー</label>
+                    <input type="checkbox" id="toggle-google-calendar" class="toggle-checkbox" checked>
+                </div>
+                <div class="toggle-row">
+                    <label for="toggle-google-tasks" class="sidebar-label" style="margin-bottom: 0;">Google Tasks</label>
+                    <input type="checkbox" id="toggle-google-tasks" class="toggle-checkbox" checked>
+                </div>
+                <div class="toggle-row">
+                    <label for="toggle-gmail" class="sidebar-label" style="margin-bottom: 0;">Gmail 未読メール</label>
+                    <input type="checkbox" id="toggle-gmail" class="toggle-checkbox" checked>
+                </div>
+                <div class="toggle-row">
+                    <label for="toggle-github" class="sidebar-label" style="margin-bottom: 0;">GitHub Issues & PRs</label>
+                    <input type="checkbox" id="toggle-github" class="toggle-checkbox" checked>
+                </div>
+                <div class="toggle-row">
+                    <label for="toggle-stocks" class="sidebar-label" style="margin-bottom: 0;">株価・市場</label>
+                    <input type="checkbox" id="toggle-stocks" class="toggle-checkbox" checked>
+                </div>
             </div>
 
             <hr class="sidebar-divider">
@@ -130,6 +155,49 @@
                     <button id="weather-city-btn" class="save-btn" style="flex: 0 0 auto; padding: 0 16px;">検索</button>
                 </div>
                 <div id="weather-city-status" style="font-size: 0.85rem; color: #94a3b8;">現在: 東京都 (デフォルト)</div>
+            </div>
+
+            <hr class="sidebar-divider">
+
+            <!-- Google 連携設定 -->
+            <div class="setting-block">
+                <h3 style="margin-top: 0; margin-bottom: 4px; font-size: 1rem; color: #e2e8f0;">Google 連携設定</h3>
+                <p class="spotify-settings-note">Googleカレンダー/Tasks/Gmail連携用のクライアントIDを設定します。</p>
+                <div style="margin-bottom: 8px;">
+                    <button id="google-setup-btn" class="outline-btn spotify-setup-btn" type="button" style="margin-bottom: 8px;">OAuth 設定手順を別タブで開く</button>
+                </div>
+                <label for="google-client-id" class="sidebar-label">Google Client ID:</label>
+                <input type="password" id="google-client-id" placeholder="123456-abc.apps.googleusercontent.com" class="url-input" style="margin-bottom: 10px;">
+                <div style="display: flex; gap: 8px;">
+                    <button id="google-connect-btn" class="save-btn" style="background: linear-gradient(135deg, #4285f4, #357ae8); flex: 1;">Googleと連携</button>
+                    <button id="google-disconnect-btn" class="outline-btn" style="border-color:#ef4444; color:#ef4444;">解除</button>
+                </div>
+            </div>
+
+            <hr class="sidebar-divider">
+
+            <!-- GitHub 連携設定 -->
+            <div class="setting-block">
+                <h3 style="margin-top: 0; margin-bottom: 4px; font-size: 1rem; color: #e2e8f0;">GitHub 連携設定</h3>
+                <p class="spotify-settings-note">IssueやPull Requestを取得するための Personal Access Token を設定します。</p>
+                <label for="github-pat" class="sidebar-label">GitHub Token (PAT):</label>
+                <input type="password" id="github-pat" placeholder="ghp_..." class="url-input" style="margin-bottom: 10px;">
+                <button id="save-github-btn" class="save-btn" style="background: linear-gradient(135deg, #24292f, #040d21);">GitHub設定を保存</button>
+            </div>
+
+            <hr class="sidebar-divider">
+
+            <!-- 株価ウィジェット設定 -->
+            <div class="setting-block">
+                <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1rem; color: #e2e8f0;">株価ウィジェット設定</h3>
+                <label for="stock-symbol-input" class="sidebar-label">銘柄を追加 (例: AAPL, ^N225, 7203.T):</label>
+                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                    <input type="text" id="stock-symbol-input" class="url-input" placeholder="シンボルを入力" style="margin-bottom: 0;">
+                    <button id="add-stock-btn" class="save-btn" style="flex: 0 0 auto; padding: 0 16px;">追加</button>
+                </div>
+                <ul id="stock-settings-list" class="todo-list" style="margin-top: 10px; max-height: 150px; overflow-y: auto;">
+                    <!-- 登録済みの銘柄リストがここに表示されます -->
+                </ul>
             </div>
 
             <hr class="sidebar-divider">
@@ -246,6 +314,82 @@
                 </div>
             </div>
 
+            <!-- Google カレンダーウィジェット -->
+            <div id="google-calendar-widget" class="google-calendar-widget sortable-item" data-id="widget-google-calendar" data-widget-id="toggle-google-calendar">
+                <div class="widget-header">
+                    <span>Google カレンダー</span>
+                    <div style="display: flex; gap: 8px;">
+                        <button id="google-calendar-form-toggle" class="todo-calendar-btn" type="button">▼ 新規予定</button>
+                        <button id="google-calendar-sync-btn" class="todo-calendar-btn" type="button">同期</button>
+                    </div>
+                </div>
+                <div id="google-calendar-form-container" class="google-calendar-form hidden">
+                    <input type="text" id="google-calendar-title-input" placeholder="タイトルを入力...">
+                    <input type="text" id="google-calendar-location-input" placeholder="場所を入力 (任意)...">
+                    <input type="date" id="google-calendar-date-input" aria-label="日付">
+                    <div class="google-calendar-form-row">
+                        <input type="time" id="google-calendar-start-input" aria-label="開始時間">
+                        <span style="align-self: center;">〜</span>
+                        <input type="time" id="google-calendar-end-input" aria-label="終了時間">
+                    </div>
+                    <button id="google-calendar-add-event-btn" type="button">予定を保存</button>
+                </div>
+                <div id="google-calendar-events-list" class="todo-list" style="margin-top: 10px; overflow-y: auto; flex: 1;">
+                    <div class="loading">同期を待っています...</div>
+                </div>
+            </div>
+
+            <!-- Google Tasks ウィジェット -->
+            <div id="google-tasks-widget" class="google-tasks-widget sortable-item" data-id="widget-google-tasks" data-widget-id="toggle-google-tasks">
+                <div class="widget-header todo-widget-header">
+                    <span>Google Tasks</span>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <select id="google-tasks-list-select" aria-label="タスクリスト選択" style="max-width: 120px;"></select>
+                        <button id="google-tasks-sync-btn" class="todo-calendar-btn" type="button">同期</button>
+                    </div>
+                </div>
+                <div class="todo-input-container">
+                    <input type="text" id="google-tasks-input" placeholder="Google Tasks に追加 (Enter)">
+                    <button id="google-tasks-add-btn" type="button">+</button>
+                </div>
+                <ul id="google-tasks-list" class="todo-list" style="overflow-y: auto; flex: 1;">
+                    <div class="loading">同期を待っています...</div>
+                </ul>
+            </div>
+
+            <!-- Gmail ウィジェット -->
+            <div id="gmail-widget" class="gmail-widget sortable-item" data-id="widget-gmail" data-widget-id="toggle-gmail">
+                <div class="widget-header">
+                    <span>Gmail 未読メール</span>
+                    <button id="gmail-sync-btn" class="todo-calendar-btn" type="button">同期</button>
+                </div>
+                <div id="gmail-list" class="gmail-list" style="overflow-y: auto; flex: 1; margin-top: 10px;">
+                    <div class="loading">同期を待っています...</div>
+                </div>
+            </div>
+
+            <!-- GitHub ウィジェット -->
+            <div id="github-widget" class="github-widget sortable-item" data-id="widget-github" data-widget-id="toggle-github">
+                <div class="widget-header">
+                    <span>GitHub Issues & PRs</span>
+                    <button id="github-sync-btn" class="todo-calendar-btn" type="button">同期</button>
+                </div>
+                <div id="github-list" class="github-list" style="overflow-y: auto; flex: 1; margin-top: 10px;">
+                    <div class="loading">同期を待っています...</div>
+                </div>
+            </div>
+
+            <!-- 株価ウィジェット -->
+            <div id="stocks-widget" class="stocks-widget sortable-item" data-id="widget-stocks" data-widget-id="toggle-stocks">
+                <div class="widget-header">
+                    <span>株価・市場</span>
+                    <button id="stocks-sync-btn" class="todo-calendar-btn" type="button">同期</button>
+                </div>
+                <div id="stocks-container" class="stocks-container" style="overflow-y: auto; flex: 1; margin-top: 10px;">
+                    <div class="loading">同期を待っています...</div>
+                </div>
+            </div>
+
             <!-- クイックリンク -->
             <div id="quick-links-widget" class="quick-links-widget sortable-item" data-id="widget-quick-links">
                 <div id="quick-links-container" class="quick-links-grid"></div>
@@ -311,6 +455,12 @@
     <script src="js/ai.js?v=20260619"></script>
     <script src="js/feed-core.js?v=20260625"></script>
     <script src="js/feed.js?v=20260619"></script>
+    <script src="js/google-auth.js?v=20260625"></script>
+    <script src="js/google-calendar.js?v=20260625"></script>
+    <script src="js/google-tasks.js?v=20260625"></script>
+    <script src="js/gmail.js?v=20260625"></script>
+    <script src="js/github.js?v=20260625"></script>
+    <script src="js/stocks.js?v=20260625"></script>
     <script src="js/spotify/config.js?v=20260625"></script>
     <script src="js/spotify/auth.js?v=20260625"></script>
     <script src="js/spotify/api.js?v=20260619"></script>

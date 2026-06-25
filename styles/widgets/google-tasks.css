@@ -1,0 +1,27 @@
+/* Google Tasks (ToDo) ウィジェット */
+.google-tasks-widget {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--border-radius-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  color: var(--text-color);
+  box-sizing: border-box;
+}
+
+#google-tasks-list-select {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--border-radius-sm);
+  color: #fff;
+  padding: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+#google-tasks-list-select option {
+  background: #1e293b;
+  color: #fff;
+}

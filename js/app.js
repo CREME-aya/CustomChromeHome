@@ -37,6 +37,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // 詳細: 次の処理行「initCalendarTodoImport();」の役割を、その場の制御フローに組み込む。
     initCalendarTodoImport();
 
+    // Google / GitHub ウィジェットの初期化
+    if (window.GoogleAuth) window.GoogleAuth.initSettings();
+    if (window.GoogleCalendar) window.GoogleCalendar.init();
+    if (window.GoogleTasks) window.GoogleTasks.init();
+    if (window.Gmail) window.Gmail.init();
+    if (window.GitHub) window.GitHub.init();
+
     // 起動時に保存済み設定を使って外部データを読み込む。
     // 詳細: 次の処理行「loadFeed(getStoredFeedUrls());」の役割を、その場の制御フローに組み込む。
     loadFeed(getStoredFeedUrls());

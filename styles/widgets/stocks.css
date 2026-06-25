@@ -1,0 +1,164 @@
+/* ========== 株価ウィジェット ========== */
+.stocks-widget {
+  background: var(--panel-bg);
+  backdrop-filter: var(--panel-blur);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--border-radius-widget);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  color: #f8fafc;
+  transition: var(--transition-default);
+}
+
+.stocks-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* スクロールバーのカスタマイズ */
+.stocks-list::-webkit-scrollbar {
+  width: 6px;
+}
+.stocks-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+.stocks-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+.stocks-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.stock-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--border-radius-input);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.stock-item:hover {
+  background: rgba(255, 255, 255, 0.07);
+  transform: translateY(-1px);
+}
+
+.stock-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 80px;
+}
+
+.stock-symbol {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.stock-name {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90px;
+}
+
+.stock-chart {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 var(--space-md);
+}
+
+.stock-chart svg {
+  display: block;
+}
+
+.stock-values {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 80px;
+}
+
+.stock-price {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.stock-change {
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 1px 6px;
+  border-radius: 4px;
+  display: inline-block;
+  text-align: right;
+}
+
+/* 騰落率のカラー定義 */
+.stock-up {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.stock-down {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.stock-flat {
+  color: #94a3b8;
+  background: rgba(148, 163, 184, 0.1);
+}
+
+/* 設定用リストアイテムのスタイル */
+.stock-setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--border-radius-input);
+  margin-bottom: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stock-setting-symbol {
+  font-weight: bold;
+  color: #f1f5f9;
+  font-size: 0.9rem;
+}
+
+.stock-delete-btn {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0 4px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  transition: transform 0.1s ease;
+}
+
+.stock-delete-btn:hover {
+  transform: scale(1.2);
+}

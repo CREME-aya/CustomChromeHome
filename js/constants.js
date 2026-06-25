@@ -36,6 +36,28 @@ const STORAGE_KEY_WIDGET_STATES = 'custom_widget_states_v2';
 const STORAGE_KEY_FEED_MODE = 'custom_feed_display_mode';
 // 障害時に直前の記事を表示するため、フィード単位のキャッシュを保存する。
 const STORAGE_KEY_FEED_CACHE = 'custom_feed_cache_v1';
+
+// Google OAuth & API キー
+const STORAGE_KEY_GOOGLE_CLIENT_ID = 'custom_google_client_id';
+const GOOGLE_STORAGE_KEYS = {
+    accessToken: 'google_access_token',
+    refreshToken: 'google_refresh_token',
+    expiresAt: 'google_token_expires_at'
+};
+const STORAGE_KEY_GOOGLE_CALENDAR_CACHE = 'custom_google_calendar_cache';
+const STORAGE_KEY_GOOGLE_TASKS_CACHE = 'custom_google_tasks_cache';
+const STORAGE_KEY_GMAIL_CACHE = 'custom_gmail_cache';
+const STORAGE_KEY_GOOGLE_SELECTED_CALENDARS = 'custom_google_selected_calendars';
+const STORAGE_KEY_GOOGLE_SELECTED_TASKLIST = 'custom_google_selected_tasklist';
+
+// GitHub 定数
+const STORAGE_KEY_GITHUB_PAT = 'custom_github_pat';
+const STORAGE_KEY_GITHUB_CACHE = 'custom_github_cache';
+
+// 株価 定数
+const STORAGE_KEY_STOCKS = 'custom_stock_symbols';
+const STORAGE_KEY_STOCKS_CACHE = 'custom_stocks_cache';
+
 // 詳細: 変数「DEFAULT_FEED_URLS」を、この後の処理で使う値として用意する。
 const DEFAULT_FEED_URLS = [DEFAULT_URL];
 

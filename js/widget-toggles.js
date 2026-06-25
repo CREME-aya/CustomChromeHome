@@ -24,8 +24,21 @@ function initWidgetToggles() {
         { id: 'toggle-ai-openai', targetId: 'ai-panel-openai' },
         // 詳細: オブジェクトまたはブロックの境界を定義する。
         { id: 'toggle-ai-anthropic', targetId: 'ai-panel-anthropic' },
-        // 詳細: オブジェクトまたはブロックの境界を定義する。
-        { id: 'toggle-ai-gemini', targetId: 'ai-panel-gemini' }
+        // 詳細: オブジェクトまたはブロックの境界を定義する.
+        { id: 'toggle-ai-gemini', targetId: 'ai-panel-gemini' },
+        // 詳細: オブジェクトまたはブロックの境界を定義する.
+        { id: 'toggle-google-calendar', targetId: 'google-calendar-widget' },
+        // 詳細: オブジェクトまたはブロックの境界を定義する.
+        { id: 'toggle-google-tasks', targetId: 'google-tasks-widget' },
+        // 詳細: オブジェクトまたはブロックの境界を定義する.
+        { id: 'toggle-gmail', targetId: 'gmail-widget' },
+        // 詳細: オブジェクトまたはブロックの境界を定義する.
+        { id: 'toggle-github', targetId: 'github-widget' },
+        // 詳細: オブジェクトまたはブロックの境界を定義する.
+        { id: 'toggle-stocks', targetId: 'stocks-widget' },
+        // Google & GitHub & 拡張ウィジェット用
+        { id: 'toggle-google-fit', targetId: 'google-fit-widget' },
+        { id: 'toggle-github-grass', targetId: 'github-grass-widget' }
     // 詳細: 配列リテラルの境界を定義する。
     ];
 
