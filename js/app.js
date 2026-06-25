@@ -1,62 +1,81 @@
 // ==========================================
-// アプリ全体のエントリーポイント
+// アプリ全体のエントリーポイント (堅牢化版)
 // ==========================================
-// 詳細: ページ全体のイベントを監視して、初期化や操作処理を開始する。
 document.addEventListener('DOMContentLoaded', () => {
-    // 各モジュールは DOM 構築後に必要な要素へイベントを配線する。
-    // 詳細: 次の処理行「initInputFocusFix();」の役割を、その場の制御フローに組み込む。
-    initInputFocusFix();
-    // 詳細: 次の処理行「initSidebar();」の役割を、その場の制御フローに組み込む。
-    initSidebar();
-    // 詳細: 次の処理行「initFeed();」の役割を、その場の制御フローに組み込む。
-    initFeed();
-    // 詳細: 次の処理行「initBackground();」の役割を、その場の制御フローに組み込む。
-    initBackground();
-    // 詳細: 次の処理行「initSearch();」の役割を、その場の制御フローに組み込む。
-    initSearch();
-    // 詳細: 次の処理行「initClock();」の役割を、その場の制御フローに組み込む。
-    initClock();
-    // 詳細: 次の処理行「initQuickLinks();」の役割を、その場の制御フローに組み込む。
-    initQuickLinks();
-    // 詳細: 次の処理行「initWidgetToggles();」の役割を、その場の制御フローに組み込む。
-    initWidgetToggles();
-    // 詳細: 次の処理行「initApiKeys();」の役割を、その場の制御フローに組み込む。
-    initApiKeys();
-    // 詳細: 次の処理行「initMultiAI();」の役割を、その場の制御フローに組み込む。
-    initMultiAI();
-    // 詳細: 次の処理行「initThemeSettings();」の役割を、その場の制御フローに組み込む。
-    initThemeSettings();
-    // 詳細: 次の処理行「initWidgetSortable();」の役割を、その場の制御フローに組み込む。
-    initWidgetSortable();
-    // 詳細: 次の処理行「initWeatherSettings();」の役割を、その場の制御フローに組み込む。
-    initWeatherSettings();
-    // 詳細: 次の処理行「initSpotify();」の役割を、その場の制御フローに組み込む。
-    initSpotify();
-    // 詳細: 次の処理行「initTodo();」の役割を、その場の制御フローに組み込む。
-    initTodo();
-    // 詳細: 次の処理行「initCalendarTodoImport();」の役割を、その場の制御フローに組み込む。
-    initCalendarTodoImport();
+    // 各モジュールの初期化を安全に実行するヘルパー
+    // 1つのウィジェットのエラーが他の無関係な機能（時計、天気など）の初期化を妨げないようにする
+    const safeInit = (name, initFn) => {
+        try {
+            if (typeof initFn === 'function') {
+                initFn();
+            } else {
+                console.warn(`[Warn] Initialization function for "${name}" is not registered or failed to load.`);
+            }
+        } catch (e) {
+            console.error(`[Error] Failed to initialize ${name}:`, e);
+        }
+    };
 
-    // Google / GitHub ウィジェットの初期化
-    if (window.GoogleAuth) window.GoogleAuth.initSettings();
-    if (window.GoogleCalendar) window.GoogleCalendar.init();
-    if (window.GoogleTasks) window.GoogleTasks.init();
-    if (window.Gmail) window.Gmail.init();
-    if (window.GitHub) window.GitHub.init();
-    if (window.initGoogleFit) window.initGoogleFit();
-    if (window.initGithubGrass) window.initGithubGrass();
-    if (window.initMediaController) window.initMediaController();
+    safeInit('InputFocusFix', window.initInputFocusFix);
+    safeInit('Sidebar', window.initSidebar);
+    safeInit('Feed', window.initFeed);
+    safeInit('Background', window.initBackground);
+    safeInit('Search', window.initSearch);
+    safeInit('Clock', window.initClock);
+    safeInit('QuickLinks', window.initQuickLinks);
+    safeInit('WidgetToggles', window.initWidgetToggles);
+    safeInit('ApiKeys', window.initApiKeys);
+    safeInit('MultiAI', window.initMultiAI);
+    safeInit('ThemeSettings', window.initThemeSettings);
+    safeInit('WidgetSortable', window.initWidgetSortable);
+    safeInit('WeatherSettings', window.initWeatherSettings);
+    safeInit('Spotify', window.initSpotify);
+    safeInit('Todo', window.initTodo);
+    safeInit('CalendarTodoImport', window.initCalendarTodoImport);
 
-    // 起動時に保存済み設定を使って外部データを読み込む。
-    // 詳細: 次の処理行「loadFeed(getStoredFeedUrls());」の役割を、その場の制御フローに組み込む。
-    loadFeed(getStoredFeedUrls());
-    // 詳細: 次の処理行「loadWeather();」の役割を、その場の制御フローに組み込む。
-    loadWeather();
+    // Google / GitHub / 拡張ウィジェットの初期化
+    const safeMethodInit = (name, obj, method) => {
+        try {
+            if (obj && typeof obj[method] === 'function') {
+                obj[method]();
+            } else if (!obj) {
+                console.warn(`[Warn] Global object "${name}" is not defined.`);
+            } else {
+                console.warn(`[Warn] Method "${method}" on "${name}" is not defined.`);
+            }
+        } catch (e) {
+            console.error(`[Error] Failed to initialize Google/GitHub ${name}.${method}:`, e);
+        }
+    };
 
-    // 保存済みテーマがなければ標準のガラス風ダークテーマを使う。
-    // 詳細: 変数「savedTheme」を、この後の処理で使う値として用意する。
-    const savedTheme = localStorage.getItem(STORAGE_KEY_THEME) || 'theme-glass-dark';
-    // 詳細: 次の処理行「document.documentElement.className = savedTheme;」の役割を、その場の制御フローに組み込む。
-    document.documentElement.className = savedTheme;
-// 詳細: 現在の関数呼び出しまたは即時実行関数のブロックを閉じる。
+    safeMethodInit('GoogleAuth', window.GoogleAuth, 'initSettings');
+    safeMethodInit('GoogleCalendar', window.GoogleCalendar, 'init');
+    safeMethodInit('GoogleTasks', window.GoogleTasks, 'init');
+    safeMethodInit('Gmail', window.Gmail, 'init');
+    safeMethodInit('GitHub', window.GitHub, 'init');
+
+    safeInit('GoogleFit', window.initGoogleFit);
+    safeInit('GithubGrass', window.initGithubGrass);
+    safeInit('MediaController', window.initMediaController);
+
+    // 初期データのロード
+    safeInit('LoadFeed', () => {
+        if (typeof window.loadFeed === 'function') {
+            window.loadFeed(window.getStoredFeedUrls ? window.getStoredFeedUrls() : []);
+        }
+    });
+    
+    safeInit('LoadWeather', () => {
+        if (typeof window.loadWeather === 'function') {
+            window.loadWeather();
+        }
+    });
+
+    // テーマの適用
+    try {
+        const savedTheme = localStorage.getItem(STORAGE_KEY_THEME) || 'theme-glass-dark';
+        document.documentElement.className = savedTheme;
+    } catch (e) {
+        console.error("Failed to apply theme:", e);
+    }
 });
