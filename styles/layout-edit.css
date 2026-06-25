@@ -65,6 +65,20 @@
   min-height: 80px;
 }
 
+/* 全ウィジェットのサイズ変更は、左上を固定したまま右下の角から行う。 */
+.layout-edit-active .sortable-item::after {
+  content: "";
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 12px;
+  height: 12px;
+  border-right: 3px solid #60a5fa;
+  border-bottom: 3px solid #60a5fa;
+  pointer-events: none;
+  z-index: 1001;
+}
+
 .layout-edit-active .sortable-item:hover {
   box-shadow: 0 8px 30px rgba(96, 165, 250, 0.4) !important;
 }

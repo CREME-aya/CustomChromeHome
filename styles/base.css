@@ -51,14 +51,18 @@ body {
 
 /* 検索バー（幅広） */
 .ai-search-bar.search-bar-style {
-  width: var(--widget-width-wide) !important;
-  max-width: 100% !important;
+  /* 初期幅だけを指定し、編集モードで保存されたインライン幅を優先できるようにする。 */
+  width: var(--widget-width-wide);
+  max-width: 100%;
 }
 
 /* Discoverセクション（幅広） */
 .discover-section {
-  width: var(--widget-width-wide) !important;
-  max-width: 100% !important;
+  /* !importantで固定するとリサイズ後の保存幅を復元できないため、既定幅として扱う。 */
+  width: var(--widget-width-wide);
+  max-width: 100%;
+  min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;

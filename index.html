@@ -135,6 +135,15 @@
             <hr class="sidebar-divider">
 
             <div class="setting-block">
+                <h3 style="margin-top: 0; margin-bottom: 4px; font-size: 1rem; color: #e2e8f0;">Spotify 連携設定</h3>
+                <p class="spotify-settings-note">再生操作には Spotify Premium プランが必要です。初回連携前に Redirect URI を Spotify 側へ登録してください。</p>
+                <div id="spotify-settings-error" class="spotify-settings-error" role="alert" hidden></div>
+                <button id="spotify-setup-btn" class="outline-btn spotify-setup-btn" type="button">URI と設定手順を別タブで開く</button>
+            </div>
+
+            <hr class="sidebar-divider">
+
+            <div class="setting-block">
                 <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1rem; color: #e2e8f0;">AI API Keys</h3>
                 <label for="openai-api-key" class="sidebar-label">OpenAI API Key:</label>
                 <input type="password" id="openai-api-key" placeholder="sk-..." class="url-input" style="margin-bottom: 10px;">
@@ -294,9 +303,10 @@
     <script src="js/calendar.js?v=20260619"></script>
     <script src="js/ai.js?v=20260619"></script>
     <script src="js/feed.js?v=20260619"></script>
-    <script src="js/spotify/auth.js?v=20260619"></script>
+    <script src="js/spotify/config.js?v=20260625"></script>
+    <script src="js/spotify/auth.js?v=20260625"></script>
     <script src="js/spotify/api.js?v=20260619"></script>
-    <script src="js/spotify/ui.js?v=20260619"></script>
+    <script src="js/spotify/ui.js?v=20260625"></script>
     <script src="js/app.js?v=20260619"></script>
 </body>
 </html>

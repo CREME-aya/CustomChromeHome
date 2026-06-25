@@ -19,6 +19,9 @@ let dragStartY = 0;
 let elementStartX = 0;
 // 詳細: 変数「elementStartY」を、この後の処理で使う値として用意する。
 let elementStartY = 0;
+// 連続するresizeイベントを1描画につき1回へまとめ、不要な再計算を避ける。
+// 詳細: 次回のリサイズ処理に対応するrequestAnimationFrameの識別子を保持する。
+let resizeFrameId = null;
 
 // 詳細: 関数「initWidgetSortable」の処理ブロックを開始する。
 function initWidgetSortable() {
@@ -53,7 +56,10 @@ function initWidgetSortable() {
 
     // 3. ウィンドウリサイズ時の境界制御
     // 詳細: 対象要素のイベントを監視し、ユーザー操作に応じた処理を登録する。
-    window.addEventListener('resize', handleWindowResize);
+    window.addEventListener('resize', scheduleWindowResize);
+    // 保存時とは異なる画面サイズで開いた場合も、DOM寸法の確定後に表示位置だけを補正する。
+    // 詳細: 初回描画の次フレームで、復元済みウィジェットを現在の表示領域へ収める。
+    scheduleWindowResize();
 
     // 4. 編集モード時のみサイズ変更の完了を検知して保存する処理
     // 詳細: 対象要素のイベントを監視し、ユーザー操作に応じた処理を登録する。
@@ -64,6 +70,9 @@ function initWidgetSortable() {
         const item = e.target.closest('.sortable-item');
         // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
         if (item) {
+            // 手動リサイズ後の寸法を基準に、操作できる位置へ戻してから保存する。
+            // 詳細: ユーザーが確定したサイズと位置を、現在の表示領域内へ制限する。
+            constrainWidgetToVisibleArea(item, container);
             // 詳細: 次の処理行「saveWidgetState(item);」の役割を、その場の制御フローに組み込む。
             saveWidgetState(item);
         // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
@@ -207,6 +216,9 @@ function addPinButton(el) {
     btn.addEventListener('click', (e) => {
         // 詳細: 次の処理行「e.stopPropagation();」の役割を、その場の制御フローに組み込む。
         e.stopPropagation();
+        // 座標系を切り替える前の画面上の位置を保持し、切り替え後のジャンプを防ぐ。
+        // 詳細: ピン留め状態を変更する前のウィジェット位置と寸法を取得する。
+        const rect = el.getBoundingClientRect();
         // 詳細: 変数「isPinned」を、この後の処理で使う値として用意する。
         const isPinned = el.classList.toggle('widget-pinned');
 
@@ -218,8 +230,6 @@ function addPinButton(el) {
             btn.classList.add('active');
 
             // absoluteからfixedへ切り替え (ウィンドウ相対)
-            // 詳細: 変数「rect」を、この後の処理で使う値として用意する。
-            const rect = el.getBoundingClientRect();
             // 詳細: インラインスタイルを更新して、要素の表示位置や見た目を調整する。
             el.style.position = 'fixed';
             // 詳細: インラインスタイルを更新して、要素の表示位置や見た目を調整する。
@@ -234,8 +244,6 @@ function addPinButton(el) {
             btn.classList.remove('active');
 
             // fixedからabsoluteへ切り替え (コンテナ相対)
-            // 詳細: 変数「rect」を、この後の処理で使う値として用意する。
-            const rect = el.getBoundingClientRect();
             // 詳細: 変数「containerRect」を、この後の処理で使う値として用意する。
             const containerRect = document.getElementById('dashboard-main').getBoundingClientRect();
             // 詳細: インラインスタイルを更新して、要素の表示位置や見た目を調整する。
@@ -247,6 +255,9 @@ function addPinButton(el) {
         // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
         }
 
+        // 座標系を切り替えた結果が画面外へ出る場合は、表示可能な位置へ戻す。
+        // 詳細: 現在のピン留め状態に対応する境界へ、ウィジェット位置を制限する。
+        constrainWidgetToVisibleArea(el, document.getElementById('dashboard-main'));
         // 詳細: 次の処理行「saveWidgetState(el);」の役割を、その場の制御フローに組み込む。
         saveWidgetState(el);
     // 詳細: 現在の関数呼び出しまたは即時実行関数のブロックを閉じる。
@@ -360,6 +371,12 @@ function onMouseUp() {
     // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
     if (!activeDragElement) return;
 
+    // ドラッグで画面外へ移動した場合は、操作可能な位置へ戻した結果を保存する。
+    // 詳細: absolute配置の境界として使用するダッシュボード要素を取得する。
+    const container = document.getElementById('dashboard-main');
+    // 詳細: ダッシュボードが存在する場合だけ、ドラッグ後の座標を表示領域へ制限する。
+    if (container) constrainWidgetToVisibleArea(activeDragElement, container);
+
     // 詳細: 次の処理行「saveWidgetState(activeDragElement);」の役割を、その場の制御フローに組み込む。
     saveWidgetState(activeDragElement);
 
@@ -369,6 +386,133 @@ function onMouseUp() {
     document.removeEventListener('mouseup', onMouseUp);
     // 詳細: 次の処理行「activeDragElement = null;」の役割を、その場の制御フローに組み込む。
     activeDragElement = null;
+// 詳細: 現在のオブジェクト定義または関数代入を閉じる。
+}
+
+// resizeイベントを描画フレーム単位へ集約し、連続リサイズ中のDOM計測回数を抑える。
+// 詳細: 関数「scheduleWindowResize」の処理ブロックを開始する。
+function scheduleWindowResize() {
+    // すでに次フレームの処理が予約されている場合は、同じ処理を重ねて予約しない。
+    // 詳細: requestAnimationFrameの予約が存在する場合は、現在の呼び出しを終了する。
+    if (resizeFrameId !== null) return;
+
+    // 詳細: 次の描画フレームで実際の境界補正を実行する。
+    resizeFrameId = window.requestAnimationFrame(() => {
+        // 次回のresizeイベントを受け付けられるよう、実行中の予約状態を解除する。
+        // 詳細: requestAnimationFrameの識別子を未予約状態へ戻す。
+        resizeFrameId = null;
+        // 詳細: 現在の表示領域に合わせて、全ウィジェットの表示位置を再計算する。
+        handleWindowResize();
+    // 詳細: 現在の関数呼び出しまたは即時実行関数のブロックを閉じる。
+    });
+// 詳細: 現在のオブジェクト定義または関数代入を閉じる。
+}
+
+// CSS座標を数値へ変換し、calc()や未設定値では実際の描画座標を使用する。
+// 詳細: 関数「parseCoordinate」の処理ブロックを開始する。
+function parseCoordinate(value, fallback) {
+    // 詳細: CSS文字列から浮動小数点数への変換を試みる。
+    const parsed = Number.parseFloat(value);
+    // 詳細: 有効な数値なら変換結果を返し、変換できない場合は実測値を返す。
+    return Number.isFinite(parsed) ? parsed : fallback;
+// 詳細: 現在のオブジェクト定義または関数代入を閉じる。
+}
+
+// 実測値を取得できない非表示要素でも、保存値やインライン値から寸法を復元する。
+// 詳細: 関数「resolveWidgetDimension」の処理ブロックを開始する。
+function resolveWidgetDimension(measuredValue, savedValue, inlineValue, fallbackValue) {
+    // 詳細: 保存されたCSS寸法を数値へ変換する。
+    const savedDimension = Number.parseFloat(savedValue);
+    // 詳細: 現在のインラインCSS寸法を数値へ変換する。
+    const inlineDimension = Number.parseFloat(inlineValue);
+
+    // 詳細: 実測寸法が正の値なら、現在の表示状態を最優先して返す。
+    if (measuredValue > 0) return measuredValue;
+    // 詳細: 保存寸法が有効なら、非表示要素の補助寸法として返す。
+    if (Number.isFinite(savedDimension) && savedDimension > 0) return savedDimension;
+    // 詳細: インライン寸法が有効なら、現在設定されている寸法として返す。
+    if (Number.isFinite(inlineDimension) && inlineDimension > 0) return inlineDimension;
+    // 詳細: どの寸法も取得できない場合は、呼び出し元が指定した既定値を返す。
+    return fallbackValue;
+// 詳細: 現在のオブジェクト定義または関数代入を閉じる。
+}
+
+// 基準座標を変更せず、現在の画面で操作できる表示座標へ一時的に補正する。
+// 詳細: 関数「constrainWidgetToVisibleArea」の処理ブロックを開始する。
+function constrainWidgetToVisibleArea(el, container, baseState = null) {
+    // 詳細: ウィジェットが画面固定配置かどうかを、ピン留めクラスから判定する。
+    const isPinned = el.classList.contains('widget-pinned');
+    // absolute配置の座標を画面座標へ変換するため、コンテナの表示位置を取得する。
+    // 詳細: ダッシュボードの画面上の位置と寸法を取得する。
+    const containerRect = container.getBoundingClientRect();
+    // 詳細: 現在描画されているウィジェットの位置と寸法を取得する。
+    const widgetRect = el.getBoundingClientRect();
+    // fixed配置はビューポート、absolute配置はダッシュボードを水平方向の境界にする。
+    // 詳細: ピン留め状態に応じて、ウィジェットを収める領域の幅を決定する。
+    const boundaryWidth = isPinned
+        // 詳細: fixed配置ではスクロールバーを除いたビューポート幅を使用する。
+        ? (document.documentElement.clientWidth || window.innerWidth)
+        // 詳細: absolute配置では配置基準となるダッシュボードの内側幅を使用する。
+        : container.clientWidth;
+    // 非表示要素の実測幅が0でも、保存値またはインライン値から境界判定できるようにする。
+    // 詳細: ウィジェットの有効な幅を、実測値、保存値、インライン値、既定値の順で決定する。
+    const widgetWidth = resolveWidgetDimension(
+        // 詳細: 表示中のウィジェットから取得した実測幅を渡す。
+        widgetRect.width,
+        // 詳細: リサイズ前の基準状態に保存された幅を渡す。
+        baseState?.width,
+        // 詳細: 現在のインラインスタイルに設定された幅を渡す。
+        el.style.width,
+        // 詳細: 最終的な代替値として通常ウィジェット幅を渡す。
+        WIDGET_WIDTH_NORMAL
+    // 詳細: 現在の関数呼び出しまたは即時実行関数のブロックを閉じる。
+    );
+    // fixed配置では画面座標、absolute配置ではコンテナ相対座標を実測フォールバックにする。
+    // 詳細: 現在の描画位置から、配置方式に対応する左座標を計算する。
+    const measuredLeft = isPinned ? widgetRect.left : widgetRect.left - containerRect.left;
+    // 詳細: 現在の描画位置から、配置方式に対応する上座標を計算する。
+    const measuredTop = isPinned ? widgetRect.top : widgetRect.top - containerRect.top;
+    // リサイズ時は保存済み基準座標、ユーザー操作時は現在のインライン座標を補正元にする。
+    // 詳細: 補正元として使用する左座標のCSS文字列を選択する。
+    const sourceLeft = baseState?.left ?? el.style.left;
+    // 詳細: 補正元として使用する上座標のCSS文字列を選択する。
+    const sourceTop = baseState?.top ?? el.style.top;
+    // 詳細: CSS左座標を数値化し、calc()や未設定値では実測座標へフォールバックする。
+    const baseLeft = parseCoordinate(sourceLeft, measuredLeft);
+    // 詳細: CSS上座標を数値化し、calc()や未設定値では実測座標へフォールバックする。
+    const baseTop = parseCoordinate(sourceTop, measuredTop);
+    // 詳細: ウィジェットの右端が境界を超えない最大左座標を計算する。
+    const maxLeft = Math.max(0, boundaryWidth - widgetWidth);
+    // 詳細: 左座標を0以上かつmaxLeft以下へ制限する。
+    const displayLeft = Math.min(Math.max(baseLeft, 0), maxLeft);
+    // fixed配置では画面下端も境界になるため、ウィジェット高を取得する。
+    // 詳細: ウィジェットの有効な高さを、実測値、保存値、インライン値の順で決定する。
+    const widgetHeight = resolveWidgetDimension(
+        // 詳細: 表示中のウィジェットから取得した実測高を渡す。
+        widgetRect.height,
+        // 詳細: リサイズ前の基準状態に保存された高さを渡す。
+        baseState?.height,
+        // 詳細: 現在のインラインスタイルに設定された高さを渡す。
+        el.style.height,
+        // 詳細: 高さを取得できない場合は0として、上端だけを確実に補正する。
+        0
+    // 詳細: 現在の関数呼び出しまたは即時実行関数のブロックを閉じる。
+    );
+    // absolute配置は縦スクロールできるため、下方向の上限を設けない。
+    // 詳細: ピン留め状態に応じて、上座標の最大値を決定する。
+    const maxTop = isPinned
+        // 詳細: fixed配置ではウィジェット下端がビューポートを超えない最大上座標を計算する。
+        ? Math.max(0, (document.documentElement.clientHeight || window.innerHeight) - widgetHeight)
+        // 詳細: absolute配置では下方向への配置を許可するため、上限を無限大にする。
+        : Number.POSITIVE_INFINITY;
+    // 詳細: 上座標を0以上かつmaxTop以下へ制限する。
+    const displayTop = Math.min(Math.max(baseTop, 0), maxTop);
+
+    // 自動補正値は保存せず、現在の描画に使うインライン座標だけを更新する。
+    // 詳細: 現在の表示領域へ収めた左座標を反映する。
+    el.style.left = `${displayLeft}px`;
+    // 詳細: 現在の表示領域へ収めた上座標を反映する。
+    el.style.top = `${displayTop}px`;
 // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
 }
 
@@ -397,22 +541,9 @@ function handleWindowResize() {
         // ユーザーがドラッグして位置が保存されている場合
         // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
         if (state && (state.left || state.top)) {
-            // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
-            if (el.classList.contains('widget-pinned')) return;
-
-            // 詳細: 変数「left」を、この後の処理で使う値として用意する。
-            const left = parseFloat(el.style.left) || 0;
-            // 詳細: 変数「width」を、この後の処理で使う値として用意する。
-            const width = el.clientWidth;
-
-            // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
-            if (left + width > containerWidth) {
-                // 詳細: インラインスタイルを更新して、要素の表示位置や見た目を調整する。
-                el.style.left = `${Math.max(0, containerWidth - width)}px`;
-                // 詳細: 次の処理行「saveWidgetState(el);」の役割を、その場の制御フローに組み込む。
-                saveWidgetState(el);
-            // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
-            }
+            // 保存済み基準座標から表示位置を再計算し、自動補正値はlocalStorageへ書き戻さない。
+            // 詳細: 通常配置とピン留め配置の両方を、現在の表示領域内へ一時的に収める。
+            constrainWidgetToVisibleArea(el, container, state);
         // 詳細: オブジェクトまたはブロックの境界を定義する。
         } else {
             // 位置が保存されていない（初期状態の）ウィジェットは、リサイズに合わせて再計算
@@ -428,6 +559,9 @@ function handleWindowResize() {
                 el.style.top = def.top;
                 // 詳細: インラインスタイルを更新して、要素の表示位置や見た目を調整する。
                 el.style.width = def.width;
+                // 初期配置も極端な画面比率では外れる可能性があるため、表示時だけ境界へ収める。
+                // 詳細: 計算済みの初期位置を、現在の表示領域内へ制限する。
+                constrainWidgetToVisibleArea(el, container, def);
             // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
             }
         // 詳細: 現在のオブジェクト定義または関数代入を閉じる。

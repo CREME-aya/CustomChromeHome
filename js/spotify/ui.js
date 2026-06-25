@@ -15,6 +15,7 @@ async function initSpotify() {
     const loginBtn = document.getElementById('spotify-login-btn');
     // 詳細: 変数「logoutBtn」を、この後の処理で使う値として用意する。
     const logoutBtn = document.getElementById('spotify-logout-btn');
+    const setupBtn = document.getElementById('spotify-setup-btn');
     // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
     if (!loginBtn) return;
 
@@ -46,6 +47,8 @@ async function initSpotify() {
     loginBtn.addEventListener('click', handleSpotifyLogin);
     // 詳細: 対象要素のイベントを監視し、ユーザー操作に応じた処理を登録する。
     logoutBtn.addEventListener('click', logoutSpotify);
+    setupBtn?.addEventListener('click', openSpotifySetupPage);
+    refreshSpotifySettingsError();
 
     // 詳細: 対象要素のイベントを監視し、ユーザー操作に応じた処理を登録する。
     document.getElementById('spotify-play-btn').addEventListener('click', toggleSpotifyPlay);
@@ -61,8 +64,12 @@ async function handleSpotifyLogin() {
     // 詳細: 変数「isAuthenticated」を、この後の処理で使う値として用意する。
     const isAuthenticated = await window.SpotifyAuth.authenticate();
     // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+        refreshSpotifySettingsError();
+        return;
+    }
 
+    refreshSpotifySettingsError();
     // 詳細: 次の処理行「showSpotifyPlayer(true);」の役割を、その場の制御フローに組み込む。
     showSpotifyPlayer(true);
     // 詳細: 次の処理行「startSpotifyPolling();」の役割を、その場の制御フローに組み込む。
@@ -79,6 +86,35 @@ function logoutSpotify() {
     // 詳細: 次の処理行「showSpotifyPlayer(false);」の役割を、その場の制御フローに組み込む。
     showSpotifyPlayer(false);
 // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
+}
+
+function openSpotifySetupPage() {
+    const hasChromeApi = typeof chrome !== 'undefined';
+    const setupUrl = hasChromeApi && chrome.runtime?.getURL
+        ? chrome.runtime.getURL('spotify-setup.html')
+        : 'spotify-setup.html';
+
+    if (hasChromeApi && chrome.tabs?.create) {
+        chrome.tabs.create({ url: setupUrl, active: true }, () => {
+            if (chrome.runtime.lastError) {
+                window.showNotification(`Spotify 設定ページを開けませんでした。${chrome.runtime.lastError.message}`, 'error');
+            }
+        });
+        return;
+    }
+
+    window.open(setupUrl, '_blank');
+}
+
+function refreshSpotifySettingsError() {
+    const errorElement = document.getElementById('spotify-settings-error');
+    if (!errorElement) return;
+
+    const lastError = window.SpotifyConfig.getLastAuthError();
+    errorElement.hidden = !lastError;
+    errorElement.textContent = lastError
+        ? `直近のエラー: ${lastError.message}`
+        : '';
 }
 
 // 詳細: 関数「showSpotifyPlayer」の処理ブロックを開始する。

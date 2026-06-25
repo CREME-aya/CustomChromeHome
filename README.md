@@ -91,17 +91,18 @@ https://<user-name>.github.io/<repository-name>/privacy.html
 
 ## Spotify 連携の設定
 
-Spotify 認証を使うには、Spotify Developer Dashboard の対象アプリで Redirect URI を登録する必要があります。
+Spotify 認証を使うには、Spotify Developer Dashboard の対象アプリで Redirect URI を登録する必要があります。再生・一時停止・曲送り・曲戻しには Spotify Premium プランが必要です。
 
 1. この拡張機能を Chrome に読み込む
-2. 新しいタブを開き、DevTools の Console を開く
-3. Spotify の「連携する」を押す
-4. Console に出る `Spotify Redirect URI:` の値をコピーする
+2. 新しいタブの設定サイドバーを開く
+3. 「Spotify 連携設定」の「URI と設定手順を別タブで開く」を押す
+4. 表示された Redirect URI をコピーする
 5. Spotify Developer Dashboard のアプリ設定で Redirect URI に同じ値を追加する
+6. Nexus Dash の Spotify ウィジェットで「連携する」を押す
 
 Redirect URI は完全一致が必要です。このアプリは `https://<拡張機能ID>.chromiumapp.org/spotify` の形式を使います。`/spotify` の有無、末尾スラッシュ、大文字小文字が違うと Spotify 側で `redirect_uri: Not matching configuration` になります。
 
-Spotify 側へ登録後は、Chrome の拡張機能ページで Nexus Dash をリロードし、新しいタブを開き直してください。
+認証に失敗した場合、直近のエラーは設定サイドバーと Spotify 連携設定ページに表示されます。Spotify 側へ登録後は、Chrome の拡張機能ページで Nexus Dash をリロードし、新しいタブを開き直してください。
 
 ## 設定と保存先
 

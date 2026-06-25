@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify 連携設定 - Nexus Dash</title>
+    <link rel="stylesheet" href="styles/spotify-setup.css">
+</head>
+<body>
+    <main class="setup-page">
+        <header class="setup-header">
+            <p class="setup-eyebrow">Nexus Dash</p>
+            <h1>Spotify 連携設定</h1>
+            <p>Spotify Developer Dashboard に Redirect URI を登録してから、ダッシュボードで連携してください。</p>
+        </header>
+
+        <section class="notice-card premium-notice" aria-labelledby="premium-title">
+            <h2 id="premium-title">Spotify Premium が必要です</h2>
+            <p>このウィジェットの再生・一時停止・曲送り・曲戻し機能は、Spotify Premium プランに加入しているアカウントで利用してください。</p>
+        </section>
+
+        <section id="spotify-setup-error" class="notice-card error-notice" aria-labelledby="error-title" role="alert" hidden>
+            <div>
+                <h2 id="error-title">直近の Spotify エラー</h2>
+                <p id="spotify-setup-error-message"></p>
+                <p id="spotify-setup-error-time" class="error-time"></p>
+            </div>
+            <button id="clear-spotify-setup-error" class="secondary-button" type="button">表示を消す</button>
+        </section>
+
+        <section class="setup-card" aria-labelledby="redirect-uri-title">
+            <h2 id="redirect-uri-title">登録する Redirect URI</h2>
+            <p>下記の URI を省略・変更せず、そのまま Spotify 側へ登録してください。</p>
+            <div class="uri-row">
+                <input id="spotify-redirect-uri" type="text" readonly aria-label="Spotify Redirect URI">
+                <button id="copy-spotify-redirect-uri" class="primary-button" type="button">URIをコピー</button>
+            </div>
+            <p class="field-note">末尾の <code>/spotify</code>、大文字・小文字、末尾スラッシュを含めて完全一致させる必要があります。</p>
+        </section>
+
+        <section class="setup-card" aria-labelledby="steps-title">
+            <h2 id="steps-title">設定手順</h2>
+            <ol class="setup-steps">
+                <li>Spotify Premium プランに加入しているアカウントを用意します。</li>
+                <li><a href="https://developer.spotify.com/dashboard" target="_blank" rel="noopener noreferrer">Spotify Developer Dashboard</a> を開き、ログインします。</li>
+                <li>この拡張機能で使用する Spotify アプリを開き、アプリの設定画面へ進みます。</li>
+                <li>「Redirect URIs」に上記の URI を追加します。</li>
+                <li>Spotify 側の設定を保存します。</li>
+                <li>Chrome の拡張機能ページで Nexus Dash を再読み込みし、新しいタブを開き直します。</li>
+                <li>Nexus Dash の Spotify ウィジェットで「連携する」を押します。</li>
+            </ol>
+        </section>
+
+        <section class="setup-card troubleshooting" aria-labelledby="troubleshooting-title">
+            <h2 id="troubleshooting-title">エラーが出る場合</h2>
+            <ul>
+                <li><code>redirect_uri: Not matching configuration</code>: Spotify 側へ登録した URI が上記の値と完全一致しているか確認してください。</li>
+                <li>認証画面を開けない: Nexus Dash を Chrome 拡張機能として読み込んでいるか確認してください。</li>
+                <li>再生操作が失敗する: Spotify Premium でログインし、Spotify アプリ側で再生デバイスをアクティブにしてください。</li>
+            </ul>
+        </section>
+    </main>
+
+    <script src="js/spotify/config.js?v=20260625"></script>
+    <script src="js/spotify/setup.js?v=20260625"></script>
+</body>
+</html>

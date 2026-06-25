@@ -7,9 +7,6 @@
 const SPOTIFY_CLIENT_ID = '3ed94377fd3840f2b3f3e88967a2ed78';
 // 詳細: 変数「SPOTIFY_SCOPES」を、この後の処理で使う値として用意する。
 const SPOTIFY_SCOPES = 'user-read-playback-state user-modify-playback-state user-read-currently-playing';
-// 詳細: 変数「SPOTIFY_REDIRECT_PATH」を、この後の処理で使う値として用意する。
-const SPOTIFY_REDIRECT_PATH = 'spotify';
-
 // 詳細: 他モジュールから利用できるように、処理や値を window に公開する。
 window.SpotifyAuth = {
     // 詳細: 次の処理行「authenticate,」の役割を、その場の制御フローに組み込む。
@@ -27,18 +24,19 @@ window.SpotifyAuth = {
 
 // 詳細: 関数「authenticate」の処理ブロックを開始する。
 async function authenticate() {
+    window.SpotifyConfig.clearAuthError();
     // chrome.identity.launchWebAuthFlow が使える環境（Chrome拡張）かチェックする。
     // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
     if (typeof chrome === 'undefined' || !chrome.identity || !chrome.identity.launchWebAuthFlow) {
         // 詳細: 次の処理行「window.showNotification("Chrome拡張機能として動作していないか、identity権限がありません。", 'error');」の役割を、その場の制御フローに組み込む。
-        window.showNotification("Chrome拡張機能として動作していないか、identity権限がありません。", 'error');
+        notifyAuthError("Chrome拡張機能として動作していないか、identity権限がありません。");
         // 詳細: 呼び出し元へ処理結果を返して、この関数の流れを終える。
         return false;
     // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
     }
 
     // 詳細: 変数「redirectUri」を、この後の処理で使う値として用意する。
-    const redirectUri = getSpotifyRedirectUri();
+    const redirectUri = window.SpotifyConfig.getRedirectUri();
     // 詳細: 調査や失敗確認のため、実行時情報をコンソールへ出力する。
     console.log("Spotify Redirect URI:", redirectUri);
 
@@ -86,7 +84,7 @@ async function authenticate() {
         // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
         if (error) {
             // 詳細: 次の処理行「window.showNotification(バッククォートSpotifyの認証に失敗しました。理由: ${error}バッククォート, 'error');」の役割を、その場の制御フローに組み込む。
-            window.showNotification(`Spotifyの認証に失敗しました。理由: ${error}`, 'error');
+            notifyAuthError(`Spotifyの認証に失敗しました。理由: ${error}`);
             // 詳細: 呼び出し元へ処理結果を返して、この関数の流れを終える。
             return false;
         // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
@@ -95,7 +93,7 @@ async function authenticate() {
         // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
         if (urlObj.searchParams.get('state') !== state) {
             // 詳細: 次の処理行「window.showNotification("Spotifyの認証応答を検証できませんでした。もう一度連携してください。", 'error');」の役割を、その場の制御フローに組み込む。
-            window.showNotification("Spotifyの認証応答を検証できませんでした。もう一度連携してください。", 'error');
+            notifyAuthError("Spotifyの認証応答を検証できませんでした。もう一度連携してください。");
             // 詳細: 呼び出し元へ処理結果を返して、この関数の流れを終える。
             return false;
         // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
@@ -106,7 +104,7 @@ async function authenticate() {
         // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
         if (!code) {
             // 詳細: 次の処理行「window.showNotification("認証コードが取得できませんでした。", 'error');」の役割を、その場の制御フローに組み込む。
-            window.showNotification("認証コードが取得できませんでした。", 'error');
+            notifyAuthError("認証コードが取得できませんでした。");
             // 詳細: 呼び出し元へ処理結果を返して、この関数の流れを終える。
             return false;
         // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
@@ -131,6 +129,7 @@ async function authenticate() {
             if (tokenData.access_token) {
                 // 詳細: 次の処理行「saveToken(tokenData);」の役割を、その場の制御フローに組み込む。
                 saveToken(tokenData);
+                window.SpotifyConfig.clearAuthError();
                 // 詳細: 呼び出し元へ処理結果を返して、この関数の流れを終える。
                 return true;
             // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
@@ -142,7 +141,7 @@ async function authenticate() {
             // 詳細: 調査や失敗確認のため、実行時情報をコンソールへ出力する。
             console.error(e);
             // 詳細: 次の処理行「window.showNotification(バッククォートSpotifyトークンの取得に失敗しました。${e.message}バッククォート, 'error');」の役割を、その場の制御フローに組み込む。
-            window.showNotification(`Spotifyトークンの取得に失敗しました。${e.message}`, 'error');
+            notifyAuthError(`Spotifyトークンの取得に失敗しました。${e.message}`);
             // 詳細: 呼び出し元へ処理結果を返して、この関数の流れを終える。
             return false;
         // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
@@ -152,7 +151,7 @@ async function authenticate() {
         // 詳細: 調査や失敗確認のため、実行時情報をコンソールへ出力する。
         console.error("Auth Error:", e);
         // 詳細: 次の処理行「window.showNotification(バッククォートSpotifyの認証ページを開けませんでした。Redirect URI を確認してください。詳細: ${e.messa」の役割を、その場の制御フローに組み込む。
-        window.showNotification(`Spotifyの認証ページを開けませんでした。Redirect URI を確認してください。詳細: ${e.message}`, 'error', { durationMs: 7000 });
+        notifyAuthError(`Spotifyの認証ページを開けませんでした。Redirect URI を確認してください。詳細: ${e.message}`, { durationMs: 7000 });
         // 詳細: 呼び出し元へ処理結果を返して、この関数の流れを終える。
         return false;
     // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
@@ -187,13 +186,6 @@ async function generateCodeChallenge(codeVerifier) {
         .replace(/\//g, '_')
         // 詳細: 次の処理行「.replace(/=+$/, '');」の役割を、その場の制御フローに組み込む。
         .replace(/=+$/, '');
-// 詳細: 現在のオブジェクト定義または関数代入を閉じる。
-}
-
-// 詳細: 関数「getSpotifyRedirectUri」の処理ブロックを開始する。
-function getSpotifyRedirectUri() {
-    // 詳細: 呼び出し元へ処理結果を返して、この関数の流れを終える。
-    return chrome.identity.getRedirectURL(SPOTIFY_REDIRECT_PATH);
 // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
 }
 
@@ -506,6 +498,7 @@ async function refreshAccessToken() {
     } catch(e) {
         // 詳細: 調査や失敗確認のため、実行時情報をコンソールへ出力する。
         console.error("Spotify token refresh error:", e);
+        window.SpotifyConfig.saveAuthError(`Spotifyトークンの更新に失敗しました。${e.message}`);
         // 詳細: 次の処理行「clearToken();」の役割を、その場の制御フローに組み込む。
         clearToken();
         // 詳細: 呼び出し元へ処理結果を返して、この関数の流れを終える。
@@ -524,6 +517,11 @@ function isTokenExpiringSoon() {
     // 詳細: 呼び出し元へ処理結果を返して、この関数の流れを終える。
     return Date.now() + SPOTIFY_TOKEN_REFRESH_MARGIN_MS >= expiresAt;
 // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
+}
+
+function notifyAuthError(message, options = {}) {
+    window.SpotifyConfig.saveAuthError(message);
+    window.showNotification(message, 'error', options);
 }
 // 詳細: オブジェクトまたはブロックの境界を定義する。
 })();
