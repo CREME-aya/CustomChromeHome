@@ -337,7 +337,7 @@ function initSettings() {
                     <li>「認証情報を作成」 &gt; 「OAuth クライアント ID」を選択します。</li>
                     <li>アプリケーションの種類として <strong>「Web アプリケーション」</strong> を選択します。</li>
                     <li>「承認されたリダイレクト URI」に以下のリダイレクトURLを追加します：<br>
-                        <code>\${redirectUri}</code>
+                        <code>${redirectUri}</code>
                     </li>
                     <li>作成された <strong>クライアント ID</strong> をコピーし、Nexus Dash の設定画面に入力します。</li>
                     <li>「Googleと連携」ボタンを押し、認証を行ってください。</li>
