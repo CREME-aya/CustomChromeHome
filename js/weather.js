@@ -7,6 +7,9 @@
 window.initWeatherSettings = initWeatherSettings;
 // 詳細: 他モジュールから利用できるように、処理や値を window に公開する。
 window.loadWeather = loadWeather;
+window.WeatherCore = {
+    buildWeatherSearchQueries
+};
 
 // 詳細: 関数「loadWeather」の処理ブロックを開始する。
 async function loadWeather() {
@@ -28,12 +31,14 @@ async function loadWeather() {
         const meteoData = await meteoRes.json();
         // 詳細: HTMLとして描画する内容を組み立てて、対象要素へ反映する。
         weatherWidget.innerHTML = renderWeatherWidget(location.name, meteoData);
+        window.ApiDiagnostics?.report('weather', 'ok', `${location.name} の天気取得に成功`);
     // 詳細: オブジェクトまたはブロックの境界を定義する。
     } catch (e) {
         // 詳細: 調査や失敗確認のため、実行時情報をコンソールへ出力する。
         console.error(e);
         // 詳細: HTMLとして描画する内容を組み立てて、対象要素へ反映する。
         weatherWidget.innerHTML = '<div class="weather-error">天気情報の取得に失敗しました</div>';
+        window.ApiDiagnostics?.report('weather', 'error', '天気情報の取得に失敗');
     // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
     }
 // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
@@ -129,16 +134,17 @@ function setWeatherStatus(status, message) {
 
 // 詳細: 関数「fetchWeatherLocationByCity」の処理ブロックを開始する。
 async function fetchWeatherLocationByCity(query) {
-    // Open-Meteo Geocoding APIは日本語名を返せるため、設定表示にもそのまま使う。
-    // 詳細: 変数「url」を、この後の処理で使う値として用意する。
-    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=ja&format=json`;
-    // 詳細: 変数「res」を、この後の処理で使う値として用意する。
-    const res = await fetch(url);
-    // 詳細: 変数「data」を、この後の処理で使う値として用意する。
-    const data = await res.json();
-    // 詳細: 変数「result」を、この後の処理で使う値として用意する。
-    const result = data.results?.[0];
-    // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
+    // 「渋谷区」のような行政区名で見つからない場合は「渋谷」へ縮めて再検索する。
+    let result = null;
+    for (const candidate of buildWeatherSearchQueries(query)) {
+        const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(candidate)}&count=1&language=ja&format=json`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Geocoding HTTP ${res.status}`);
+        const data = await res.json();
+        result = data.results?.[0] || null;
+        if (result) break;
+    }
+
     if (!result) return null;
 
     // 詳細: 呼び出し元へ処理結果を返して、この関数の流れを終える。
@@ -152,6 +158,16 @@ async function fetchWeatherLocationByCity(query) {
     // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
     };
 // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
+}
+
+function buildWeatherSearchQueries(query) {
+    const normalized = String(query || '').trim();
+    if (!normalized) return [];
+
+    const simplified = normalized.replace(/(?:都|道|府|県|市|区|町|村)$/u, '').trim();
+    return simplified && simplified !== normalized
+        ? [normalized, simplified]
+        : [normalized];
 }
 
 // 詳細: 関数「saveWeatherLocation」の処理ブロックを開始する。

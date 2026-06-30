@@ -1,337 +1,372 @@
 // ==========================================
-// 株価・市場ウィジェット
+// 株価・市場ウィジェット (Alpha Vantage)
 // ==========================================
 (function() {
-const STORAGE_KEY_STOCKS = 'custom_stock_symbols';
-const STORAGE_KEY_STOCKS_CACHE = 'custom_stocks_cache';
-const DEFAULT_SYMBOLS = ['^N225', 'AAPL', '7203.T'];
+const DEFAULT_SYMBOLS = ['AAPL', 'MSFT', 'IBM'];
+const ALPHA_VANTAGE_ENDPOINT = 'https://www.alphavantage.co/query';
 
 let currentStocksData = {};
 
 window.StocksWidget = {
     init,
     initSettings,
-    loadStocksData
+    loadStocksData,
+    parseDailySeries
 };
 
 function init() {
-    const syncBtn = document.getElementById('stocks-sync-btn');
-    syncBtn?.addEventListener('click', () => loadStocksData(true));
+    document.getElementById('stocks-sync-btn')
+        ?.addEventListener('click', () => loadStocksData(true));
 
     initSettings();
+    restoreCache();
 
-    // キャッシュの読み込み
-    const cached = localStorage.getItem(STORAGE_KEY_STOCKS_CACHE);
-    if (cached) {
-        try {
-            currentStocksData = JSON.parse(cached);
-            renderStocks();
-        } catch(e) {
-            console.warn("Stocks cache parse failed", e);
-        }
+    if (getApiKey()) {
+        loadStocksData();
+    } else if (Object.keys(currentStocksData).length === 0) {
+        renderApiKeyGuide();
     }
-
-    loadStocksData();
 }
 
-// 登録されているシンボルの取得
+function restoreCache() {
+    const cached = localStorage.getItem(STORAGE_KEY_STOCKS_CACHE);
+    if (!cached) return;
+
+    try {
+        currentStocksData = JSON.parse(cached);
+        renderStocks();
+    } catch (error) {
+        console.warn('株価キャッシュを読み取れませんでした。', error);
+    }
+}
+
+function getApiKey() {
+    return localStorage.getItem(STORAGE_KEY_STOCKS_API_KEY)?.trim() || '';
+}
+
 function getRegisteredSymbols() {
     const stored = localStorage.getItem(STORAGE_KEY_STOCKS);
-    if (stored) {
-        try {
-            return JSON.parse(stored);
-        } catch(e) {
-            console.warn("Failed to parse stock symbols", e);
-        }
+    if (!stored) return [...DEFAULT_SYMBOLS];
+
+    try {
+        const symbols = JSON.parse(stored);
+        return Array.isArray(symbols) ? symbols : [...DEFAULT_SYMBOLS];
+    } catch (error) {
+        console.warn('登録銘柄を読み取れませんでした。', error);
+        return [...DEFAULT_SYMBOLS];
     }
-    return DEFAULT_SYMBOLS;
 }
 
-// シンボルの保存
 function saveRegisteredSymbols(symbols) {
     localStorage.setItem(STORAGE_KEY_STOCKS, JSON.stringify(symbols));
 }
 
-// Yahoo Finance からデータを取得
 async function loadStocksData(force = false) {
-    const symbols = getRegisteredSymbols();
-    if (symbols.length === 0) {
-        renderEmpty();
+    const apiKey = getApiKey();
+    if (!apiKey) {
+        renderApiKeyGuide();
+        window.ApiDiagnostics?.report('stocks', 'missing', 'Alpha Vantage APIキー未設定');
         return;
     }
 
-    setLoading(true);
+    const symbols = getRegisteredSymbols();
+    if (symbols.length === 0) {
+        window.ApiUI.setEmpty('stocks-container', '登録銘柄がありません。設定から追加してください。');
+        window.ApiDiagnostics?.report('stocks', 'warning', '登録銘柄がありません');
+        return;
+    }
 
-    const newData = {};
-    let hasError = false;
+    window.ApiUI.setLoading('stocks-container', 'Alpha Vantage から株価を取得中...');
 
-    // 各シンボルのデータを並行してフェッチ
-    const fetchPromises = symbols.map(async (symbol) => {
-        try {
-            // 直近1ヶ月、1日足でデータを取得
-            const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1mo&interval=1d`;
-            const res = await fetch(url);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const results = await Promise.allSettled(
+        symbols.map(symbol => fetchStock(symbol, apiKey))
+    );
 
-            const data = await res.json();
-            const result = data.chart?.result?.[0];
-            if (!result) throw new Error("Invalid response format");
+    let succeeded = 0;
+    const updatedData = { ...currentStocksData };
 
-            const meta = result.meta || {};
-            const quote = result.indicators?.quote?.[0] || {};
-            const adjclose = result.indicators?.adjclose?.[0]?.adjclose || [];
-            
-            // 終値配列（null値を除外・補間するための処理）
-            let prices = adjclose.length > 0 ? adjclose : (quote.close || []);
-            prices = prices.filter(p => p !== null && p !== undefined);
-
-            const currentPrice = meta.regularMarketPrice ?? (prices[prices.length - 1] || 0);
-            const prevClose = meta.chartPreviousClose ?? meta.previousClose ?? (prices[0] || currentPrice);
-            const change = currentPrice - prevClose;
-            const changePercent = prevClose !== 0 ? (change / prevClose) * 100 : 0;
-
-            newData[symbol] = {
-                symbol: meta.symbol || symbol,
-                name: meta.shortName || meta.longName || meta.symbol || symbol,
-                price: currentPrice,
-                change: change,
-                changePercent: changePercent,
-                currency: meta.currency || '',
-                prices: prices
-            };
-        } catch (e) {
-            console.error(`Failed to fetch stock data for ${symbol}:`, e);
-            hasError = true;
-            // エラー時でも既存のキャッシュがあれば残す
-            if (currentStocksData[symbol]) {
-                newData[symbol] = currentStocksData[symbol];
-            }
+    results.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+            updatedData[symbols[index]] = result.value;
+            succeeded += 1;
+        } else {
+            console.warn(`株価取得失敗: ${symbols[index]}`, result.reason);
         }
     });
 
-    await Promise.all(fetchPromises);
+    if (succeeded > 0) {
+        currentStocksData = updatedData;
+        localStorage.setItem(STORAGE_KEY_STOCKS_CACHE, JSON.stringify(currentStocksData));
+        renderStocks();
+        window.ApiDiagnostics?.report(
+            'stocks',
+            succeeded === symbols.length ? 'ok' : 'warning',
+            `${succeeded}/${symbols.length}件の株価を更新`
+        );
+    } else if (Object.keys(currentStocksData).length > 0) {
+        renderStocks();
+        window.ApiDiagnostics?.report('stocks', 'warning', '株価更新に失敗。キャッシュを表示');
+    } else {
+        window.ApiUI.setError(
+            'stocks-container',
+            '株価を取得できませんでした。APIキー、銘柄コード、利用上限を確認してください。'
+        );
+        window.ApiDiagnostics?.report('stocks', 'error', '株価を取得できませんでした');
+    }
 
-    currentStocksData = newData;
-    localStorage.setItem(STORAGE_KEY_STOCKS_CACHE, JSON.stringify(currentStocksData));
-    
-    setLoading(false);
-    renderStocks();
-
-    if (hasError) {
-        if (Object.keys(currentStocksData).length > 0) {
-            window.showNotification?.("一部の株価データの取得に失敗しました。キャッシュを表示しています。", "warning");
-        } else {
-            renderError("株価データの取得に失敗しました。ネットワーク状況を確認してください。");
-        }
+    if (succeeded < symbols.length) {
+        window.showNotification?.(
+            '一部の株価を更新できませんでした。Alpha Vantageの利用上限または銘柄コードを確認してください。',
+            'warning'
+        );
     } else if (force) {
-        window.showNotification?.("株価データを更新しました。", "success");
+        window.showNotification?.('株価データを更新しました。', 'success');
     }
 }
 
-// SVGスパークライン（ミニチャート）の生成
+async function fetchStock(symbol, apiKey) {
+    const params = new URLSearchParams({
+        function: 'TIME_SERIES_DAILY',
+        symbol,
+        outputsize: 'compact',
+        apikey: apiKey
+    });
+    const response = await fetch(`${ALPHA_VANTAGE_ENDPOINT}?${params.toString()}`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const payload = await response.json();
+    return parseDailySeries(symbol, payload);
+}
+
+// Alpha Vantageの日足レスポンスを、描画に必要な共通形式へ変換する。
+function parseDailySeries(requestedSymbol, payload) {
+    const providerError = payload?.['Error Message']
+        || payload?.Information
+        || payload?.Note;
+    if (providerError) throw new Error(providerError);
+
+    const series = payload?.['Time Series (Daily)'];
+    if (!series || typeof series !== 'object') {
+        throw new Error('日足データが含まれていません。');
+    }
+
+    const rows = Object.entries(series)
+        .map(([date, values]) => ({
+            date,
+            close: Number(values?.['4. close'])
+        }))
+        .filter(row => Number.isFinite(row.close))
+        .sort((left, right) => left.date.localeCompare(right.date));
+
+    if (rows.length === 0) throw new Error('有効な終値がありません。');
+
+    const currentPrice = rows[rows.length - 1].close;
+    const previousPrice = rows.length > 1 ? rows[rows.length - 2].close : currentPrice;
+    const change = currentPrice - previousPrice;
+    const changePercent = previousPrice === 0 ? 0 : (change / previousPrice) * 100;
+    const symbol = payload?.['Meta Data']?.['2. Symbol'] || requestedSymbol;
+
+    return {
+        symbol,
+        name: symbol,
+        price: currentPrice,
+        change,
+        changePercent,
+        currency: inferCurrency(symbol),
+        prices: rows.slice(-30).map(row => row.close),
+        updatedAt: rows[rows.length - 1].date
+    };
+}
+
+function inferCurrency(symbol) {
+    return /\.(T|TRT|JP)$/i.test(symbol) ? 'JPY' : 'USD';
+}
+
 function generateSparklineSvg(prices) {
-    if (!prices || prices.length < 2) return '';
+    if (!prices || prices.length < 2) return null;
 
     const min = Math.min(...prices);
     const max = Math.max(...prices);
-    const range = max - min === 0 ? 1 : max - min;
-
+    const range = max - min || 1;
     const width = 100;
     const height = 28;
     const padding = 2;
-
     const points = prices.map((price, index) => {
         const x = (index / (prices.length - 1)) * width;
         const y = height - padding - ((price - min) / range) * (height - padding * 2);
         return `${x.toFixed(1)},${y.toFixed(1)}`;
     }).join(' ');
 
-    const isUp = prices[prices.length - 1] >= prices[0];
-    const strokeColor = isUp ? '#10b981' : '#ef4444'; // CSSカラーコード直接指定
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', String(width));
+    svg.setAttribute('height', String(height));
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
 
-    return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-        <polyline fill="none" stroke="${strokeColor}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" points="${points}" />
-    </svg>`;
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+    line.setAttribute('fill', 'none');
+    line.setAttribute('stroke', prices.at(-1) >= prices[0] ? '#10b981' : '#ef4444');
+    line.setAttribute('stroke-width', '1.5');
+    line.setAttribute('stroke-linecap', 'round');
+    line.setAttribute('stroke-linejoin', 'round');
+    line.setAttribute('points', points);
+    svg.appendChild(line);
+    return svg;
 }
 
-// 通貨記号の取得
-function getCurrencySymbol(currency) {
-    switch (currency?.toUpperCase()) {
-        case 'USD': return '$';
-        case 'JPY': return '¥';
-        case 'EUR': return '€';
-        case 'GBP': return '£';
-        default: return '';
-    }
-}
-
-// データの描画
 function renderStocks() {
     const container = document.getElementById('stocks-container');
     if (!container) return;
 
-    container.innerHTML = '';
-    
-    const symbols = getRegisteredSymbols();
-    if (symbols.length === 0) {
-        renderEmpty();
-        return;
-    }
-
     const list = document.createElement('div');
     list.className = 'stocks-list';
 
-    let hasData = false;
-
-    symbols.forEach(symbol => {
+    getRegisteredSymbols().forEach(symbol => {
         const data = currentStocksData[symbol];
         if (!data) return;
-
-        hasData = true;
-        const item = document.createElement('div');
-        item.className = 'stock-item';
-
-        // 騰落率のステータスクラス
-        let statusClass = 'stock-flat';
-        let prefix = '';
-        if (data.changePercent > 0.005) {
-            statusClass = 'stock-up';
-            prefix = '+';
-        } else if (data.changePercent < -0.005) {
-            statusClass = 'stock-down';
-        }
-
-        // 小数点以下の表示桁数調整
-        const isYen = data.currency?.toUpperCase() === 'JPY';
-        const priceFormatted = isYen ? Math.round(data.price).toLocaleString() : data.price.toFixed(2);
-        const changeFormatted = isYen ? Math.round(data.change).toLocaleString() : data.change.toFixed(2);
-        const curSymbol = getCurrencySymbol(data.currency);
-
-        item.innerHTML = `
-            <div class="stock-info">
-                <span class="stock-symbol" title="${data.symbol}">${data.symbol}</span>
-                <span class="stock-name" title="${data.name}">${data.name}</span>
-            </div>
-            <div class="stock-chart">
-                ${generateSparklineSvg(data.prices)}
-            </div>
-            <div class="stock-values">
-                <span class="stock-price">${curSymbol}${priceFormatted}</span>
-                <span class="stock-change ${statusClass}">${prefix}${changeFormatted} (${prefix}${data.changePercent.toFixed(2)}%)</span>
-            </div>
-        `;
-
-        list.appendChild(item);
+        list.appendChild(createStockItem(data));
     });
 
-    if (!hasData) {
-        container.innerHTML = '<div class="loading">株価データをロード中...</div>';
-    } else {
-        container.appendChild(list);
+    if (!list.childElementCount) {
+        window.ApiUI.setEmpty('stocks-container', '表示できる株価データがありません。');
+        return;
     }
+
+    container.replaceChildren(list);
 }
 
-function renderEmpty() {
-    const container = document.getElementById('stocks-container');
-    if (!container) return;
-    container.innerHTML = `
-        <div class="empty-state">
-            <p>登録されている銘柄はありません。設定からシンボルを追加してください。</p>
-        </div>
-    `;
+function createStockItem(data) {
+    const item = document.createElement('div');
+    item.className = 'stock-item';
+
+    const info = document.createElement('div');
+    info.className = 'stock-info';
+    const symbol = document.createElement('span');
+    symbol.className = 'stock-symbol';
+    symbol.textContent = data.symbol;
+    symbol.title = data.symbol;
+    const updated = document.createElement('span');
+    updated.className = 'stock-name';
+    updated.textContent = data.updatedAt || '';
+    info.append(symbol, updated);
+
+    const chart = document.createElement('div');
+    chart.className = 'stock-chart';
+    const svg = generateSparklineSvg(data.prices);
+    if (svg) chart.appendChild(svg);
+
+    const values = document.createElement('div');
+    values.className = 'stock-values';
+    const price = document.createElement('span');
+    price.className = 'stock-price';
+    price.textContent = `${getCurrencySymbol(data.currency)}${formatNumber(data.price, data.currency)}`;
+
+    const change = document.createElement('span');
+    const statusClass = data.changePercent > 0.005
+        ? 'stock-up'
+        : data.changePercent < -0.005 ? 'stock-down' : 'stock-flat';
+    const prefix = data.changePercent > 0.005 ? '+' : '';
+    change.className = `stock-change ${statusClass}`;
+    change.textContent = `${prefix}${formatNumber(data.change, data.currency)} (${prefix}${data.changePercent.toFixed(2)}%)`;
+    values.append(price, change);
+
+    item.append(info, chart, values);
+    return item;
 }
 
-function renderError(message) {
-    const container = document.getElementById('stocks-container');
-    if (!container) return;
-    container.innerHTML = `
-        <div class="empty-state error-state">
-            <span>⚠️</span>
-            <p>${message}</p>
-        </div>
-    `;
+function getCurrencySymbol(currency) {
+    return currency === 'JPY' ? '¥' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '$';
 }
 
-function setLoading(isLoading) {
-    const container = document.getElementById('stocks-container');
-    if (!container) return;
-    
-    // すでにリストがある場合はローディングを上書きせず、最小限のインジケータ（必要なら）にする
-    if (isLoading && !container.querySelector('.stocks-list')) {
-        container.innerHTML = '<div class="loading">最新データを取得中...</div>';
-    }
+function formatNumber(value, currency) {
+    return currency === 'JPY'
+        ? Math.round(value).toLocaleString()
+        : Number(value).toFixed(2);
 }
 
-// 設定画面の初期化
+function renderApiKeyGuide() {
+    window.ApiUI.setAuthGuide(
+        'stocks-container',
+        'Alpha Vantage APIキーが未設定です。設定サイドバーから保存してください。'
+    );
+}
+
 function initSettings() {
+    const apiKeyInput = document.getElementById('stock-api-key');
+    const saveApiKeyButton = document.getElementById('save-stock-api-key-btn');
     const symbolInput = document.getElementById('stock-symbol-input');
-    const addBtn = document.getElementById('add-stock-btn');
+    const addButton = document.getElementById('add-stock-btn');
     const settingsList = document.getElementById('stock-settings-list');
+
+    if (apiKeyInput) apiKeyInput.value = getApiKey();
+    saveApiKeyButton?.addEventListener('click', () => {
+        const apiKey = apiKeyInput?.value.trim() || '';
+        if (apiKey) {
+            localStorage.setItem(STORAGE_KEY_STOCKS_API_KEY, apiKey);
+            window.showNotification?.('Alpha Vantage APIキーを保存しました。', 'success');
+            loadStocksData(true);
+        } else {
+            localStorage.removeItem(STORAGE_KEY_STOCKS_API_KEY);
+            renderApiKeyGuide();
+            window.ApiDiagnostics?.report('stocks', 'missing', 'Alpha Vantage APIキー未設定');
+        }
+        window.ApiDiagnostics?.refresh?.();
+    });
 
     if (!settingsList) return;
 
-    // リストの描画
     const renderSettingsList = () => {
-        settingsList.innerHTML = '';
+        settingsList.replaceChildren();
         const symbols = getRegisteredSymbols();
-        
         if (symbols.length === 0) {
-            settingsList.innerHTML = '<li style="color:#94a3b8; font-size:0.85rem; padding:4px;">登録なし</li>';
+            const empty = document.createElement('li');
+            empty.textContent = '登録なし';
+            settingsList.appendChild(empty);
             return;
         }
 
         symbols.forEach((symbol, index) => {
-            const li = document.createElement('li');
-            li.className = 'stock-setting-item';
-            
-            const span = document.createElement('span');
-            span.className = 'stock-setting-symbol';
-            span.textContent = symbol;
-
-            const delBtn = document.createElement('button');
-            delBtn.className = 'stock-delete-btn';
-            delBtn.innerHTML = '&times;';
-            delBtn.title = '削除';
-            delBtn.addEventListener('click', () => {
+            const item = document.createElement('li');
+            item.className = 'stock-setting-item';
+            const label = document.createElement('span');
+            label.className = 'stock-setting-symbol';
+            label.textContent = symbol;
+            const deleteButton = document.createElement('button');
+            deleteButton.className = 'stock-delete-btn';
+            deleteButton.type = 'button';
+            deleteButton.title = '削除';
+            deleteButton.textContent = '×';
+            deleteButton.addEventListener('click', () => {
                 const currentSymbols = getRegisteredSymbols();
                 currentSymbols.splice(index, 1);
                 saveRegisteredSymbols(currentSymbols);
+                delete currentStocksData[symbol];
                 renderSettingsList();
-                loadStocksData();
+                renderStocks();
             });
-
-            li.append(span, delBtn);
-            settingsList.appendChild(li);
+            item.append(label, deleteButton);
+            settingsList.appendChild(item);
         });
     };
 
-    renderSettingsList();
-
-    // 銘柄追加イベント
-    const addSymbolAction = () => {
-        if (!symbolInput) return;
-        const val = symbolInput.value.trim().toUpperCase();
-        if (!val) return;
-
-        const currentSymbols = getRegisteredSymbols();
-        if (currentSymbols.includes(val)) {
-            window.showNotification?.("既に登録されているシンボルです。", "warning");
+    const addSymbol = () => {
+        const symbol = symbolInput?.value.trim().toUpperCase() || '';
+        if (!symbol) return;
+        const symbols = getRegisteredSymbols();
+        if (symbols.includes(symbol)) {
+            window.showNotification?.('既に登録されている銘柄です。', 'warning');
             return;
         }
-
-        // 追加
-        currentSymbols.push(val);
-        saveRegisteredSymbols(currentSymbols);
+        symbols.push(symbol);
+        saveRegisteredSymbols(symbols);
         symbolInput.value = '';
         renderSettingsList();
         loadStocksData();
     };
 
-    addBtn?.addEventListener('click', addSymbolAction);
-    symbolInput?.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            addSymbolAction();
-        }
+    addButton?.addEventListener('click', addSymbol);
+    symbolInput?.addEventListener('keypress', event => {
+        if (event.key === 'Enter') addSymbol();
     });
+    renderSettingsList();
 }
 })();

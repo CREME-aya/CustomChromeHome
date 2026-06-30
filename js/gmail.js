@@ -34,6 +34,7 @@ function init() {
 async function loadEmails(force = false) {
     if (!GoogleAuth.hasStoredSession()) {
         renderUnauthenticated();
+        window.ApiDiagnostics?.report('gmail', 'missing', 'Google 連携が必要');
         return;
     }
 
@@ -59,6 +60,7 @@ async function loadEmails(force = false) {
             currentEmails = [];
             localStorage.setItem(STORAGE_KEY_GMAIL_CACHE, JSON.stringify(currentEmails));
             renderEmails();
+            window.ApiDiagnostics?.report('gmail', 'ok', '未読メールはありません');
             return;
         }
 
@@ -88,13 +90,16 @@ async function loadEmails(force = false) {
         currentEmails = emailDetails;
         localStorage.setItem(STORAGE_KEY_GMAIL_CACHE, JSON.stringify(currentEmails));
         renderEmails();
+        window.ApiDiagnostics?.report('gmail', 'ok', `${currentEmails.length}件の未読メールを取得`);
     } catch(e) {
         console.error("Gmail load emails failed", e);
         setLoading(false);
         if (currentEmails.length > 0) {
             window.showNotification("Gmailの同期に失敗しました。キャッシュを表示しています。", "warning");
+            window.ApiDiagnostics?.report('gmail', 'warning', 'Gmail同期に失敗。キャッシュを表示');
         } else {
             renderError("メールの同期に失敗しました。");
+            window.ApiDiagnostics?.report('gmail', 'error', 'メールの同期に失敗');
         }
     }
 }
@@ -169,32 +174,17 @@ function renderEmails() {
 }
 
 function renderUnauthenticated() {
-    const list = document.getElementById('gmail-list');
-    if (!list) return;
-    setLoading(false);
-    list.innerHTML = `
-        <div class="empty-state auth-guide">
-            <p>Google アカウントと未連携です。設定サイドバーの Google 連携設定を行ってください。</p>
-        </div>
-    `;
+    window.ApiUI.setAuthGuide('gmail-list', 'Google アカウントと未連携です。設定サイドバーの Google 連携設定を行ってください。');
+    window.ApiDiagnostics?.report('gmail', 'missing', 'Google 連携が必要');
 }
 
 function renderError(message) {
-    const list = document.getElementById('gmail-list');
-    if (!list) return;
-    list.innerHTML = `
-        <div class="empty-state error-state">
-            <span>⚠️</span>
-            <p>${message}</p>
-        </div>
-    `;
+    window.ApiUI.setError('gmail-list', message);
 }
 
 function setLoading(isLoading) {
-    const list = document.getElementById('gmail-list');
-    if (!list) return;
     if (isLoading) {
-        list.innerHTML = '<div class="loading">Gmail から同期中...</div>';
+        window.ApiUI.setLoading('gmail-list', 'Gmail から同期中...');
     }
 }
 

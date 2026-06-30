@@ -96,6 +96,7 @@ async function authenticate() {
             if (tokenData.access_token) {
                 saveToken(tokenData);
                 window.showNotification("Google 連携に成功しました！", "success");
+                window.ApiDiagnostics?.report('google-auth', 'ok', 'Google OAuth 連携成功');
                 return true;
             }
             return false;
@@ -251,6 +252,7 @@ function saveToken(data) {
 
 function clearToken() {
     Object.values(GOOGLE_STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
+    window.ApiDiagnostics?.report('google-auth', 'missing', 'Google 連携なし');
 }
 
 function hasStoredSession() {
@@ -359,6 +361,7 @@ function initSettings() {
         }
 
         localStorage.setItem(STORAGE_KEY_GOOGLE_CLIENT_ID, val);
+        window.ApiDiagnostics?.refresh?.();
         const success = await authenticate();
         if (success) {
             updateSettingsUI();
@@ -366,6 +369,7 @@ function initSettings() {
             window.GoogleTasks?.loadTaskLists();
             window.Gmail?.loadEmails();
         }
+        window.ApiDiagnostics?.refresh?.();
     });
 
     disconnectBtn?.addEventListener('click', () => {
@@ -376,6 +380,7 @@ function initSettings() {
             window.GoogleTasks?.loadTaskLists();
             window.Gmail?.loadEmails();
             window.showNotification("Googleアカウントとの連携を解除しました。", "success");
+            window.ApiDiagnostics?.refresh?.();
         }
     });
 

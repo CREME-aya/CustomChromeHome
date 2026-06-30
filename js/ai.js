@@ -3,6 +3,12 @@
 // ==========================================
 // 詳細: 次の処理行「(function() {」の役割を、その場の制御フローに組み込む。
 (function() {
+const AI_MODELS = Object.freeze({
+    openai: 'gpt-4o',
+    anthropic: 'claude-sonnet-4-6',
+    gemini: 'gemini-3.5-flash'
+});
+
 // 詳細: 他モジュールから利用できるように、処理や値を window に公開する。
 window.initApiKeys = initApiKeys;
 // 詳細: 他モジュールから利用できるように、処理や値を window に公開する。
@@ -23,7 +29,7 @@ function initApiKeys() {
             // 詳細: 変数「b」を、この後の処理で使う値として用意する。
             const b = document.getElementById('chatbox-openai');
             // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
-            if (b && b.innerHTML.includes('APIキーを設定してください')) b.innerHTML = '<div class="chat-msg ai-msg">OpenAIの準備が完了しました！<br><small style="color:#94a3b8;">※質問は上部の検索バーから入力してください</small></div>';
+            if (b && b.innerHTML.includes('APIキーを設定してください')) b.innerHTML = '<div class="chat-msg ai-msg">OpenAI APIキー設定済み<br><small style="color:#94a3b8;">接続状態は質問送信時に確認します</small></div>';
         // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
         }
         // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
@@ -31,7 +37,7 @@ function initApiKeys() {
             // 詳細: 変数「b」を、この後の処理で使う値として用意する。
             const b = document.getElementById('chatbox-anthropic');
             // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
-            if (b && b.innerHTML.includes('APIキーを設定してください')) b.innerHTML = '<div class="chat-msg ai-msg">Claudeの準備が完了しました！<br><small style="color:#94a3b8;">※質問は上部の検索バーから入力してください</small></div>';
+            if (b && b.innerHTML.includes('APIキーを設定してください')) b.innerHTML = '<div class="chat-msg ai-msg">Anthropic APIキー設定済み<br><small style="color:#94a3b8;">接続状態は質問送信時に確認します</small></div>';
         // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
         }
         // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
@@ -39,7 +45,7 @@ function initApiKeys() {
             // 詳細: 変数「b」を、この後の処理で使う値として用意する。
             const b = document.getElementById('chatbox-gemini');
             // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
-            if (b && b.innerHTML.includes('APIキーを設定してください')) b.innerHTML = '<div class="chat-msg ai-msg">Geminiの準備が完了しました！<br><small style="color:#94a3b8;">※質問は上部の検索バーから入力してください</small></div>';
+            if (b && b.innerHTML.includes('APIキーを設定してください')) b.innerHTML = '<div class="chat-msg ai-msg">Gemini APIキー設定済み<br><small style="color:#94a3b8;">接続状態は質問送信時に確認します</small></div>';
         // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
         }
     // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
@@ -92,6 +98,7 @@ function initApiKeys() {
             updateBoxStatus();
             // 詳細: 次の処理行「window.showNotification('APIキーを保存しました', 'success');」の役割を、その場の制御フローに組み込む。
             window.showNotification('APIキーを保存しました', 'success');
+            window.ApiDiagnostics?.refresh?.();
             // 詳細: 次の処理行「window._toggleSidebar?.();」の役割を、その場の制御フローに組み込む。
             window._toggleSidebar?.();
         // 詳細: 現在の関数呼び出しまたは即時実行関数のブロックを閉じる。
@@ -117,9 +124,15 @@ function initMultiAI() {
 
     // 詳細: 関数「formatMarkdown」の処理ブロックを開始する。
     function formatMarkdown(text) {
-        // AI応答の最低限のMarkdownだけを、チャット欄で読めるHTMLに変換する。
+        // API応答を先にエスケープし、許可した最小限の装飾だけをHTMLへ戻す。
         // 詳細: 呼び出し元へ処理結果を返して、この関数の流れを終える。
-        return text.replace(/\n/g, '<br>')
+        return String(text)
+                   .replace(/&/g, '&amp;')
+                   .replace(/</g, '&lt;')
+                   .replace(/>/g, '&gt;')
+                   .replace(/"/g, '&quot;')
+                   .replace(/'/g, '&#039;')
+                   .replace(/\n/g, '<br>')
                    // 詳細: 次の処理行「.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');」の役割を、その場の制御フローに組み込む。
                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
@@ -163,6 +176,7 @@ function initMultiAI() {
         if (!apiKeys.openai) {
             // 詳細: 次の処理行「addChatMessageToBox(boxId, 'エラー: OpenAI APIキーが未設定です。', 'ai');」の役割を、その場の制御フローに組み込む。
             addChatMessageToBox(boxId, 'エラー: OpenAI APIキーが未設定です。', 'ai');
+            window.ApiDiagnostics?.report('openai', 'missing', 'OpenAI APIキー未設定');
             // 詳細: 呼び出し元へ処理結果を返して、この関数の流れを終える。
             return;
         // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
@@ -187,7 +201,7 @@ function initMultiAI() {
                 // 詳細: JavaScriptの値を保存可能なJSON文字列へ変換する。
                 body: JSON.stringify({
                     // 詳細: オブジェクトのプロパティ値を定義する。
-                    model: 'gpt-4o',
+                    model: AI_MODELS.openai,
                     // 詳細: 次の処理行「messages: [{ role: 'user', content: prompt }]」の役割を、その場の制御フローに組み込む。
                     messages: [{ role: 'user', content: prompt }]
                 // 詳細: 現在の関数呼び出しまたは即時実行関数のブロックを閉じる。
@@ -201,13 +215,17 @@ function initMultiAI() {
             // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
             if (!res.ok) throw new Error(data.error?.message || 'API Error');
             // 詳細: 次の処理行「addChatMessageToBox(boxId, data.choices[0].message.content, 'ai');」の役割を、その場の制御フローに組み込む。
-            addChatMessageToBox(boxId, data.choices[0].message.content, 'ai');
+            const responseText = data.choices?.[0]?.message?.content;
+            if (!responseText) throw new Error('OpenAI APIから回答本文が返されませんでした。');
+            addChatMessageToBox(boxId, responseText, 'ai');
+            window.ApiDiagnostics?.report('openai', 'ok', 'OpenAI API 応答成功');
         // 詳細: オブジェクトまたはブロックの境界を定義する。
         } catch (e) {
             // 詳細: 不要になったDOM要素を画面から取り除く。
             loadingDiv.remove();
             // 詳細: 次の処理行「addChatMessageToBox(boxId, バッククォートエラー: ${e.message}バッククォート, 'ai');」の役割を、その場の制御フローに組み込む。
             addChatMessageToBox(boxId, `エラー: ${e.message}`, 'ai');
+            window.ApiDiagnostics?.report('openai', 'error', `OpenAI API エラー: ${e.message}`);
         // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
         }
     // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
@@ -221,6 +239,7 @@ function initMultiAI() {
         if (!apiKeys.anthropic) {
             // 詳細: 次の処理行「addChatMessageToBox(boxId, 'エラー: Anthropic APIキーが未設定です。', 'ai');」の役割を、その場の制御フローに組み込む。
             addChatMessageToBox(boxId, 'エラー: Anthropic APIキーが未設定です。', 'ai');
+            window.ApiDiagnostics?.report('anthropic', 'missing', 'Anthropic APIキー未設定');
             // 詳細: 呼び出し元へ処理結果を返して、この関数の流れを終える。
             return;
         // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
@@ -249,7 +268,7 @@ function initMultiAI() {
                 // 詳細: JavaScriptの値を保存可能なJSON文字列へ変換する。
                 body: JSON.stringify({
                     // 詳細: オブジェクトのプロパティ値を定義する。
-                    model: 'claude-3-5-sonnet-20240620',
+                    model: AI_MODELS.anthropic,
                     // 詳細: オブジェクトのプロパティ値を定義する。
                     max_tokens: 1024,
                     // 詳細: 次の処理行「messages: [{ role: 'user', content: prompt }]」の役割を、その場の制御フローに組み込む。
@@ -265,13 +284,17 @@ function initMultiAI() {
             // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
             if (!res.ok) throw new Error(data.error?.message || 'API Error');
             // 詳細: 次の処理行「addChatMessageToBox(boxId, data.content[0].text, 'ai');」の役割を、その場の制御フローに組み込む。
-            addChatMessageToBox(boxId, data.content[0].text, 'ai');
+            const responseText = data.content?.find(part => part.type === 'text')?.text;
+            if (!responseText) throw new Error('Anthropic APIから回答本文が返されませんでした。');
+            addChatMessageToBox(boxId, responseText, 'ai');
+            window.ApiDiagnostics?.report('anthropic', 'ok', 'Anthropic API 応答成功');
         // 詳細: オブジェクトまたはブロックの境界を定義する。
         } catch (e) {
             // 詳細: 不要になったDOM要素を画面から取り除く。
             loadingDiv.remove();
             // 詳細: 次の処理行「addChatMessageToBox(boxId, バッククォートエラー: ${e.message}バッククォート, 'ai');」の役割を、その場の制御フローに組み込む。
             addChatMessageToBox(boxId, `エラー: ${e.message}`, 'ai');
+            window.ApiDiagnostics?.report('anthropic', 'error', `Anthropic API エラー: ${e.message}`);
         // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
         }
     // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
@@ -285,6 +308,7 @@ function initMultiAI() {
         if (!apiKeys.gemini) {
             // 詳細: 次の処理行「addChatMessageToBox(boxId, 'エラー: Gemini APIキーが未設定です。', 'ai');」の役割を、その場の制御フローに組み込む。
             addChatMessageToBox(boxId, 'エラー: Gemini APIキーが未設定です。', 'ai');
+            window.ApiDiagnostics?.report('gemini', 'missing', 'Gemini APIキー未設定');
             // 詳細: 呼び出し元へ処理結果を返して、この関数の流れを終える。
             return;
         // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
@@ -295,7 +319,7 @@ function initMultiAI() {
         try {
             // GeminiはAPIキーをクエリパラメータで渡す仕様に合わせる。
             // 詳細: 変数「res」を、この後の処理で使う値として用意する。
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKeys.gemini}`, {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${AI_MODELS.gemini}:generateContent?key=${apiKeys.gemini}`, {
                 // 詳細: オブジェクトのプロパティ値を定義する。
                 method: 'POST',
                 // 詳細: オブジェクトのプロパティ値を定義する。
@@ -315,13 +339,20 @@ function initMultiAI() {
             // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
             if (!res.ok) throw new Error(data.error?.message || 'API Error');
             // 詳細: 次の処理行「addChatMessageToBox(boxId, data.candidates[0].content.parts[0].text, 'ai');」の役割を、その場の制御フローに組み込む。
-            addChatMessageToBox(boxId, data.candidates[0].content.parts[0].text, 'ai');
+            const responseText = data.candidates?.[0]?.content?.parts
+                ?.filter(part => typeof part.text === 'string')
+                .map(part => part.text)
+                .join('');
+            if (!responseText) throw new Error('Gemini APIから回答本文が返されませんでした。');
+            addChatMessageToBox(boxId, responseText, 'ai');
+            window.ApiDiagnostics?.report('gemini', 'ok', 'Gemini API 応答成功');
         // 詳細: オブジェクトまたはブロックの境界を定義する。
         } catch (e) {
             // 詳細: 不要になったDOM要素を画面から取り除く。
             loadingDiv.remove();
             // 詳細: 次の処理行「addChatMessageToBox(boxId, バッククォートエラー: ${e.message}バッククォート, 'ai');」の役割を、その場の制御フローに組み込む。
             addChatMessageToBox(boxId, `エラー: ${e.message}`, 'ai');
+            window.ApiDiagnostics?.report('gemini', 'error', `Gemini API エラー: ${e.message}`);
         // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
         }
     // 詳細: 現在のオブジェクト定義または関数代入を閉じる。

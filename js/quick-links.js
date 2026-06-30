@@ -42,10 +42,13 @@ function initQuickLinks() {
         quickLinksContainer.innerHTML = '';
         // 詳細: 複数の要素を順番に処理するための反復処理を行う。
         quickLinks.forEach((link, index) => {
+            const safeUrl = normalizeQuickLinkUrl(link.url);
+            if (!safeUrl) return;
+
             // 詳細: 変数「a」を、この後の処理で使う値として用意する。
             const a = document.createElement('a');
             // 詳細: 次の処理行「a.href = link.url;」の役割を、その場の制御フローに組み込む。
-            a.href = link.url;
+            a.href = safeUrl;
             // 詳細: 次の処理行「a.className = 'quick-link-item';」の役割を、その場の制御フローに組み込む。
             a.className = 'quick-link-item';
 
@@ -53,19 +56,26 @@ function initQuickLinks() {
             // 詳細: 変数「hostname」を、この後の処理で使う値として用意する。
             let hostname = 'localhost';
             // 詳細: 失敗する可能性がある処理を、例外捕捉できる範囲で開始する。
-            try { hostname = new URL(link.url).hostname; } catch(e){}
+            try { hostname = new URL(safeUrl).hostname; } catch(e){}
             // 詳細: 変数「iconUrl」を、この後の処理で使う値として用意する。
             const iconUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
 
-            // 詳細: HTMLとして描画する内容を組み立てて、対象要素へ反映する。
-            a.innerHTML = `
-                <img src="${iconUrl}" class="quick-link-icon" alt="icon">
-                <span class="quick-link-title">${link.title}</span>
-                <button class="delete-link-btn" title="削除">&times;</button>
-            `;
+            // 保存データをHTML文字列へ埋め込まず、DOM APIで安全に描画する。
+            const icon = document.createElement('img');
+            icon.src = iconUrl;
+            icon.className = 'quick-link-icon';
+            icon.alt = '';
 
-            // 詳細: 変数「delBtn」を、この後の処理で使う値として用意する。
-            const delBtn = a.querySelector('.delete-link-btn');
+            const title = document.createElement('span');
+            title.className = 'quick-link-title';
+            title.textContent = String(link.title || hostname);
+
+            const delBtn = document.createElement('button');
+            delBtn.className = 'delete-link-btn';
+            delBtn.type = 'button';
+            delBtn.title = '削除';
+            delBtn.textContent = '×';
+            a.append(icon, title, delBtn);
             // 詳細: 対象要素のイベントを監視し、ユーザー操作に応じた処理を登録する。
             delBtn.addEventListener('click', (e) => {
                 // 詳細: 次の処理行「e.preventDefault();」の役割を、その場の制御フローに組み込む。
@@ -103,14 +113,15 @@ function initQuickLinks() {
         // 詳細: 失敗する可能性がある処理を、例外捕捉できる範囲で開始する。
         try {
             // 詳細: 次の処理行「new URL(url);」の役割を、その場の制御フローに組み込む。
-            new URL(url);
+            const normalizedUrl = normalizeQuickLinkUrl(url);
+            if (!normalizedUrl) throw new Error('Unsupported URL');
             // 詳細: 変数「title」を、この後の処理で使う値として用意する。
             let title = prompt('サイトのタイトルを入力してください:');
             // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
-            if (!title) title = new URL(url).hostname.replace('www.', '');
+            if (!title) title = new URL(normalizedUrl).hostname.replace('www.', '');
 
             // 詳細: 次の処理行「quickLinks.push({ title, url });」の役割を、その場の制御フローに組み込む。
-            quickLinks.push({ title, url });
+            quickLinks.push({ title, url: normalizedUrl });
             // 詳細: 次の処理行「writeJsonToStorage(STORAGE_KEY_LINKS, quickLinks);」の役割を、その場の制御フローに組み込む。
             writeJsonToStorage(STORAGE_KEY_LINKS, quickLinks);
             // 詳細: 次の処理行「renderQuickLinks();」の役割を、その場の制御フローに組み込む。
@@ -127,6 +138,16 @@ function initQuickLinks() {
     // 詳細: 次の処理行「renderQuickLinks();」の役割を、その場の制御フローに組み込む。
     renderQuickLinks();
 // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
+}
+
+// ブラウザで安全に開けるHTTP(S) URLだけをクイックリンクとして受け付ける。
+function normalizeQuickLinkUrl(value) {
+    try {
+        const url = new URL(String(value || '').trim());
+        return ['http:', 'https:'].includes(url.protocol) ? url.toString() : '';
+    } catch (error) {
+        return '';
+    }
 }
 // 詳細: オブジェクトまたはブロックの境界を定義する。
 })();

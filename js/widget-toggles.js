@@ -16,6 +16,7 @@ function initWidgetToggles() {
         { id: 'toggle-weather', targetId: 'weather-widget' },
         // 詳細: オブジェクトまたはブロックの境界を定義する。
         { id: 'toggle-todo', targetId: 'todo-widget' },
+        { id: 'toggle-unified-agenda', targetId: 'unified-agenda-widget' },
         // 詳細: オブジェクトまたはブロックの境界を定義する。
         { id: 'toggle-spotify', targetId: 'spotify-widget' },
         // 詳細: オブジェクトまたはブロックの境界を定義する。
@@ -36,9 +37,8 @@ function initWidgetToggles() {
         { id: 'toggle-github', targetId: 'github-widget' },
         // 詳細: オブジェクトまたはブロックの境界を定義する.
         { id: 'toggle-stocks', targetId: 'stocks-widget' },
-        // Google & GitHub & 拡張ウィジェット用
-        { id: 'toggle-google-fit', targetId: 'google-fit-widget' },
-        { id: 'toggle-github-grass', targetId: 'github-grass-widget' }
+        { id: 'toggle-github-grass', targetId: 'github-grass-widget' },
+        { id: 'toggle-api-diagnostics', targetId: 'api-diagnostics-widget' }
     // 詳細: 配列リテラルの境界を定義する。
     ];
 

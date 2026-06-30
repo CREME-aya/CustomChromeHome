@@ -36,7 +36,9 @@ function renderFromCache() {
     const cached = readJsonFromStorage(STORAGE_KEY_GITHUB_GRASS_CACHE, null);
     if (cached !== null) {
         updateUI(cached);
+        return true;
     }
+    return false;
 }
 
 // GitHub GraphQL API から芝生データを取得
@@ -44,6 +46,7 @@ async function fetchGithubGrass() {
     const pat = localStorage.getItem(STORAGE_KEY_GITHUB_PAT);
     if (!pat) {
         showGrassError("GitHub PAT が未設定です。設定サイドバーから登録してください。");
+        window.ApiDiagnostics?.report('github-grass', 'missing', 'GitHub PAT 未設定');
         return;
     }
 
@@ -103,10 +106,17 @@ async function fetchGithubGrass() {
         // キャッシュに保存してUIを更新
         writeJsonToStorage(STORAGE_KEY_GITHUB_GRASS_CACHE, payload);
         updateUI(payload);
+        window.ApiDiagnostics?.report('github-grass', 'ok', `${payload.totalContributions}件のコントリビューションを取得`);
 
     } catch (err) {
         console.error("Failed to fetch GitHub grass:", err);
-        renderFromCache();
+        if (!renderFromCache()) {
+            showGrassError("GitHub コントリビューションの取得に失敗しました。PATと通信状態を確認してください。");
+            window.ApiDiagnostics?.report('github-grass', 'error', 'GitHub コントリビューション取得に失敗');
+        } else {
+            window.showNotification?.("GitHub コントリビューションの更新に失敗したため、キャッシュを表示しています。", "warning");
+            window.ApiDiagnostics?.report('github-grass', 'warning', 'GitHub コントリビューション更新に失敗。キャッシュを表示');
+        }
     }
 }
 
@@ -148,8 +158,8 @@ function updateUI(data) {
 }
 
 function getAdaptiveColor(color) {
-    if (color === '#ebedf0' || color === '#ns') {
-        const isDark = document.body.classList.contains('dark-theme') || 
+    if (color === '#ebedf0') {
+        const isDark = document.body.classList.contains('dark-theme') ||
                        window.matchMedia('(prefers-color-scheme: dark)').matches;
         return isDark ? 'rgba(255, 255, 255, 0.05)' : '#ebedf0';
     }

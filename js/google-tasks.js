@@ -90,6 +90,7 @@ async function loadTaskLists() {
         }
     } catch(e) {
         console.error("Google Tasks load lists failed", e);
+        window.ApiDiagnostics?.report('google-tasks', 'error', 'Google Tasks リスト取得に失敗');
     }
 }
 
@@ -97,6 +98,7 @@ async function loadTasks(listId, showLoadingState = true) {
     if (!listId) return;
     if (!GoogleAuth.hasStoredSession()) {
         renderUnauthenticated();
+        window.ApiDiagnostics?.report('google-tasks', 'missing', 'Google 連携が必要');
         return;
     }
 
@@ -125,13 +127,17 @@ async function loadTasks(listId, showLoadingState = true) {
 
         localStorage.setItem(STORAGE_KEY_GOOGLE_TASKS_CACHE, JSON.stringify(currentTasks));
         renderTasks();
+        window.ApiDiagnostics?.report('google-tasks', 'ok', `${currentTasks.length}件のタスクを取得`);
+        window.UnifiedAgenda?.refresh?.();
     } catch(e) {
         console.error("Google Tasks load tasks failed", e);
         setLoading(false);
         if (currentTasks.length > 0) {
             window.showNotification("Google Tasksの同期に失敗しました。キャッシュを表示しています。", "warning");
+            window.ApiDiagnostics?.report('google-tasks', 'warning', 'Google Tasks 同期に失敗。キャッシュを表示');
         } else {
             renderError("タスクの同期に失敗しました。");
+            window.ApiDiagnostics?.report('google-tasks', 'error', 'タスクの同期に失敗');
         }
     }
 }
@@ -253,6 +259,7 @@ function renderTasks() {
 
     if (currentTasks.length === 0) {
         listEl.innerHTML = '<div class="empty-state">タスクはありません。</div>';
+        window.UnifiedAgenda?.refresh?.();
         return;
     }
 
@@ -290,35 +297,21 @@ function renderTasks() {
         item.append(checkbox, textWrap, deleteBtn);
         listEl.appendChild(item);
     });
+    window.UnifiedAgenda?.refresh?.();
 }
 
 function renderUnauthenticated() {
-    const listEl = document.getElementById('google-tasks-list');
-    if (!listEl) return;
-    setLoading(false);
-    listEl.innerHTML = `
-        <div class="empty-state auth-guide">
-            <p>Google アカウントと未連携です。設定サイドバーの Google 連携設定を行ってください。</p>
-        </div>
-    `;
+    window.ApiUI.setAuthGuide('google-tasks-list', 'Google アカウントと未連携です。設定サイドバーの Google 連携設定を行ってください。');
+    window.ApiDiagnostics?.report('google-tasks', 'missing', 'Google 連携が必要');
 }
 
 function renderError(message) {
-    const listEl = document.getElementById('google-tasks-list');
-    if (!listEl) return;
-    listEl.innerHTML = `
-        <div class="empty-state error-state">
-            <span>⚠️</span>
-            <p>${message}</p>
-        </div>
-    `;
+    window.ApiUI.setError('google-tasks-list', message);
 }
 
 function setLoading(isLoading) {
-    const listEl = document.getElementById('google-tasks-list');
-    if (!listEl) return;
     if (isLoading) {
-        listEl.innerHTML = '<div class="loading">Google Tasks と同期中...</div>';
+        window.ApiUI.setLoading('google-tasks-list', 'Google Tasks と同期中...');
     }
 }
 })();

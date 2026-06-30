@@ -2,17 +2,25 @@
 // アプリ全体のエントリーポイント (堅牢化版)
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
+    const reportInitializationError = (name, error) => {
+        console.error(`[Error] Failed to initialize ${name}:`, error);
+    };
+
     // 各モジュールの初期化を安全に実行するヘルパー
     // 1つのウィジェットのエラーが他の無関係な機能（時計、天気など）の初期化を妨げないようにする
     const safeInit = (name, initFn) => {
         try {
             if (typeof initFn === 'function') {
-                initFn();
+                const result = initFn();
+                // async 初期化の失敗も未処理のPromiseにせず、対象ウィジェット名付きで記録する。
+                if (result && typeof result.catch === 'function') {
+                    result.catch(error => reportInitializationError(name, error));
+                }
             } else {
                 console.warn(`[Warn] Initialization function for "${name}" is not registered or failed to load.`);
             }
         } catch (e) {
-            console.error(`[Error] Failed to initialize ${name}:`, e);
+            reportInitializationError(name, e);
         }
     };
 
@@ -25,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     safeInit('QuickLinks', window.initQuickLinks);
     safeInit('WidgetToggles', window.initWidgetToggles);
     safeInit('ApiKeys', window.initApiKeys);
+    safeInit('ApiDiagnostics', window.ApiDiagnostics?.init);
     safeInit('MultiAI', window.initMultiAI);
     safeInit('ThemeSettings', window.initThemeSettings);
     safeInit('WidgetSortable', window.initWidgetSortable);
@@ -32,12 +41,16 @@ document.addEventListener('DOMContentLoaded', () => {
     safeInit('Spotify', window.initSpotify);
     safeInit('Todo', window.initTodo);
     safeInit('CalendarTodoImport', window.initCalendarTodoImport);
+    safeInit('UnifiedAgenda', window.UnifiedAgenda?.init);
 
     // Google / GitHub / 拡張ウィジェットの初期化
     const safeMethodInit = (name, obj, method) => {
         try {
             if (obj && typeof obj[method] === 'function') {
-                obj[method]();
+                const result = obj[method]();
+                if (result && typeof result.catch === 'function') {
+                    result.catch(error => reportInitializationError(`${name}.${method}`, error));
+                }
             } else if (!obj) {
                 console.warn(`[Warn] Global object "${name}" is not defined.`);
             } else {
@@ -54,9 +67,9 @@ document.addEventListener('DOMContentLoaded', () => {
     safeMethodInit('Gmail', window.Gmail, 'init');
     safeMethodInit('GitHub', window.GitHub, 'init');
 
-    safeInit('GoogleFit', window.initGoogleFit);
     safeInit('GithubGrass', window.initGithubGrass);
     safeInit('MediaController', window.initMediaController);
+    safeInit('Stocks', window.StocksWidget?.init);
 
     // 初期データのロード
     safeInit('LoadFeed', () => {

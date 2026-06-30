@@ -9,7 +9,8 @@
   },
   "permissions": [
     "identity",
-    "tabs"
+    "tabs",
+    "scripting"
   ],
   "host_permissions": [
     "https://*/*",

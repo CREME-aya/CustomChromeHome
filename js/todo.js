@@ -80,6 +80,7 @@ function renderTodos() {
             saveTodos();
             // 詳細: 次の処理行「renderTodos();」の役割を、その場の制御フローに組み込む。
             renderTodos();
+            window.UnifiedAgenda?.refresh?.();
         // 詳細: 現在の関数呼び出しまたは即時実行関数のブロックを閉じる。
         });
 
@@ -125,6 +126,7 @@ function renderTodos() {
             saveTodos();
             // 詳細: 次の処理行「renderTodos();」の役割を、その場の制御フローに組み込む。
             renderTodos();
+            window.UnifiedAgenda?.refresh?.();
         // 詳細: 現在の関数呼び出しまたは即時実行関数のブロックを閉じる。
         });
 
@@ -155,6 +157,7 @@ function addTodo(text) {
     saveTodos();
     // 詳細: 次の処理行「renderTodos();」の役割を、その場の制御フローに組み込む。
     renderTodos();
+    window.UnifiedAgenda?.refresh?.();
 
     // 詳細: 変数「input」を、この後の処理で使う値として用意する。
     const input = document.getElementById('todo-input');
@@ -184,6 +187,7 @@ function persistAndRenderTodos() {
     saveTodos();
     // 詳細: 次の処理行「renderTodos();」の役割を、その場の制御フローに組み込む。
     renderTodos();
+    window.UnifiedAgenda?.refresh?.();
 // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
 }
 

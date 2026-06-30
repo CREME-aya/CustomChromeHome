@@ -103,14 +103,15 @@ function calculateWidgetPositions(containerWidth) {
     // グリッド配置対象のノーマル幅ウィジェット一覧
     const normalWidgets = [
         'widget-todo',
+        'widget-unified-agenda',
         'widget-quick-links',
         'widget-google-calendar',
         'widget-google-tasks',
         'widget-gmail',
         'widget-github',
         'widget-stocks',
-        'widget-google-fit',
-        'widget-github-grass'
+        'widget-github-grass',
+        'widget-api-diagnostics'
     ];
 
     // 利用可能な幅に応じて列数を動的に決定 (1列から最大3列)

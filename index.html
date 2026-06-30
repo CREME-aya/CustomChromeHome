@@ -23,8 +23,9 @@
     <link rel="stylesheet" href="styles/widgets/gmail.css">
     <link rel="stylesheet" href="styles/widgets/github.css">
     <link rel="stylesheet" href="styles/widgets/stocks.css">
-    <link rel="stylesheet" href="styles/widgets/google-fit.css">
     <link rel="stylesheet" href="styles/widgets/github-grass.css">
+    <link rel="stylesheet" href="styles/widgets/api-diagnostics.css">
+    <link rel="stylesheet" href="styles/widgets/unified-agenda.css">
 </head>
 <body>
     <!-- 設定用のサイドバー -->
@@ -63,6 +64,10 @@
                     <input type="checkbox" id="toggle-todo" class="toggle-checkbox" checked>
                 </div>
                 <div class="toggle-row">
+                    <label for="toggle-unified-agenda" class="sidebar-label" style="margin-bottom: 0;">予定・タスク統合</label>
+                    <input type="checkbox" id="toggle-unified-agenda" class="toggle-checkbox" checked>
+                </div>
+                <div class="toggle-row">
                     <label for="toggle-spotify" class="sidebar-label" style="margin-bottom: 0;">Spotify</label>
                     <input type="checkbox" id="toggle-spotify" class="toggle-checkbox" checked>
                 </div>
@@ -75,7 +80,7 @@
                     <input type="checkbox" id="toggle-ai-openai" class="toggle-checkbox" checked>
                 </div>
                 <div class="toggle-row">
-                    <label for="toggle-ai-anthropic" class="sidebar-label" style="margin-bottom: 0;">Claude (3.5 Sonnet)</label>
+                    <label for="toggle-ai-anthropic" class="sidebar-label" style="margin-bottom: 0;">Claude (Sonnet 4.6)</label>
                     <input type="checkbox" id="toggle-ai-anthropic" class="toggle-checkbox" checked>
                 </div>
                 <div class="toggle-row">
@@ -103,12 +108,12 @@
                     <input type="checkbox" id="toggle-stocks" class="toggle-checkbox" checked>
                 </div>
                 <div class="toggle-row">
-                    <label for="toggle-google-fit" class="sidebar-label" style="margin-bottom: 0;">Google Fit (万歩計)</label>
-                    <input type="checkbox" id="toggle-google-fit" class="toggle-checkbox" checked>
-                </div>
-                <div class="toggle-row">
                     <label for="toggle-github-grass" class="sidebar-label" style="margin-bottom: 0;">GitHub 芝生</label>
                     <input type="checkbox" id="toggle-github-grass" class="toggle-checkbox" checked>
+                </div>
+                <div class="toggle-row">
+                    <label for="toggle-api-diagnostics" class="sidebar-label" style="margin-bottom: 0;">API診断</label>
+                    <input type="checkbox" id="toggle-api-diagnostics" class="toggle-checkbox" checked>
                 </div>
             </div>
 
@@ -147,6 +152,26 @@
                 <button id="clear-bg-btn" class="outline-btn" style="border-color:#ef4444; color:#ef4444; margin-top: 10px;">背景画像をクリア</button>
             </div>
             
+            <hr class="sidebar-divider">
+
+            <div class="setting-block">
+                <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1rem; color: #e2e8f0;">Googleカレンダー ToDo化</h3>
+                <label for="calendar-ical-url-input" class="sidebar-label">iCal URL:</label>
+                <input type="password" id="calendar-ical-url-input" class="url-input" placeholder="https://calendar.google.com/calendar/ical/.../basic.ics">
+                <label for="calendar-lookahead-select" class="sidebar-label" style="margin-top: 10px;">取り込み範囲:</label>
+                <select id="calendar-lookahead-select" class="url-input" style="cursor: pointer; padding: 10px;">
+                    <option value="3">今後3日</option>
+                    <option value="7">今後7日</option>
+                    <option value="14">今後14日</option>
+                    <option value="30">今後30日</option>
+                </select>
+                <div style="display: flex; gap: 8px; margin-top: 10px;">
+                    <button id="calendar-save-btn" class="save-btn" type="button" style="flex: 1;">設定を保存</button>
+                    <button id="calendar-sync-btn" class="outline-btn" type="button" style="flex: 1;">予定をToDo化</button>
+                </div>
+                <div id="calendar-import-status" role="status" aria-live="polite" style="font-size: 0.85rem; color: #94a3b8; margin-top: 8px;">未設定</div>
+            </div>
+
             <hr class="sidebar-divider">
 
             <div class="setting-block">
@@ -212,7 +237,11 @@
             <!-- 株価ウィジェット設定 -->
             <div class="setting-block">
                 <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1rem; color: #e2e8f0;">株価ウィジェット設定</h3>
-                <label for="stock-symbol-input" class="sidebar-label">銘柄を追加 (例: AAPL, ^N225, 7203.T):</label>
+                <p class="spotify-settings-note">Alpha Vantage のAPIキーを使用します。無料キーには呼び出し回数制限があります。</p>
+                <label for="stock-api-key" class="sidebar-label">Alpha Vantage API Key:</label>
+                <input type="password" id="stock-api-key" class="url-input" placeholder="APIキーを入力" style="margin-bottom: 8px;">
+                <button id="save-stock-api-key-btn" class="outline-btn" type="button" style="margin-bottom: 12px;">APIキーを保存</button>
+                <label for="stock-symbol-input" class="sidebar-label">銘柄を追加 (例: AAPL, MSFT, IBM):</label>
                 <div style="display: flex; gap: 8px; margin-bottom: 8px;">
                     <input type="text" id="stock-symbol-input" class="url-input" placeholder="シンボルを入力" style="margin-bottom: 0;">
                     <button id="add-stock-btn" class="save-btn" style="flex: 0 0 auto; padding: 0 16px;">追加</button>
@@ -286,7 +315,7 @@
 
             <!-- AI回答パネル (Anthropic) -->
             <div id="ai-panel-anthropic" class="ai-panel sortable-item" data-id="widget-ai-anthropic" data-widget-id="toggle-ai-anthropic">
-                <div class="ai-panel-header">Claude <span class="ai-model-name">(3.5 Sonnet)</span></div>
+                <div class="ai-panel-header">Claude <span class="ai-model-name">(Sonnet 4.6)</span></div>
                 <div id="chatbox-anthropic" class="ai-chat-content">APIキーを設定してください</div>
             </div>
 
@@ -307,6 +336,18 @@
                     <button id="todo-add-btn">+</button>
                 </div>
                 <ul id="todo-list" class="todo-list"></ul>
+            </div>
+
+            <!-- 予定・タスク統合ビュー -->
+            <div id="unified-agenda-widget" class="unified-agenda-widget sortable-item" data-id="widget-unified-agenda" data-widget-id="toggle-unified-agenda">
+                <div class="widget-header">
+                    <span>予定・タスク統合</span>
+                    <button id="unified-agenda-refresh-btn" class="todo-calendar-btn" type="button">更新</button>
+                </div>
+                <div id="unified-agenda-summary" class="unified-agenda-summary">集計中...</div>
+                <div id="unified-agenda-list" class="unified-agenda-list">
+                    <div class="loading">予定とタスクを集計しています...</div>
+                </div>
             </div>
 
             <!-- Spotify / YouTube ウィジェット -->
@@ -333,36 +374,6 @@
                 </div>
                 <div id="spotify-auth-prompt" class="spotify-auth-row" style="justify-content: center; padding: 10px 0;">
                     <button id="spotify-login-btn" class="outline-btn spotify-connect-btn">連携する</button>
-                </div>
-            </div>
-
-            <!-- Google Fit ウィジェット -->
-            <div id="google-fit-widget" class="google-fit-widget sortable-item" data-id="widget-google-fit" data-widget-id="toggle-google-fit">
-                <div class="widget-header">
-                    <span>Google Fit 歩数計</span>
-                    <button id="google-fit-sync-btn" class="todo-calendar-btn" type="button">同期</button>
-                </div>
-                <div id="google-fit-error" class="hidden" style="color: var(--text-muted); font-size: 0.85rem; padding: 10px 0; text-align: center;"></div>
-                <div id="google-fit-content" class="google-fit-container">
-                    <div class="fit-progress-wrapper">
-                        <svg class="fit-svg" viewBox="0 0 100 100">
-                            <circle class="fit-bg-circle" cx="50" cy="50" r="40"></circle>
-                            <circle id="google-fit-progress-circle" class="fit-progress-circle" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
-                        </svg>
-                        <div class="fit-steps-center">
-                            <div class="fit-icon">🚶</div>
-                        </div>
-                    </div>
-                    <div class="fit-stats">
-                        <div id="google-fit-steps-value" class="fit-steps-value">0</div>
-                        <div class="fit-steps-label">今日の歩数</div>
-                    </div>
-                    <div class="fit-goal-container">
-                        <span>目標:</span>
-                        <input type="number" id="google-fit-goal-input" class="fit-goal-input" value="8000" min="1000" step="500">
-                        <span>歩</span>
-                    </div>
-                    <div id="google-fit-progress-text" class="fit-progress-text"></div>
                 </div>
             </div>
 
@@ -469,6 +480,18 @@
                 </div>
             </div>
 
+            <!-- API 接続状態・診断 -->
+            <div id="api-diagnostics-widget" class="api-diagnostics-widget sortable-item" data-id="widget-api-diagnostics" data-widget-id="toggle-api-diagnostics">
+                <div class="widget-header">
+                    <span>API診断</span>
+                    <button id="api-diagnostics-refresh-btn" class="todo-calendar-btn" type="button">再評価</button>
+                </div>
+                <div id="api-diagnostics-summary" class="api-diagnostics-summary">集計中...</div>
+                <div id="api-diagnostics-list" class="api-diagnostics-list">
+                    <div class="loading">接続状態を確認しています...</div>
+                </div>
+            </div>
+
             <!-- クイックリンク -->
             <div id="quick-links-widget" class="quick-links-widget sortable-item" data-id="widget-quick-links">
                 <div id="quick-links-container" class="quick-links-grid"></div>
@@ -527,10 +550,13 @@
     <script src="js/widget-toggles.js?v=20260625"></script>
     <script src="js/layout-defaults.js?v=20260625"></script>
     <script src="js/layout.js?v=20260625"></script>
+    <script src="js/api-ui.js?v=20260625"></script>
+    <script src="js/api-diagnostics.js?v=20260625"></script>
     <script src="js/weather.js?v=20260625"></script>
     <script src="js/todo.js?v=20260625"></script>
     <script src="js/ical-parser.js?v=20260625"></script>
     <script src="js/calendar.js?v=20260625"></script>
+    <script src="js/unified-agenda.js?v=20260625"></script>
     <script src="js/ai.js?v=20260625"></script>
     <script src="js/feed-core.js?v=20260625"></script>
     <script src="js/feed.js?v=20260625"></script>
@@ -544,7 +570,6 @@
     <script src="js/spotify/auth.js?v=20260625"></script>
     <script src="js/spotify/api.js?v=20260625"></script>
     <script src="js/spotify/ui.js?v=20260625"></script>
-    <script src="js/google-fit.js?v=20260625"></script>
     <script src="js/github-grass.js?v=20260625"></script>
     <script src="js/media-controller.js?v=20260625"></script>
     <script src="js/app.js?v=20260625"></script>

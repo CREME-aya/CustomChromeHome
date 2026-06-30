@@ -28,6 +28,7 @@ async function initSpotify() {
         if (token) {
             // 詳細: 次の処理行「showSpotifyPlayer(true);」の役割を、その場の制御フローに組み込む。
             showSpotifyPlayer(true);
+            window.ApiDiagnostics?.report('spotify', 'idle', 'Spotify 連携済み。再生状態取得を待機');
             // 詳細: 次の処理行「startSpotifyPolling();」の役割を、その場の制御フローに組み込む。
             startSpotifyPolling();
         // 詳細: オブジェクトまたはブロックの境界を定義する。
@@ -40,6 +41,7 @@ async function initSpotify() {
     } else {
         // 詳細: 次の処理行「showSpotifyPlayer(false);」の役割を、その場の制御フローに組み込む。
         showSpotifyPlayer(false);
+        window.ApiDiagnostics?.report('spotify', 'missing', 'Spotify 未連携');
     // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
     }
 
@@ -72,6 +74,7 @@ async function handleSpotifyLogin() {
     refreshSpotifySettingsError();
     // 詳細: 次の処理行「showSpotifyPlayer(true);」の役割を、その場の制御フローに組み込む。
     showSpotifyPlayer(true);
+    window.ApiDiagnostics?.report('spotify', 'idle', 'Spotify 連携済み。再生状態取得を待機');
     // 詳細: 次の処理行「startSpotifyPolling();」の役割を、その場の制御フローに組み込む。
     startSpotifyPolling();
 // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
@@ -85,6 +88,7 @@ function logoutSpotify() {
     stopSpotifyPolling();
     // 詳細: 次の処理行「showSpotifyPlayer(false);」の役割を、その場の制御フローに組み込む。
     showSpotifyPlayer(false);
+    window.ApiDiagnostics?.report('spotify', 'missing', 'Spotify 未連携');
 // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
 }
 
@@ -174,6 +178,7 @@ async function fetchSpotifyCurrentlyPlaying() {
             // 再生されていない状態も正常応答としてUIへ反映する。
             // 詳細: 次の処理行「updateSpotifyUI(null);」の役割を、その場の制御フローに組み込む。
             updateSpotifyUI(null);
+            window.ApiDiagnostics?.report('spotify', 'ok', 'Spotify 再生状態取得成功');
             // 詳細: 呼び出し元へ処理結果を返して、この関数の流れを終える。
             return;
         // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
@@ -183,10 +188,12 @@ async function fetchSpotifyCurrentlyPlaying() {
         const data = await res.json();
         // 詳細: 次の処理行「updateSpotifyUI(data);」の役割を、その場の制御フローに組み込む。
         updateSpotifyUI(data);
+        window.ApiDiagnostics?.report('spotify', 'ok', 'Spotify 再生状態取得成功');
     // 詳細: オブジェクトまたはブロックの境界を定義する。
     } catch(e) {
         // 詳細: 調査や失敗確認のため、実行時情報をコンソールへ出力する。
         console.error("Spotify Fetch Error:", e);
+        window.ApiDiagnostics?.report('spotify', 'error', `Spotify 再生状態取得失敗: ${e.message}`);
     // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
     }
 // 詳細: 現在のオブジェクト定義または関数代入を閉じる。

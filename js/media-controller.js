@@ -7,6 +7,7 @@ let mediaPollInterval = null;
 window.initMediaController = initMediaController;
 
 function initMediaController() {
+    configureYouTubeAvailability();
     setupMediaModeSettings();
     applyMediaMode();
 
@@ -49,6 +50,33 @@ function initMediaController() {
                 controlYouTube('prev');
             }
         }, true);
+    }
+}
+
+function canControlYouTube() {
+    return Boolean(
+        typeof chrome !== 'undefined' &&
+        chrome.tabs?.query &&
+        chrome.scripting?.executeScript
+    );
+}
+
+function configureYouTubeAvailability() {
+    const youtubeRadio = document.querySelector('input[name="media-mode"][value="youtube"]');
+    if (!youtubeRadio || canControlYouTube()) return;
+
+    youtubeRadio.disabled = true;
+    youtubeRadio.title = 'このビルドにはYouTube操作に必要なscripting権限がありません。';
+    const label = youtubeRadio.closest('label');
+    if (label) {
+        label.title = youtubeRadio.title;
+        label.style.opacity = '0.55';
+        label.style.cursor = 'not-allowed';
+    }
+
+    if (getMediaMode() === 'youtube') {
+        localStorage.setItem(STORAGE_KEY_MEDIA_MODE, 'spotify');
+        window.showNotification?.('YouTube操作は必要な拡張権限がないためSpotifyへ戻しました。', 'warning');
     }
 }
 
@@ -119,18 +147,24 @@ async function getYouTubeTab() {
 }
 
 async function executeOnYouTube(func) {
+    if (!canControlYouTube()) {
+        window.showNotification?.('YouTube操作に必要な拡張権限がありません。', 'warning');
+        return null;
+    }
+
     const tab = await getYouTubeTab();
     if (!tab) return null;
     
     return new Promise((resolve) => {
-        if (typeof chrome === 'undefined' || !chrome.scripting) {
-            resolve(null);
-            return;
-        }
         chrome.scripting.executeScript({
             target: { tabId: tab.id },
             func: func
         }, (results) => {
+            if (chrome.runtime?.lastError) {
+                console.warn('YouTubeタブの操作に失敗しました:', chrome.runtime.lastError.message);
+                resolve(null);
+                return;
+            }
             if (results && results[0]) {
                 resolve(results[0].result);
             } else {

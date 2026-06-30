@@ -38,6 +38,7 @@ async function loadIssues(force = false) {
     const pat = localStorage.getItem(STORAGE_KEY_GITHUB_PAT);
     if (!pat) {
         renderUnauthenticated();
+        window.ApiDiagnostics?.report('github', 'missing', 'GitHub PAT 未設定');
         return;
     }
 
@@ -80,13 +81,16 @@ async function loadIssues(force = false) {
 
         localStorage.setItem(STORAGE_KEY_GITHUB_CACHE, JSON.stringify(currentIssues));
         renderIssues();
+        window.ApiDiagnostics?.report('github', 'ok', `${currentIssues.length}件のIssue/PRを取得`);
     } catch(e) {
         console.error("GitHub load issues failed", e);
         setLoading(false);
         if (currentIssues.length > 0) {
             window.showNotification("GitHubの同期に失敗しました。キャッシュを表示しています。", "warning");
+            window.ApiDiagnostics?.report('github', 'warning', 'GitHub同期に失敗。キャッシュを表示');
         } else {
             renderError("GitHubデータの同期に失敗しました。");
+            window.ApiDiagnostics?.report('github', 'error', 'GitHubデータの同期に失敗');
         }
     }
 }
@@ -141,32 +145,16 @@ function renderIssues() {
 }
 
 function renderUnauthenticated() {
-    const list = document.getElementById('github-list');
-    if (!list) return;
-    setLoading(false);
-    list.innerHTML = `
-        <div class="empty-state auth-guide">
-            <p>GitHub PAT が設定されていません。設定サイドバーの GitHub 連携設定を行ってください。</p>
-        </div>
-    `;
+    window.ApiUI.setAuthGuide('github-list', 'GitHub PAT が設定されていません。設定サイドバーの GitHub 連携設定を行ってください。');
 }
 
 function renderError(message) {
-    const list = document.getElementById('github-list');
-    if (!list) return;
-    list.innerHTML = `
-        <div class="empty-state error-state">
-            <span>⚠️</span>
-            <p>${message}</p>
-        </div>
-    `;
+    window.ApiUI.setError('github-list', message);
 }
 
 function setLoading(isLoading) {
-    const list = document.getElementById('github-list');
-    if (!list) return;
     if (isLoading) {
-        list.innerHTML = '<div class="loading">GitHub から同期中...</div>';
+        window.ApiUI.setLoading('github-list', 'GitHub から同期中...');
     }
 }
 function initSettings() {
@@ -188,7 +176,9 @@ function initSettings() {
             localStorage.removeItem(STORAGE_KEY_GITHUB_PAT);
             window.showNotification("GitHub 設定を解除しました。", "success");
             renderUnauthenticated();
+            window.ApiDiagnostics?.report('github', 'missing', 'GitHub PAT 未設定');
         }
+        window.ApiDiagnostics?.refresh?.();
     });
 }
 })();

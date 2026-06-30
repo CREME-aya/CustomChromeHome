@@ -47,10 +47,11 @@ function init() {
 async function loadEvents(force = false) {
     if (!GoogleAuth.hasStoredSession()) {
         renderUnauthenticated();
+        window.ApiDiagnostics?.report('google-calendar', 'missing', 'Google 連携が必要');
         return;
     }
 
-    setLoading(true);
+    window.ApiUI.setLoading('google-calendar-events-list', 'Google カレンダーから同期中...');
 
     try {
         const token = await GoogleAuth.getValidAccessToken();
@@ -101,13 +102,18 @@ async function loadEvents(force = false) {
 
         localStorage.setItem(STORAGE_KEY_GOOGLE_CALENDAR_CACHE, JSON.stringify(currentEvents));
         renderEvents();
+        window.ApiDiagnostics?.report('google-calendar', 'ok', `${currentEvents.length}件の予定を取得`);
+        window.UnifiedAgenda?.refresh?.();
     } catch (e) {
         console.error("Google Calendar load failed", e);
-        setLoading(false);
         if (currentEvents.length > 0) {
+            // ローディング表示をキャッシュ済み予定へ戻してから、更新失敗だけを通知する。
+            renderEvents();
             window.showNotification("Google カレンダーの更新に失敗しました。キャッシュを表示しています。", "warning");
+            window.ApiDiagnostics?.report('google-calendar', 'warning', 'Google カレンダー更新に失敗。キャッシュを表示');
         } else {
             renderError("予定の取得に失敗しました。再試行してください。");
+            window.ApiDiagnostics?.report('google-calendar', 'error', '予定の取得に失敗');
         }
     }
 }
@@ -192,6 +198,7 @@ function renderEvents() {
 
     if (currentEvents.length === 0) {
         list.innerHTML = '<div class="empty-state">7日以内の予定はありません。</div>';
+        window.UnifiedAgenda?.refresh?.();
         return;
     }
 
@@ -259,35 +266,21 @@ function renderEvents() {
 
         list.appendChild(groupEl);
     });
+    window.UnifiedAgenda?.refresh?.();
 }
 
 function renderUnauthenticated() {
-    const list = document.getElementById('google-calendar-events-list');
-    if (!list) return;
-    setLoading(false);
-    list.innerHTML = `
-        <div class="empty-state auth-guide">
-            <p>Google アカウントと未連携です。設定サイドバーの Google 連携設定を行ってください。</p>
-        </div>
-    `;
+    window.ApiUI.setAuthGuide('google-calendar-events-list', 'Google アカウントと未連携です。設定サイドバーの Google 連携設定を行ってください。');
+    window.ApiDiagnostics?.report('google-calendar', 'missing', 'Google 連携が必要');
 }
 
 function renderError(message) {
-    const list = document.getElementById('google-calendar-events-list');
-    if (!list) return;
-    list.innerHTML = `
-        <div class="empty-state error-state">
-            <span>⚠️</span>
-            <p>${message}</p>
-        </div>
-    `;
+    window.ApiUI.setError('google-calendar-events-list', message);
 }
 
 function setLoading(isLoading) {
-    const list = document.getElementById('google-calendar-events-list');
-    if (!list) return;
     if (isLoading) {
-        list.innerHTML = '<div class="loading">Google カレンダーから同期中...</div>';
+        window.ApiUI.setLoading('google-calendar-events-list', 'Google カレンダーから同期中...');
     }
 }
 

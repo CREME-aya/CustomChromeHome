@@ -17,7 +17,7 @@ function showNotification(message, type = 'info', options = {}) {
     const notification = document.createElement('div');
     // 未定義の種別が渡されてもCSSクラスが壊れないように標準化する。
     // 詳細: 変数「normalizedType」を、この後の処理で使う値として用意する。
-    const normalizedType = ['info', 'success', 'error'].includes(type) ? type : 'info';
+    const normalizedType = ['info', 'success', 'warning', 'error'].includes(type) ? type : 'info';
 
     // 詳細: 次の処理行「notification.className = バッククォートnotification ${normalizedType}バッククォート;」の役割を、その場の制御フローに組み込む。
     notification.className = `notification ${normalizedType}`;

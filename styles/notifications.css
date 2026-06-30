@@ -40,6 +40,10 @@
   border-color: rgba(239, 68, 68, 0.55);
 }
 
+.notification.warning {
+  border-color: rgba(245, 158, 11, 0.55);
+}
+
 .notification.info {
   border-color: rgba(96, 165, 250, 0.45);
 }

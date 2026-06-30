@@ -159,6 +159,7 @@ async function loadFeed(feedUrlInput) {
         currentFeedResults = [];
         currentArticles = [];
         setFeedStatus('empty', 'フィードが設定されていません。');
+        window.ApiDiagnostics?.report('feed', 'missing', 'フィードURL未設定');
         renderArticles();
         return;
     }
@@ -348,6 +349,7 @@ function updateFeedLoadStatus(results) {
 
     if (successfulResults.length === 0) {
         setFeedStatus('error', 'フィードを取得できませんでした。再試行してください。', true);
+        window.ApiDiagnostics?.report('feed', 'error', 'フィードを取得できませんでした');
         return;
     }
 
@@ -356,15 +358,18 @@ function updateFeedLoadStatus(results) {
             'warning',
             `${results.length}件中${failedResults.length}件の取得に失敗しました。成功した記事を表示しています。`
         );
+        window.ApiDiagnostics?.report('feed', 'warning', `${results.length}件中${failedResults.length}件の取得に失敗`);
         return;
     }
 
     if (staleResults.length > 0) {
         setFeedStatus('warning', '前回取得した記事を含めて表示しています。');
+        window.ApiDiagnostics?.report('feed', 'warning', '前回取得した記事を含めて表示');
         return;
     }
 
     setFeedStatus('success', `${currentArticles.length}件の記事を読み込みました。`);
+    window.ApiDiagnostics?.report('feed', 'ok', `${currentArticles.length}件の記事を取得`);
 }
 
 function setFeedStatus(type, message, showRetry = false) {

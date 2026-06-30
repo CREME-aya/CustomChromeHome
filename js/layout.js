@@ -272,8 +272,10 @@ function addPinButton(el) {
 // 詳細: 関数「makeElementDraggable」の処理ブロックを開始する。
 function makeElementDraggable(el, container) {
     // 掴みやすくするため、ヘッダー領域またはウィジェット全体をドラッグ対象にする
-    // 詳細: 変数「handler」を、この後の処理で使う値として用意する。
-    const handler = el.querySelector('.widget-header') || el.querySelector('.clock-widget') || el;
+    const handler = el.querySelector('.widget-header') ||
+                    el.querySelector('.ai-panel-header') ||
+                    el.querySelector('.clock-widget') ||
+                    el;
 
     // 詳細: 対象要素のイベントを監視し、ユーザー操作に応じた処理を登録する。
     handler.addEventListener('mousedown', (e) => {
