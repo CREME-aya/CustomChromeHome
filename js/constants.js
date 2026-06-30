@@ -61,7 +61,7 @@ const STORAGE_KEY_GITHUB_GRASS_CACHE = 'custom_github_grass_cache';
 // 株価 定数
 const STORAGE_KEY_STOCKS = 'custom_stock_symbols';
 const STORAGE_KEY_STOCKS_CACHE = 'custom_stocks_cache';
-const STORAGE_KEY_STOCKS_API_KEY = 'custom_alpha_vantage_api_key';
+const STORAGE_KEY_STOCKS_SOURCE_URL = 'custom_googlefinance_csv_url';
 
 // 詳細: 変数「DEFAULT_FEED_URLS」を、この後の処理で使う値として用意する。
 const DEFAULT_FEED_URLS = [DEFAULT_URL];

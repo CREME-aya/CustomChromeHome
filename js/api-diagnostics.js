@@ -11,7 +11,7 @@ const SERVICE_DEFINITIONS = [
     { id: 'gmail', label: 'Gmail', kind: 'google-api' },
     { id: 'github', label: 'GitHub', kind: 'storage-key', storageKey: 'STORAGE_KEY_GITHUB_PAT', envName: 'NEXUS_GITHUB_PAT' },
     { id: 'github-grass', label: 'GitHub 芝生', kind: 'storage-key', storageKey: 'STORAGE_KEY_GITHUB_PAT', envName: 'NEXUS_GITHUB_PAT' },
-    { id: 'stocks', label: 'Alpha Vantage 株価', kind: 'storage-key', storageKey: 'STORAGE_KEY_STOCKS_API_KEY', envName: 'NEXUS_ALPHA_VANTAGE_API_KEY' },
+    { id: 'stocks', label: 'GoogleFinance 株価', kind: 'storage-key', storageKey: 'STORAGE_KEY_STOCKS_SOURCE_URL', envName: 'NEXUS_GOOGLEFINANCE_CSV_URL' },
     { id: 'spotify', label: 'Spotify', kind: 'spotify' },
     { id: 'openai', label: 'OpenAI', kind: 'storage-key', storageKey: 'STORAGE_KEY_OPENAI_API_KEY', envName: 'NEXUS_OPENAI_API_KEY' },
     { id: 'anthropic', label: 'Anthropic', kind: 'storage-key', storageKey: 'STORAGE_KEY_ANTHROPIC_API_KEY', envName: 'NEXUS_ANTHROPIC_API_KEY' },
@@ -121,8 +121,8 @@ function evaluateWeather() {
 function evaluateStorageKey(service) {
     const storageKey = getStorageConstant(service.storageKey);
     return hasConfiguredValue(storageKey, service.envName)
-        ? { state: 'idle', message: '認証情報設定済み。直近の通信結果を待機' }
-        : { state: 'missing', message: '認証情報未設定' };
+        ? { state: 'idle', message: '設定値保存済み。直近の通信結果を待機' }
+        : { state: 'missing', message: '設定値未設定' };
 }
 
 function mergeRuntimeReports(baseStatuses, reports) {
@@ -205,7 +205,7 @@ function getStorageConstant(name) {
         const storageConstants = {
             STORAGE_KEY_GOOGLE_CLIENT_ID: typeof STORAGE_KEY_GOOGLE_CLIENT_ID !== 'undefined' ? STORAGE_KEY_GOOGLE_CLIENT_ID : '',
             STORAGE_KEY_GITHUB_PAT: typeof STORAGE_KEY_GITHUB_PAT !== 'undefined' ? STORAGE_KEY_GITHUB_PAT : '',
-            STORAGE_KEY_STOCKS_API_KEY: typeof STORAGE_KEY_STOCKS_API_KEY !== 'undefined' ? STORAGE_KEY_STOCKS_API_KEY : '',
+            STORAGE_KEY_STOCKS_SOURCE_URL: typeof STORAGE_KEY_STOCKS_SOURCE_URL !== 'undefined' ? STORAGE_KEY_STOCKS_SOURCE_URL : '',
             STORAGE_KEY_OPENAI_API_KEY: typeof STORAGE_KEY_OPENAI_API_KEY !== 'undefined' ? STORAGE_KEY_OPENAI_API_KEY : '',
             STORAGE_KEY_ANTHROPIC_API_KEY: typeof STORAGE_KEY_ANTHROPIC_API_KEY !== 'undefined' ? STORAGE_KEY_ANTHROPIC_API_KEY : '',
             STORAGE_KEY_GEMINI_API_KEY: typeof STORAGE_KEY_GEMINI_API_KEY !== 'undefined' ? STORAGE_KEY_GEMINI_API_KEY : ''

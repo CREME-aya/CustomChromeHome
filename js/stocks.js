@@ -1,9 +1,20 @@
 // ==========================================
-// 株価・市場ウィジェット (Alpha Vantage)
+// 株価・市場ウィジェット (Google Sheets / GOOGLEFINANCE)
 // ==========================================
 (function() {
-const DEFAULT_SYMBOLS = ['AAPL', 'MSFT', 'IBM'];
-const ALPHA_VANTAGE_ENDPOINT = 'https://www.alphavantage.co/query';
+const DEFAULT_SYMBOLS = ['NASDAQ:AAPL', 'NASDAQ:MSFT', 'NYSE:IBM'];
+const GOOGLEFINANCE_CSV_ENV_NAME = 'NEXUS_GOOGLEFINANCE_CSV_URL';
+
+const HEADER_ALIASES = {
+    symbol: ['symbol', 'ticker', 'code', '銘柄', 'シンボル', 'ティッカー'],
+    name: ['name', 'company', '銘柄名', '名称', '名前'],
+    price: ['price', 'current', 'currentprice', 'last', '現在値', '価格', '株価'],
+    change: ['change', 'pricechange', 'chg', '前日比', '変化'],
+    changePercent: ['changepct', 'changepercent', 'change%', 'chg%', '前日比率', '騰落率'],
+    currency: ['currency', '通貨'],
+    updatedAt: ['updatedat', 'updated', 'tradetime', 'time', '更新日時', '取引日時'],
+    prices: ['prices', 'history', 'sparkline', '履歴', '推移']
+};
 
 let currentStocksData = {};
 
@@ -11,7 +22,8 @@ window.StocksWidget = {
     init,
     initSettings,
     loadStocksData,
-    parseDailySeries
+    normalizeGoogleFinanceCsvUrl,
+    parseGoogleFinanceCsv
 };
 
 function init() {
@@ -21,10 +33,10 @@ function init() {
     initSettings();
     restoreCache();
 
-    if (getApiKey()) {
+    if (getSourceUrl()) {
         loadStocksData();
     } else if (Object.keys(currentStocksData).length === 0) {
-        renderApiKeyGuide();
+        renderSourceGuide();
     }
 }
 
@@ -40,9 +52,9 @@ function restoreCache() {
     }
 }
 
-function getApiKey() {
-    return window.EnvConfig?.getStorageBackedValue(STORAGE_KEY_STOCKS_API_KEY, 'NEXUS_ALPHA_VANTAGE_API_KEY')
-        || localStorage.getItem(STORAGE_KEY_STOCKS_API_KEY)?.trim()
+function getSourceUrl() {
+    return window.EnvConfig?.getStorageBackedValue(STORAGE_KEY_STOCKS_SOURCE_URL, GOOGLEFINANCE_CSV_ENV_NAME)
+        || localStorage.getItem(STORAGE_KEY_STOCKS_SOURCE_URL)?.trim()
         || '';
 }
 
@@ -64,10 +76,10 @@ function saveRegisteredSymbols(symbols) {
 }
 
 async function loadStocksData(force = false) {
-    const apiKey = getApiKey();
-    if (!apiKey) {
-        renderApiKeyGuide();
-        window.ApiDiagnostics?.report('stocks', 'missing', 'Alpha Vantage APIキー未設定');
+    const sourceUrl = getSourceUrl();
+    if (!sourceUrl) {
+        renderSourceGuide();
+        window.ApiDiagnostics?.report('stocks', 'missing', 'GoogleFinance CSV URL 未設定');
         return;
     }
 
@@ -78,110 +90,260 @@ async function loadStocksData(force = false) {
         return;
     }
 
-    window.ApiUI.setLoading('stocks-container', 'Alpha Vantage から株価を取得中...');
+    window.ApiUI.setLoading('stocks-container', 'Google Sheets から株価を取得中...');
 
-    const results = await Promise.allSettled(
-        symbols.map(symbol => fetchStock(symbol, apiKey))
-    );
+    try {
+        const fetchedData = await fetchStocksFromGoogleFinance(sourceUrl);
+        const updatedData = { ...currentStocksData };
+        let succeeded = 0;
 
-    let succeeded = 0;
-    const updatedData = { ...currentStocksData };
-
-    results.forEach((result, index) => {
-        if (result.status === 'fulfilled') {
-            updatedData[symbols[index]] = result.value;
+        symbols.forEach((symbol) => {
+            const data = findStockData(fetchedData, symbol);
+            if (!data) {
+                console.warn(`GoogleFinance CSVに銘柄が見つかりません: ${symbol}`);
+                return;
+            }
+            updatedData[symbol] = data;
             succeeded += 1;
+        });
+
+        if (succeeded > 0) {
+            currentStocksData = updatedData;
+            localStorage.setItem(STORAGE_KEY_STOCKS_CACHE, JSON.stringify(currentStocksData));
+            renderStocks();
+            window.ApiDiagnostics?.report(
+                'stocks',
+                succeeded === symbols.length ? 'ok' : 'warning',
+                `${succeeded}/${symbols.length}件の株価を更新`
+            );
         } else {
-            console.warn(`株価取得失敗: ${symbols[index]}`, result.reason);
+            renderFetchFailure('GoogleFinance CSVに登録銘柄のデータがありません。');
         }
-    });
 
-    if (succeeded > 0) {
-        currentStocksData = updatedData;
-        localStorage.setItem(STORAGE_KEY_STOCKS_CACHE, JSON.stringify(currentStocksData));
-        renderStocks();
-        window.ApiDiagnostics?.report(
-            'stocks',
-            succeeded === symbols.length ? 'ok' : 'warning',
-            `${succeeded}/${symbols.length}件の株価を更新`
-        );
-    } else if (Object.keys(currentStocksData).length > 0) {
-        renderStocks();
-        window.ApiDiagnostics?.report('stocks', 'warning', '株価更新に失敗。キャッシュを表示');
-    } else {
-        window.ApiUI.setError(
-            'stocks-container',
-            '株価を取得できませんでした。APIキー、銘柄コード、利用上限を確認してください。'
-        );
-        window.ApiDiagnostics?.report('stocks', 'error', '株価を取得できませんでした');
-    }
-
-    if (succeeded < symbols.length) {
-        window.showNotification?.(
-            '一部の株価を更新できませんでした。Alpha Vantageの利用上限または銘柄コードを確認してください。',
-            'warning'
-        );
-    } else if (force) {
-        window.showNotification?.('株価データを更新しました。', 'success');
+        if (succeeded < symbols.length) {
+            window.showNotification?.(
+                '一部の株価を更新できませんでした。Google Sheetsの銘柄行と登録銘柄を確認してください。',
+                'warning'
+            );
+        } else if (force) {
+            window.showNotification?.('株価データを更新しました。', 'success');
+        }
+    } catch (error) {
+        console.warn('株価取得失敗:', error);
+        renderFetchFailure('株価を取得できませんでした。Google Sheetsの公開設定とCSV URLを確認してください。');
     }
 }
 
-async function fetchStock(symbol, apiKey) {
-    const params = new URLSearchParams({
-        function: 'TIME_SERIES_DAILY',
-        symbol,
-        outputsize: 'compact',
-        apikey: apiKey
-    });
-    const response = await fetch(`${ALPHA_VANTAGE_ENDPOINT}?${params.toString()}`);
+async function fetchStocksFromGoogleFinance(sourceUrl) {
+    const response = await fetch(normalizeGoogleFinanceCsvUrl(sourceUrl), { cache: 'no-store' });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-    const payload = await response.json();
-    return parseDailySeries(symbol, payload);
+    const csvText = await response.text();
+    return parseGoogleFinanceCsv(csvText);
 }
 
-// Alpha Vantageの日足レスポンスを、描画に必要な共通形式へ変換する。
-function parseDailySeries(requestedSymbol, payload) {
-    const providerError = payload?.['Error Message']
-        || payload?.Information
-        || payload?.Note;
-    if (providerError) throw new Error(providerError);
-
-    const series = payload?.['Time Series (Daily)'];
-    if (!series || typeof series !== 'object') {
-        throw new Error('日足データが含まれていません。');
+function renderFetchFailure(message) {
+    if (Object.keys(currentStocksData).length > 0) {
+        renderStocks();
+        window.ApiDiagnostics?.report('stocks', 'warning', '株価更新に失敗。キャッシュを表示');
+        return;
     }
 
-    const rows = Object.entries(series)
-        .map(([date, values]) => ({
-            date,
-            close: Number(values?.['4. close'])
-        }))
-        .filter(row => Number.isFinite(row.close))
-        .sort((left, right) => left.date.localeCompare(right.date));
+    window.ApiUI.setError('stocks-container', message);
+    window.ApiDiagnostics?.report('stocks', 'error', '株価を取得できませんでした');
+}
 
-    if (rows.length === 0) throw new Error('有効な終値がありません。');
+function normalizeGoogleFinanceCsvUrl(input) {
+    const rawUrl = String(input || '').trim();
+    if (!rawUrl) return '';
 
-    const currentPrice = rows[rows.length - 1].close;
-    const previousPrice = rows.length > 1 ? rows[rows.length - 2].close : currentPrice;
-    const change = currentPrice - previousPrice;
-    const changePercent = previousPrice === 0 ? 0 : (change / previousPrice) * 100;
-    const symbol = payload?.['Meta Data']?.['2. Symbol'] || requestedSymbol;
+    try {
+        const url = new URL(rawUrl);
+        if (url.hostname !== 'docs.google.com') return rawUrl;
+        if (!url.pathname.includes('/spreadsheets/')) return rawUrl;
+        if (url.searchParams.get('output') === 'csv' || url.searchParams.get('tqx') === 'out:csv') {
+            return rawUrl;
+        }
+
+        const gid = url.searchParams.get('gid') || new URLSearchParams(url.hash.replace(/^#/, '')).get('gid') || '0';
+        const publishedMatch = url.pathname.match(/\/spreadsheets\/d\/e\/([^/]+)/);
+        if (publishedMatch) {
+            const csvUrl = new URL(`https://docs.google.com/spreadsheets/d/e/${publishedMatch[1]}/pub`);
+            csvUrl.searchParams.set('gid', gid);
+            csvUrl.searchParams.set('single', 'true');
+            csvUrl.searchParams.set('output', 'csv');
+            return csvUrl.toString();
+        }
+
+        const sheetMatch = url.pathname.match(/\/spreadsheets\/d\/([^/]+)/);
+        if (!sheetMatch) return rawUrl;
+
+        const csvUrl = new URL(`https://docs.google.com/spreadsheets/d/${sheetMatch[1]}/gviz/tq`);
+        csvUrl.searchParams.set('tqx', 'out:csv');
+        csvUrl.searchParams.set('gid', gid);
+        return csvUrl.toString();
+    } catch (error) {
+        return rawUrl;
+    }
+}
+
+function parseGoogleFinanceCsv(csvText) {
+    const rows = parseCsvRows(csvText);
+    if (rows.length < 2) throw new Error('CSVにデータ行がありません。');
+
+    const headerIndexes = createHeaderIndexes(rows[0]);
+    if (headerIndexes.symbol === undefined || headerIndexes.price === undefined) {
+        throw new Error('CSVには symbol と price 列が必要です。');
+    }
+
+    return rows.slice(1)
+        .map(row => parseStockRow(row, headerIndexes))
+        .filter(Boolean);
+}
+
+function parseCsvRows(csvText) {
+    const rows = [];
+    let row = [];
+    let cell = '';
+    let inQuotes = false;
+
+    for (let index = 0; index < String(csvText || '').length; index += 1) {
+        const char = csvText[index];
+        const nextChar = csvText[index + 1];
+
+        if (char === '"' && inQuotes && nextChar === '"') {
+            cell += '"';
+            index += 1;
+            continue;
+        }
+
+        if (char === '"') {
+            inQuotes = !inQuotes;
+            continue;
+        }
+
+        if (char === ',' && !inQuotes) {
+            row.push(cell);
+            cell = '';
+            continue;
+        }
+
+        if ((char === '\n' || char === '\r') && !inQuotes) {
+            if (char === '\r' && nextChar === '\n') index += 1;
+            row.push(cell);
+            if (row.some(value => value.trim() !== '')) rows.push(row);
+            row = [];
+            cell = '';
+            continue;
+        }
+
+        cell += char;
+    }
+
+    row.push(cell);
+    if (row.some(value => value.trim() !== '')) rows.push(row);
+    return rows;
+}
+
+function createHeaderIndexes(headerRow) {
+    return headerRow.reduce((indexes, header, index) => {
+        const normalizedHeader = normalizeHeader(header);
+        Object.entries(HEADER_ALIASES).forEach(([field, aliases]) => {
+            if (indexes[field] === undefined && aliases.includes(normalizedHeader)) {
+                indexes[field] = index;
+            }
+        });
+        return indexes;
+    }, {});
+}
+
+function parseStockRow(row, indexes) {
+    const symbol = getCell(row, indexes.symbol).toUpperCase();
+    const price = parseNumber(getCell(row, indexes.price));
+    if (!symbol || !Number.isFinite(price)) return null;
+
+    const change = parseOptionalNumber(getCell(row, indexes.change));
+    const changePercent = parseOptionalNumber(getCell(row, indexes.changePercent));
+    const normalizedChange = Number.isFinite(change)
+        ? change
+        : calculateChangeFromPercent(price, changePercent);
+    const normalizedChangePercent = Number.isFinite(changePercent)
+        ? changePercent
+        : calculateChangePercent(price, normalizedChange);
+    const prices = parsePrices(getCell(row, indexes.prices), price);
 
     return {
         symbol,
-        name: symbol,
-        price: currentPrice,
-        change,
-        changePercent,
-        currency: inferCurrency(symbol),
-        prices: rows.slice(-30).map(row => row.close),
-        updatedAt: rows[rows.length - 1].date
+        name: getCell(row, indexes.name) || symbol,
+        price,
+        change: normalizedChange,
+        changePercent: normalizedChangePercent,
+        currency: getCell(row, indexes.currency) || inferCurrency(symbol),
+        prices,
+        updatedAt: getCell(row, indexes.updatedAt)
     };
 }
 
+function getCell(row, index) {
+    return index === undefined ? '' : String(row[index] || '').trim();
+}
+
+function normalizeHeader(header) {
+    return String(header || '')
+        .trim()
+        .toLowerCase()
+        .replace(/[\s_\-（）()]/g, '');
+}
+
+function parseOptionalNumber(value) {
+    const parsed = parseNumber(value);
+    return Number.isFinite(parsed) ? parsed : NaN;
+}
+
+function parseNumber(value) {
+    const normalized = String(value || '')
+        .replace(/[,%$¥€£]/g, '')
+        .trim();
+    if (!normalized) return NaN;
+    return Number(normalized);
+}
+
+function calculateChangeFromPercent(price, changePercent) {
+    if (!Number.isFinite(changePercent)) return 0;
+    const previousPrice = price / (1 + (changePercent / 100));
+    return price - previousPrice;
+}
+
+function calculateChangePercent(price, change) {
+    if (!Number.isFinite(change) || change === 0) return 0;
+    const previousPrice = price - change;
+    return previousPrice === 0 ? 0 : (change / previousPrice) * 100;
+}
+
+function parsePrices(value, fallbackPrice) {
+    const prices = String(value || '')
+        .split(/[;|\s]+/)
+        .map(parseNumber)
+        .filter(Number.isFinite);
+    return prices.length >= 2 ? prices.slice(-30) : [fallbackPrice, fallbackPrice];
+}
+
+function findStockData(stocks, requestedSymbol) {
+    const requestedKeys = createSymbolKeys(requestedSymbol);
+    return stocks.find(stock => {
+        const stockKeys = createSymbolKeys(stock.symbol);
+        return requestedKeys.some(key => stockKeys.includes(key));
+    });
+}
+
+function createSymbolKeys(symbol) {
+    const normalized = String(symbol || '').trim().toUpperCase();
+    const withoutExchange = normalized.includes(':') ? normalized.split(':').at(-1) : normalized;
+    return [...new Set([normalized, withoutExchange])].filter(Boolean);
+}
+
 function inferCurrency(symbol) {
-    return /\.(T|TRT|JP)$/i.test(symbol) ? 'JPY' : 'USD';
+    return /(^TYO:|\.T$|\.JP$)/i.test(symbol) ? 'JPY' : 'USD';
 }
 
 function generateSparklineSvg(prices) {
@@ -248,7 +410,7 @@ function createStockItem(data) {
     symbol.title = data.symbol;
     const updated = document.createElement('span');
     updated.className = 'stock-name';
-    updated.textContent = data.updatedAt || '';
+    updated.textContent = data.updatedAt || data.name || '';
     info.append(symbol, updated);
 
     const chart = document.createElement('div');
@@ -285,31 +447,31 @@ function formatNumber(value, currency) {
         : Number(value).toFixed(2);
 }
 
-function renderApiKeyGuide() {
+function renderSourceGuide() {
     window.ApiUI.setAuthGuide(
         'stocks-container',
-        'Alpha Vantage APIキーが未設定です。設定サイドバーから保存してください。'
+        'GoogleFinance の計算結果を含む Google Sheets の公開CSV URLを設定してください。'
     );
 }
 
 function initSettings() {
-    const apiKeyInput = document.getElementById('stock-api-key');
-    const saveApiKeyButton = document.getElementById('save-stock-api-key-btn');
+    const sourceInput = document.getElementById('stock-source-url');
+    const saveSourceButton = document.getElementById('save-stock-source-btn');
     const symbolInput = document.getElementById('stock-symbol-input');
     const addButton = document.getElementById('add-stock-btn');
     const settingsList = document.getElementById('stock-settings-list');
 
-    if (apiKeyInput) apiKeyInput.value = getApiKey();
-    saveApiKeyButton?.addEventListener('click', () => {
-        const apiKey = apiKeyInput?.value.trim() || '';
-        if (apiKey) {
-            localStorage.setItem(STORAGE_KEY_STOCKS_API_KEY, apiKey);
-            window.showNotification?.('Alpha Vantage APIキーを保存しました。', 'success');
+    if (sourceInput) sourceInput.value = getSourceUrl();
+    saveSourceButton?.addEventListener('click', () => {
+        const sourceUrl = sourceInput?.value.trim() || '';
+        if (sourceUrl) {
+            localStorage.setItem(STORAGE_KEY_STOCKS_SOURCE_URL, sourceUrl);
+            window.showNotification?.('GoogleFinance CSV URLを保存しました。', 'success');
             loadStocksData(true);
         } else {
-            localStorage.removeItem(STORAGE_KEY_STOCKS_API_KEY);
-            renderApiKeyGuide();
-            window.ApiDiagnostics?.report('stocks', 'missing', 'Alpha Vantage APIキー未設定');
+            localStorage.removeItem(STORAGE_KEY_STOCKS_SOURCE_URL);
+            renderSourceGuide();
+            window.ApiDiagnostics?.report('stocks', 'missing', 'GoogleFinance CSV URL 未設定');
         }
         window.ApiDiagnostics?.refresh?.();
     });

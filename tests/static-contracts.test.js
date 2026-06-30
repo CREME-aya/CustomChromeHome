@@ -33,10 +33,10 @@ test('iCal取り込みに必要な操作要素が存在する', () => {
     ].forEach(id => assert(ids.has(id), `${id} がありません`));
 });
 
-test('株価API設定に必要な操作要素が存在する', () => {
+test('株価設定に必要な操作要素が存在する', () => {
     [
-        'stock-api-key',
-        'save-stock-api-key-btn',
+        'stock-source-url',
+        'save-stock-source-btn',
         'stock-symbol-input',
         'add-stock-btn',
         'stocks-sync-btn'

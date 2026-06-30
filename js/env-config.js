@@ -10,7 +10,7 @@ const ENV_NAMES = Object.freeze({
     geminiApiKey: 'NEXUS_GEMINI_API_KEY',
     googleClientId: 'NEXUS_GOOGLE_CLIENT_ID',
     githubPat: 'NEXUS_GITHUB_PAT',
-    alphaVantageApiKey: 'NEXUS_ALPHA_VANTAGE_API_KEY',
+    googleFinanceCsvUrl: 'NEXUS_GOOGLEFINANCE_CSV_URL',
     spotifyClientId: 'NEXUS_SPOTIFY_CLIENT_ID',
     openaiModel: 'NEXUS_OPENAI_MODEL',
     anthropicModel: 'NEXUS_ANTHROPIC_MODEL',

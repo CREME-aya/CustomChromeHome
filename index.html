@@ -239,11 +239,11 @@
             <!-- 株価ウィジェット設定 -->
             <div class="setting-block">
                 <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1rem; color: #e2e8f0;">株価ウィジェット設定</h3>
-                <p class="spotify-settings-note">Alpha Vantage のAPIキーを使用します。無料キーには呼び出し回数制限があります。</p>
-                <label for="stock-api-key" class="sidebar-label">Alpha Vantage API Key:</label>
-                <input type="password" id="stock-api-key" class="url-input" placeholder="APIキーを入力" style="margin-bottom: 8px;">
-                <button id="save-stock-api-key-btn" class="outline-btn" type="button" style="margin-bottom: 12px;">APIキーを保存</button>
-                <label for="stock-symbol-input" class="sidebar-label">銘柄を追加 (例: AAPL, MSFT, IBM):</label>
+                <p class="spotify-settings-note">GoogleFinance 関数を入れた Google Sheets を公開CSVとして読み込みます。</p>
+                <label for="stock-source-url" class="sidebar-label">Google Sheets CSV URL:</label>
+                <input type="url" id="stock-source-url" class="url-input" placeholder="https://docs.google.com/spreadsheets/..." style="margin-bottom: 8px;">
+                <button id="save-stock-source-btn" class="outline-btn" type="button" style="margin-bottom: 12px;">CSV URLを保存</button>
+                <label for="stock-symbol-input" class="sidebar-label">銘柄を追加 (例: NASDAQ:AAPL, TYO:7203):</label>
                 <div style="display: flex; gap: 8px; margin-bottom: 8px;">
                     <input type="text" id="stock-symbol-input" class="url-input" placeholder="シンボルを入力" style="margin-bottom: 0;">
                     <button id="add-stock-btn" class="save-btn" style="flex: 0 0 auto; padding: 0 16px;">追加</button>

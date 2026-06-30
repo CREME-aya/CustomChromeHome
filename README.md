@@ -70,9 +70,9 @@ OAuth 連携ではなく iCal URL 方式です。Google カレンダーの設定
 
 ### 株価
 
-- Alpha Vantage APIによる日足・現在値・前日比の表示
-- 利用には設定サイドバーでAlpha Vantage APIキーの登録が必要
-- 無料APIキーの利用上限を超えた場合は、キャッシュを表示してエラーを通知
+- Google Sheets の `GOOGLEFINANCE` 関数で計算した現在値・前日比の表示
+- 利用には公開CSVとして取得できる Google Sheets URL の登録が必要
+- 取得に失敗した場合は、キャッシュを表示してエラーを通知
 
 ### RSS / Discover
 
@@ -83,7 +83,7 @@ OAuth 連携ではなく iCal URL 方式です。Google カレンダーの設定
 
 ### API 診断
 
-- Google、GitHub、Alpha Vantage、Spotify、AI API、RSS、天気の設定状態を一覧表示
+- Google、GitHub、GoogleFinance、Spotify、AI API、RSS、天気の設定状態を一覧表示
 - 各ウィジェットの同期成功、失敗、キャッシュ表示、未設定を診断へ反映
 - 診断ウィジェット自体は有料APIを自動実行せず、設定状態と直近の通信結果を表示
 
@@ -118,6 +118,32 @@ https://<user-name>.github.io/<repository-name>/privacy.html
 7. 「予定をToDo化」を押す
 
 同じ予定を再度取り込んでも、既存の ToDo が重複して増えないようにしています。
+
+## 株価ウィジェットの使い方
+
+株価はブラウザから `GOOGLEFINANCE` 関数を直接実行するのではなく、Google Sheets で計算した結果を公開CSVとして読み込みます。
+
+1. Google Sheets に株価用のシートを作成する
+2. 1行目に `symbol`, `name`, `price`, `change`, `changepct`, `currency`, `updatedAt`, `prices` を置く
+3. 2行目以降に銘柄と `GOOGLEFINANCE` の式を入れる
+4. 「ファイル」から「共有」または「ウェブに公開」を設定し、CSVとして読める URL を用意する
+5. Nexus Dash の設定サイドバーで Google Sheets CSV URL を保存する
+6. 表示したい銘柄を `NASDAQ:AAPL` や `TYO:7203` の形式で登録する
+
+式の例:
+
+```text
+A2: NASDAQ:AAPL
+B2: Apple
+C2: =GOOGLEFINANCE(A2, "price")
+D2: =GOOGLEFINANCE(A2, "change")
+E2: =GOOGLEFINANCE(A2, "changepct")
+F2: =GOOGLEFINANCE(A2, "currency")
+G2: =GOOGLEFINANCE(A2, "tradetime")
+H2: 190;192;191;195
+```
+
+`prices` 列はスパークライン用の任意列です。省略した場合は現在値だけで平坦な線を表示します。
 
 ## Google OAuth 連携の設定
 
@@ -163,7 +189,7 @@ NEXUS_ANTHROPIC_API_KEY=
 NEXUS_GEMINI_API_KEY=
 NEXUS_GOOGLE_CLIENT_ID=
 NEXUS_GITHUB_PAT=
-NEXUS_ALPHA_VANTAGE_API_KEY=
+NEXUS_GOOGLEFINANCE_CSV_URL=
 NEXUS_OPENAI_MODEL=gpt-4o
 NEXUS_ANTHROPIC_MODEL=claude-sonnet-4-6
 NEXUS_GEMINI_MODEL=gemini-3.5-flash
@@ -180,7 +206,7 @@ NEXUS_SPOTIFY_CLIENT_ID=3ed94377fd3840f2b3f3e88967a2ed78
 - Google Calendar / Tasks / Gmail の同期キャッシュ
 - Google OAuth アクセストークン、取得済みスコープ
 - AI API キー
-- Alpha Vantage API キー
+- GoogleFinance CSV URL
 - GitHub PAT
 - Spotify アクセストークン
 - Spotify リフレッシュトークン
