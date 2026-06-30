@@ -2,7 +2,18 @@
 // Google OAuth 2.0 認証とトークン管理
 // ==========================================
 (function() {
-const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/gmail.readonly';
+const GOOGLE_SCOPE_LIST = [
+    'https://www.googleapis.com/auth/calendar',
+    'https://www.googleapis.com/auth/tasks',
+    'https://www.googleapis.com/auth/gmail.readonly'
+];
+const GOOGLE_SCOPES = GOOGLE_SCOPE_LIST.join(' ');
+const GOOGLE_SCOPE_LABELS = {
+    'https://www.googleapis.com/auth/calendar': 'Google カレンダー',
+    'https://www.googleapis.com/auth/tasks': 'Google Tasks',
+    'https://www.googleapis.com/auth/gmail.readonly': 'Gmail 読み取り'
+};
+let isAuthenticating = false;
 
 window.GoogleAuth = {
     initSettings,
@@ -11,228 +22,71 @@ window.GoogleAuth = {
     getValidAccessToken,
     hasStoredSession,
     refreshAccessToken,
-    getRedirectUri
+    getRedirectUri,
+    getMissingRequiredScopes,
+    getConfiguredClientId: getGoogleClientId,
+    createApiError
 };
 
 function getRedirectUri() {
     if (typeof chrome !== 'undefined' && chrome.identity && chrome.identity.getRedirectURL) {
-        return chrome.identity.getRedirectURL('google');
+        return chrome.identity.getRedirectURL();
     }
     const extId = typeof chrome !== 'undefined' && chrome.runtime?.id ? chrome.runtime.id : 'dummy';
-    return `https://${extId}.chromiumapp.org/google`;
+    return `https://${extId}.chromiumapp.org/`;
 }
 
 function getGoogleClientId() {
-    return window.EnvConfig?.getStorageBackedValue(STORAGE_KEY_GOOGLE_CLIENT_ID, 'NEXUS_GOOGLE_CLIENT_ID')
-        || localStorage.getItem(STORAGE_KEY_GOOGLE_CLIENT_ID)?.trim()
-        || '';
+    return getManifestGoogleClientId();
 }
 
 async function authenticate() {
     const clientId = getGoogleClientId();
     if (!clientId) {
-        notifyAuthError("Google Client ID が設定されていません。設定サイドバーから入力してください。");
+        notifyAuthError("manifest.json の oauth2.client_id が未設定です。Google Cloud Console で作成した Chrome 拡張機能用 Client ID を manifest.json に設定してください。", { durationMs: 12000 });
         return false;
     }
 
-    if (typeof chrome === 'undefined' || !chrome.identity || !chrome.identity.launchWebAuthFlow) {
+    if (typeof chrome === 'undefined' || !chrome.identity || !chrome.identity.getAuthToken) {
         notifyAuthError("Chrome拡張機能として動作していないか、identity権限がありません。");
         return false;
     }
 
-    const redirectUri = getRedirectUri();
-    console.log("Google Redirect URI:", redirectUri);
-
-    const codeVerifier = generateRandomString(64);
-    const codeChallenge = await generateCodeChallenge(codeVerifier);
-    const state = generateRandomString(32);
-
-    const authParams = new URLSearchParams({
-        client_id: clientId,
-        response_type: 'code',
-        redirect_uri: redirectUri,
-        scope: GOOGLE_SCOPES,
-        code_challenge_method: 'S256',
-        code_challenge: codeChallenge,
-        state: state,
-        access_type: 'offline',
-        prompt: 'consent'
-    });
-
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${authParams.toString()}`;
-    console.log("Google Auth URL:", authUrl);
-
     try {
-        const redirectUrl = await launchGoogleAuthFlow(authUrl, redirectUri);
-        const urlObj = new URL(redirectUrl);
-        
-        let code = urlObj.searchParams.get('code');
-        let respState = urlObj.searchParams.get('state');
-        
-        if (!code && urlObj.hash) {
-            const hashParams = new URLSearchParams(urlObj.hash.substring(1));
-            code = hashParams.get('code');
-            respState = hashParams.get('state');
-        }
-
-        const error = urlObj.searchParams.get('error');
-        if (error) {
-            notifyAuthError(`Googleの認証に失敗しました。理由: ${error}`);
+        clearToken();
+        const tokenResult = await getGoogleIdentityToken(true);
+        if (!tokenResult?.token) {
+            notifyAuthError("Google アクセストークンを取得できませんでした。");
             return false;
         }
 
-        if (respState !== state) {
-            notifyAuthError("Googleの認証応答を検証できませんでした。セキュリティ状態が一致しません。");
+        const grantedScopeString = scopeListToString(tokenResult.grantedScopes);
+        const missingScopes = getMissingRequiredScopes(grantedScopeString);
+        if (missingScopes.length > 0) {
+            clearToken();
+            notifyAuthError(
+                `Google 認証で必要な権限が許可されていません: ${formatScopeLabels(missingScopes)}。再連携時にすべての権限を許可してください。`,
+                { durationMs: 9000 }
+            );
+            window.ApiDiagnostics?.report('google-auth', 'error', 'Google OAuth の権限が不足しています');
             return false;
         }
 
-        if (!code) {
-            notifyAuthError("認証コードが取得できませんでした。");
-            return false;
-        }
-
-        try {
-            const tokenData = await requestToken({
-                grant_type: 'authorization_code',
-                code: code,
-                redirect_uri: redirectUri,
-                code_verifier: codeVerifier
-            });
-
-            if (tokenData.access_token) {
-                saveToken(tokenData);
-                window.showNotification("Google 連携に成功しました！", "success");
-                window.ApiDiagnostics?.report('google-auth', 'ok', 'Google OAuth 連携成功');
-                return true;
-            }
-            return false;
-        } catch(e) {
-            console.error(e);
-            notifyAuthError(`Googleトークンの取得に失敗しました。詳細: ${e.message}`);
-            return false;
-        }
+        saveToken({
+            access_token: tokenResult.token,
+            expires_in: 3300,
+            scope: grantedScopeString
+        });
+        localStorage.setItem(STORAGE_KEY_GOOGLE_CLIENT_ID, clientId);
+        window.showNotification("Google 連携に成功しました！", "success");
+        window.ApiDiagnostics?.report('google-auth', 'ok', 'Google OAuth 連携成功');
+        return true;
     } catch(e) {
         console.error("Auth Error:", e);
-        notifyAuthError(`Googleの認証ページを開けませんでした。詳細: ${e.message}`, { durationMs: 7000 });
+        notifyAuthError(formatGoogleAuthError(e), { durationMs: 12000 });
+        window.ApiDiagnostics?.report('google-auth', 'error', e.message || 'Google OAuth 認証に失敗');
         return false;
     }
-}
-
-function generateRandomString(length) {
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    const values = crypto.getRandomValues(new Uint8Array(length));
-    return values.reduce((acc, x) => acc + possible[x % possible.length], "");
-}
-
-async function generateCodeChallenge(codeVerifier) {
-    const data = new TextEncoder().encode(codeVerifier);
-    const digest = await crypto.subtle.digest('SHA-256', data);
-    return btoa(String.fromCharCode.apply(null, [...new Uint8Array(digest)]))
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '');
-}
-
-async function launchGoogleAuthFlow(authUrl, redirectUri) {
-    try {
-        return await launchGoogleAuthFlowWithIdentity(authUrl);
-    } catch(e) {
-        console.warn("chrome.identity.launchWebAuthFlow failed. Falling back to a normal tab.", e);
-        return launchGoogleAuthFlowInTab(authUrl, redirectUri);
-    }
-}
-
-function launchGoogleAuthFlowWithIdentity(authUrl) {
-    return new Promise((resolve, reject) => {
-        chrome.identity.launchWebAuthFlow({
-            url: authUrl,
-            interactive: true
-        }, (redirectUrl) => {
-            if (chrome.runtime.lastError || !redirectUrl) {
-                reject(new Error(chrome.runtime.lastError?.message || '認証応答がありません。'));
-                return;
-            }
-            resolve(redirectUrl);
-        });
-    });
-}
-
-function launchGoogleAuthFlowInTab(authUrl, redirectUri) {
-    if (!chrome.tabs?.create || !chrome.tabs?.onUpdated) {
-        throw new Error('通常タブで認証を開くための chrome.tabs API が利用できません。');
-    }
-
-    return new Promise((resolve, reject) => {
-        let authTabId = null;
-        let timeoutId = null;
-
-        const cleanup = () => {
-            chrome.tabs.onUpdated.removeListener(handleUpdated);
-            chrome.tabs.onRemoved.removeListener(handleRemoved);
-            if (timeoutId) clearTimeout(timeoutId);
-        };
-
-        const finish = (redirectUrl) => {
-            cleanup();
-            if (authTabId !== null) {
-                chrome.tabs.remove(authTabId, () => void chrome.runtime.lastError);
-            }
-            resolve(redirectUrl);
-        };
-
-        const handleUpdated = (tabId, changeInfo) => {
-            if (tabId !== authTabId || !changeInfo.url) return;
-            if (changeInfo.url.startsWith(redirectUri)) {
-                finish(changeInfo.url);
-            }
-        };
-
-        const handleRemoved = (tabId) => {
-            if (tabId !== authTabId) return;
-            cleanup();
-            reject(new Error('認証タブが閉じられました。'));
-        };
-
-        chrome.tabs.onUpdated.addListener(handleUpdated);
-        chrome.tabs.onRemoved.addListener(handleRemoved);
-
-        chrome.tabs.create({ url: authUrl, active: true }, (tab) => {
-            if (chrome.runtime.lastError || !tab?.id) {
-                cleanup();
-                reject(new Error(chrome.runtime.lastError?.message || '認証タブを作成できませんでした。'));
-                return;
-            }
-            authTabId = tab.id;
-        });
-
-        timeoutId = setTimeout(() => {
-            cleanup();
-            reject(new Error('Google 認証がタイムアウトしました。'));
-        }, 120000);
-    });
-}
-
-async function requestToken(params) {
-    const clientId = getGoogleClientId();
-    const body = new URLSearchParams({
-        client_id: clientId,
-        ...params
-    });
-
-    const res = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: body.toString()
-    });
-
-    const data = await parseTokenResponse(res);
-    if (!res.ok) {
-        const message = data.error_description || data.error || `HTTP ${res.status}`;
-        throw new Error(message);
-    }
-    return data;
 }
 
 async function parseTokenResponse(res) {
@@ -247,28 +101,36 @@ function saveToken(data) {
     if (data.access_token) {
         localStorage.setItem(GOOGLE_STORAGE_KEYS.accessToken, data.access_token);
     }
-    if (data.refresh_token) {
-        localStorage.setItem(GOOGLE_STORAGE_KEYS.refreshToken, data.refresh_token);
-    }
     if (data.expires_in) {
         const expiresAt = Date.now() + (Number(data.expires_in) * 1000);
         localStorage.setItem(GOOGLE_STORAGE_KEYS.expiresAt, String(expiresAt));
     }
+    if (data.scope) {
+        localStorage.setItem(GOOGLE_STORAGE_KEYS.grantedScopes, normalizeScopeString(data.scope));
+    }
 }
 
 function clearToken() {
+    removeCachedGoogleToken(localStorage.getItem(GOOGLE_STORAGE_KEYS.accessToken));
     Object.values(GOOGLE_STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
     window.ApiDiagnostics?.report('google-auth', 'missing', 'Google 連携なし');
 }
 
 function hasStoredSession() {
-    return Boolean(
-        localStorage.getItem(GOOGLE_STORAGE_KEYS.accessToken) ||
-        localStorage.getItem(GOOGLE_STORAGE_KEYS.refreshToken)
-    );
+    return Boolean(localStorage.getItem(GOOGLE_STORAGE_KEYS.accessToken));
 }
 
 async function getValidAccessToken() {
+    const missingScopes = getMissingRequiredScopes();
+    if (missingScopes.length > 0) {
+        notifyAuthError(
+            `Google 連携の権限が不足しています: ${formatScopeLabels(missingScopes)}。Google 連携を解除してから再連携してください。`,
+            { durationMs: 9000 }
+        );
+        window.ApiDiagnostics?.report('google-auth', 'error', 'Google OAuth の権限が不足しています');
+        return null;
+    }
+
     const token = localStorage.getItem(GOOGLE_STORAGE_KEYS.accessToken);
     const isTokenExpiring = isTokenExpiringSoon();
     if (token && !isTokenExpiring) {
@@ -283,23 +145,85 @@ async function getValidAccessToken() {
 }
 
 async function refreshAccessToken() {
-    const refreshToken = localStorage.getItem(GOOGLE_STORAGE_KEYS.refreshToken);
-    if (!refreshToken) {
-        return null;
-    }
-
     try {
-        const tokenData = await requestToken({
-            grant_type: 'refresh_token',
-            refresh_token: refreshToken
-        });
-        saveToken(tokenData);
-        return tokenData.access_token || null;
+        const tokenResult = await getGoogleIdentityToken(false);
+        if (tokenResult?.token) {
+            const grantedScopeString = scopeListToString(tokenResult.grantedScopes);
+            if (getMissingRequiredScopes(grantedScopeString).length > 0) {
+                return null;
+            }
+            saveToken({
+                access_token: tokenResult.token,
+                expires_in: 3300,
+                scope: grantedScopeString
+            });
+        }
+        return tokenResult?.token || null;
     } catch(e) {
         console.error("Google token refresh error:", e);
         clearToken();
         return null;
     }
+}
+
+function getGoogleIdentityToken(interactive) {
+    return new Promise((resolve, reject) => {
+        const clientId = getGoogleClientId();
+        const redirectUri = getRedirectUri();
+        const scopes = encodeURIComponent(GOOGLE_SCOPE_LIST.join(' '));
+        const prompt = interactive ? 'select_account' : 'none';
+        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&prompt=${prompt}`;
+
+        const timeoutId = setTimeout(() => {
+            if (interactive) {
+                reject(new Error("認証がタイムアウトしました。ポップアップがブロックされていないか確認してください。"));
+            } else {
+                resolve(null);
+            }
+        }, 60000);
+
+        try {
+            chrome.identity.launchWebAuthFlow({
+                url: authUrl,
+                interactive
+            }, (redirectUrl) => {
+                clearTimeout(timeoutId);
+                if (chrome.runtime.lastError || !redirectUrl) {
+                    const msg = chrome.runtime.lastError?.message || 'キャンセルされました';
+                    if (!interactive) return resolve(null);
+                    reject(new Error(msg));
+                    return;
+                }
+                try {
+                    const url = new URL(redirectUrl.replace('#', '?'));
+                    const token = url.searchParams.get('access_token');
+                    if (!token) {
+                        if (!interactive) return resolve(null);
+                        reject(new Error('トークンが取得できませんでした。'));
+                        return;
+                    }
+                    resolve({
+                        token,
+                        grantedScopes: GOOGLE_SCOPE_LIST
+                    });
+                } catch (e) {
+                    if (!interactive) return resolve(null);
+                    reject(e);
+                }
+            });
+        } catch (e) {
+            clearTimeout(timeoutId);
+            if (!interactive) return resolve(null);
+            reject(e);
+        }
+    });
+}
+
+function removeCachedGoogleToken(token) {
+    if (!token || typeof chrome === 'undefined' || !chrome.identity?.removeCachedAuthToken) {
+        return;
+    }
+    chrome.identity.removeCachedAuthToken({ token }, () => void chrome.runtime.lastError);
 }
 
 function isTokenExpiringSoon() {
@@ -308,18 +232,93 @@ function isTokenExpiringSoon() {
     return Date.now() + 60000 >= expiresAt;
 }
 
+function getMissingRequiredScopes(grantedScopeString = localStorage.getItem(GOOGLE_STORAGE_KEYS.grantedScopes)) {
+    if (!grantedScopeString) return [];
+
+    const grantedScopes = new Set(normalizeScopeString(grantedScopeString).split(' ').filter(Boolean));
+    return GOOGLE_SCOPE_LIST.filter(scope => !grantedScopes.has(scope));
+}
+
+function normalizeScopeString(scopeString) {
+    return String(scopeString || '')
+        .split(/\s+/)
+        .filter(Boolean)
+        .sort()
+        .join(' ');
+}
+
+function scopeListToString(scopes) {
+    return normalizeScopeString(Array.isArray(scopes) ? scopes.join(' ') : GOOGLE_SCOPES);
+}
+
+function formatScopeLabels(scopes) {
+    return scopes.map(scope => GOOGLE_SCOPE_LABELS[scope] || scope).join('、');
+}
+
+async function createApiError(res, serviceLabel) {
+    const data = await parseTokenResponse(res);
+    const apiMessage = data.error?.message || data.error_description || data.error || `HTTP ${res.status}`;
+    const reason = data.error?.errors?.[0]?.reason || '';
+
+    let message = `${serviceLabel} へのアクセスに失敗しました。${apiMessage}`;
+    if (res.status === 401) {
+        removeCachedGoogleToken(localStorage.getItem(GOOGLE_STORAGE_KEYS.accessToken));
+        localStorage.removeItem(GOOGLE_STORAGE_KEYS.accessToken);
+        localStorage.removeItem(GOOGLE_STORAGE_KEYS.expiresAt);
+        message = 'Google 認証の有効期限が切れています。Google 連携を解除してから再連携してください。';
+    } else if (res.status === 403 && isScopeError(apiMessage, reason)) {
+        message = `${serviceLabel} の権限が不足しています。Google 連携を解除してから再連携し、必要な権限をすべて許可してください。`;
+    } else if (res.status === 403) {
+        message = `${serviceLabel} へのアクセスが拒否されました。Google Cloud Console で対象 API が有効化されているか、OAuth 同意画面のスコープとテストユーザー設定を確認してください。`;
+    }
+
+    const error = new Error(message);
+    error.status = res.status;
+    error.reason = reason;
+    error.apiMessage = apiMessage;
+    return error;
+}
+
+function isScopeError(apiMessage, reason) {
+    return reason === 'insufficientPermissions'
+        || /insufficient authentication scopes/i.test(apiMessage)
+        || /insufficient permissions/i.test(apiMessage);
+}
+
 function notifyAuthError(message, options = {}) {
     window.showNotification(message, 'error', options);
 }
 
+function formatGoogleAuthError(error) {
+    const message = error?.message || String(error || '');
+    if (/Invalid OAuth2 Client ID/i.test(message)) {
+        return `Google OAuth Client ID が無効です。Google Cloud Console で「Chrome 拡張機能」用 OAuth クライアントを作成し、拡張機能 ID「${getChromeExtensionId()}」を登録してください。その Client ID を manifest.json の oauth2.client_id に設定後、chrome://extensions で拡張機能をリロードしてください。`;
+    }
+    if (/OAuth2 not granted or revoked/i.test(message)) {
+        return 'Google OAuth の許可が取り消されたか未許可です。Google 連携を解除してから再連携し、Calendar / Tasks / Gmail の権限をすべて許可してください。';
+    }
+    return `Googleの認証に失敗しました。詳細: ${message}`;
+}
+
+function getManifestGoogleClientId() {
+    return typeof chrome !== 'undefined' && chrome.runtime?.getManifest
+        ? chrome.runtime.getManifest().oauth2?.client_id || ''
+        : '';
+}
+
 function initSettings() {
-    const clientIdInput = document.getElementById('google-client-id');
+    const clientIdDisplay = document.getElementById('google-client-id');
+    const extensionIdDisplay = document.getElementById('google-extension-id');
     const connectBtn = document.getElementById('google-connect-btn');
     const disconnectBtn = document.getElementById('google-disconnect-btn');
     const setupBtn = document.getElementById('google-setup-btn');
+    const manifestClientId = getManifestGoogleClientId();
 
-    if (clientIdInput) {
-        clientIdInput.value = getGoogleClientId();
+    if (clientIdDisplay) {
+        clientIdDisplay.textContent = manifestClientId || 'manifest.json の oauth2.client_id が未設定です';
+    }
+    if (extensionIdDisplay) {
+        extensionIdDisplay.textContent = getChromeExtensionId();
     }
 
     setupBtn?.addEventListener('click', () => {
@@ -341,15 +340,24 @@ function initSettings() {
                 <h1>Google OAuth 連携の設定手順</h1>
                 <ol>
                     <li><a href="https://console.cloud.google.com/" target="_blank" style="color:#60a5fa; text-decoration:none;">Google Cloud Console</a> にアクセスし、プロジェクトを作成または選択します。</li>
+                    <li>「APIとサービス」 &gt; 「有効な API とサービス」で <strong>Google Calendar API</strong>、<strong>Google Tasks API</strong>、<strong>Gmail API</strong> を有効化します。</li>
+                    <li>「OAuth 同意画面」で Calendar / Tasks / Gmail のスコープを追加します。テスト公開中の場合は、利用する Google アカウントをテストユーザーに追加します。</li>
                     <li>「APIとサービス」 &gt; 「認証情報」に移動します。</li>
                     <li>「認証情報を作成」 &gt; 「OAuth クライアント ID」を選択します。</li>
-                    <li>アプリケーションの種類として <strong>「Web アプリケーション」</strong> を選択します。</li>
-                    <li>「承認されたリダイレクト URI」に以下のリダイレクトURLを追加します：<br>
+                    <li>アプリケーションの種類として <strong>「Web アプリケーション」</strong> (または「Chrome 拡張機能」) を選択します。</li>
+                    <li>「Web アプリケーション」を選んだ場合、「承認済みのリダイレクト URI」に以下のURIを追加してください：<br>
                         <code>${redirectUri}</code>
                     </li>
-                    <li>作成された <strong>クライアント ID</strong> をコピーし、Nexus Dash の設定画面に入力します。</li>
-                    <li>「Googleと連携」ボタンを押し、認証を行ってください。</li>
+                    <li>拡張機能 ID に以下の値を登録します（Chrome 拡張機能を選んだ場合）：<br>
+                        <code>${getChromeExtensionId()}</code>
+                    </li>
+                    <li>この拡張機能の <code>manifest.json</code> に設定されている Client ID は以下です：<br>
+                        <code>${manifestClientId || '未設定'}</code>
+                    </li>
+                    <li>作成された <strong>クライアント ID</strong> が <code>manifest.json</code> の <code>oauth2.client_id</code> と一致していることを確認します。</li>
+                    <li>「Googleと連携」ボタンを押し、Calendar / Tasks / Gmail の権限をすべて許可してください。</li>
                 </ol>
+                <p>この拡張機能で使うリダイレクト URI は <code>${redirectUri}</code> です。通常は Chrome 拡張機能クライアント ID と拡張機能 ID の組み合わせで認証します。</p>
             </body>
             </html>
         `;
@@ -359,23 +367,31 @@ function initSettings() {
     });
 
     connectBtn?.addEventListener('click', async () => {
-        if (!clientIdInput) return;
-        const val = clientIdInput.value.trim();
-        if (!val) {
-            window.showNotification("Google Client ID を入力してください。", "error");
+        if (isAuthenticating) return;
+
+        const clientId = getManifestGoogleClientId();
+        if (!clientId) {
+            window.showNotification("manifest.json の oauth2.client_id が未設定です。", "error", { durationMs: 9000 });
             return;
         }
 
-        localStorage.setItem(STORAGE_KEY_GOOGLE_CLIENT_ID, val);
-        window.ApiDiagnostics?.refresh?.();
-        const success = await authenticate();
-        if (success) {
+        isAuthenticating = true;
+        updateSettingsUI();
+
+        try {
+            localStorage.setItem(STORAGE_KEY_GOOGLE_CLIENT_ID, clientId);
+            window.ApiDiagnostics?.refresh?.();
+            const success = await authenticate();
+            if (success) {
+                window.GoogleCalendar?.loadEvents();
+                window.GoogleTasks?.loadTaskLists();
+                window.Gmail?.loadEmails();
+            }
+        } finally {
+            isAuthenticating = false;
             updateSettingsUI();
-            window.GoogleCalendar?.loadEvents();
-            window.GoogleTasks?.loadTaskLists();
-            window.Gmail?.loadEmails();
+            window.ApiDiagnostics?.refresh?.();
         }
-        window.ApiDiagnostics?.refresh?.();
     });
 
     disconnectBtn?.addEventListener('click', () => {
@@ -393,23 +409,33 @@ function initSettings() {
     updateSettingsUI();
 }
 
+function getChromeExtensionId() {
+    return typeof chrome !== 'undefined' && chrome.runtime?.id ? chrome.runtime.id : '拡張機能ID';
+}
+
 function updateSettingsUI() {
     const connectBtn = document.getElementById('google-connect-btn');
     const disconnectBtn = document.getElementById('google-disconnect-btn');
-    
-    if (hasStoredSession()) {
+
+    if (isAuthenticating) {
         if (connectBtn) {
-            connectBtn.textContent = '連携済み';
+            connectBtn.textContent = '連携中...';
             connectBtn.disabled = true;
             connectBtn.style.opacity = '0.7';
         }
+        if (disconnectBtn) disconnectBtn.hidden = true;
+        return;
+    }
+
+    if (connectBtn) {
+        connectBtn.textContent = hasStoredSession() ? 'Googleと再連携' : 'Googleと連携';
+        connectBtn.disabled = false;
+        connectBtn.style.opacity = '1';
+    }
+
+    if (hasStoredSession()) {
         if (disconnectBtn) disconnectBtn.hidden = false;
     } else {
-        if (connectBtn) {
-            connectBtn.textContent = 'Googleと連携';
-            connectBtn.disabled = false;
-            connectBtn.style.opacity = '1';
-        }
         if (disconnectBtn) disconnectBtn.hidden = true;
     }
 }

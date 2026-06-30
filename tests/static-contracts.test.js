@@ -2,6 +2,9 @@ const fs = require('fs');
 
 const html = fs.readFileSync('index.html', 'utf8');
 const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
+const constantsSource = fs.readFileSync('js/constants.js', 'utf8');
+const googleAuthSource = fs.readFileSync('js/google-auth.js', 'utf8');
+const readme = fs.readFileSync('README.md', 'utf8');
 const ids = new Set([...html.matchAll(/(?:^|\s)id=["']([^"']+)["']/g)].map(match => match[1]));
 let failed = 0;
 
@@ -93,6 +96,22 @@ test('.env の雛形があり、実ファイルはgitignore対象', () => {
 test('YouTube操作に必要な拡張権限を持つ', () => {
     assert(manifest.permissions.includes('tabs'), 'tabs権限がありません');
     assert(manifest.permissions.includes('scripting'), 'scripting権限がありません');
+});
+
+test('Google OAuthはスコープ不足を検出できる', () => {
+    assert(manifest.oauth2?.client_id === '760784834651-atgcr5aag36ifmfoh0lghstce1emt7d7.apps.googleusercontent.com', 'manifest.json の Google OAuth client_id が不正です');
+    assert(!html.includes('<input type="password" id="google-client-id"'), 'Google OAuth Client ID が入力欄に戻っています');
+    assert(!googleAuthSource.includes('647744756098-qqksp0oc9cnstcscnvh3abrph3bpsalg.apps.googleusercontent.com'), '古い Google OAuth client_id が JS に残っています');
+    assert(googleAuthSource.includes('getManifestGoogleClientId'), 'Google OAuth が manifest の client_id を参照していません');
+    assert(googleAuthSource.includes("connectBtn.textContent = hasStoredSession() ? 'Googleと再連携' : 'Googleと連携'"), 'Google再連携ボタンが常時押せる設計になっていません');
+    assert(manifest.oauth2?.scopes?.includes('https://www.googleapis.com/auth/calendar'), 'Google Calendar scope が manifest にありません');
+    assert(manifest.oauth2?.scopes?.includes('https://www.googleapis.com/auth/tasks'), 'Google Tasks scope が manifest にありません');
+    assert(manifest.oauth2?.scopes?.includes('https://www.googleapis.com/auth/gmail.readonly'), 'Gmail readonly scope が manifest にありません');
+    assert(googleAuthSource.includes('chrome.identity.getAuthToken'), 'Google OAuth が chrome.identity.getAuthToken を使っていません');
+    assert(constantsSource.includes("grantedScopes: 'google_granted_scopes'"), 'Google OAuthの取得済みスコープ保存キーがありません');
+    assert(googleAuthSource.includes('getMissingRequiredScopes'), 'Google OAuthのスコープ不足検出がありません');
+    assert(googleAuthSource.includes('Google Calendar API'), 'Google API有効化の案内がありません');
+    assert(readme.includes('Chrome 拡張機能用クライアント ID'), 'READMEにChrome拡張用OAuthクライアントIDの説明がありません');
 });
 
 if (failed > 0) process.exit(1);

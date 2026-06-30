@@ -209,12 +209,14 @@
             <!-- Google 連携設定 -->
             <div class="setting-block">
                 <h3 style="margin-top: 0; margin-bottom: 4px; font-size: 1rem; color: #e2e8f0;">Google 連携設定</h3>
-                <p class="spotify-settings-note">Googleカレンダー/Tasks/Gmail連携用のクライアントIDを設定します。</p>
+                <p class="spotify-settings-note">Googleカレンダー/Tasks/Gmail連携用の OAuth 設定は manifest.json で管理します。</p>
                 <div style="margin-bottom: 8px;">
                     <button id="google-setup-btn" class="outline-btn spotify-setup-btn" type="button" style="margin-bottom: 8px;">OAuth 設定手順を別タブで開く</button>
                 </div>
-                <label for="google-client-id" class="sidebar-label">Google Client ID:</label>
-                <input type="password" id="google-client-id" placeholder="123456-abc.apps.googleusercontent.com" class="url-input" style="margin-bottom: 10px;">
+                <div class="sidebar-label">Google Client ID (manifest.json)</div>
+                <div id="google-client-id" class="spotify-settings-note" style="word-break: break-all; margin-bottom: 8px;">manifest.json から読み込みます</div>
+                <div class="sidebar-label">拡張機能 ID</div>
+                <div id="google-extension-id" class="spotify-settings-note" style="word-break: break-all; margin-bottom: 10px;">Chrome から読み込みます</div>
                 <div style="display: flex; gap: 8px;">
                     <button id="google-connect-btn" class="save-btn" style="background: linear-gradient(135deg, #4285f4, #357ae8); flex: 1;">Googleと連携</button>
                     <button id="google-disconnect-btn" class="outline-btn" style="border-color:#ef4444; color:#ef4444;">解除</button>

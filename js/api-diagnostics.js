@@ -83,11 +83,12 @@ function evaluateService(service) {
 }
 
 function evaluateGoogleAuth() {
-    const hasClientId = hasConfiguredValue(getStorageConstant('STORAGE_KEY_GOOGLE_CLIENT_ID'), 'NEXUS_GOOGLE_CLIENT_ID');
+    const hasClientId = Boolean(window.GoogleAuth?.getConfiguredClientId?.())
+        || hasConfiguredValue(getStorageConstant('STORAGE_KEY_GOOGLE_CLIENT_ID'), 'NEXUS_GOOGLE_CLIENT_ID');
     const hasSession = Boolean(window.GoogleAuth?.hasStoredSession?.());
     if (hasSession) return { state: 'ok', message: 'Google セッション保存済み' };
-    if (hasClientId) return { state: 'idle', message: 'Client ID 設定済み。連携待ち' };
-    return { state: 'missing', message: 'Google Client ID 未設定' };
+    if (hasClientId) return { state: 'idle', message: 'manifest の Client ID 設定済み。連携待ち' };
+    return { state: 'missing', message: 'manifest の Google Client ID 未設定' };
 }
 
 function evaluateGoogleApi() {

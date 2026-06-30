@@ -65,6 +65,7 @@ async function fetchGithubGrass() {
                                     contributionCount
                                     color
                                     date
+                                    weekday
                                 }
                             }
                         }
@@ -139,23 +140,21 @@ function updateUI(data) {
     if (!containerEl) return;
     containerEl.innerHTML = '';
 
-    const days = [];
-    data.weeks.forEach(w => {
-        w.contributionDays.forEach(d => {
-            days.push(d);
+    data.weeks.forEach((w, weekIndex) => {
+        w.contributionDays.forEach(day => {
+            const cell = document.createElement('div');
+            cell.className = 'grass-cell';
+            cell.style.backgroundColor = getAdaptiveColor(day.color);
+            
+            cell.style.gridRow = (day.weekday + 1).toString();
+            cell.style.gridColumn = (weekIndex + 1).toString();
+
+            cell.setAttribute('title', `${day.contributionCount} contributions on ${day.date}`);
+            cell.setAttribute('role', 'gridcell');
+            cell.setAttribute('aria-label', `${day.contributionCount} contributions on ${day.date}`);
+
+            containerEl.appendChild(cell);
         });
-    });
-
-    days.forEach(day => {
-        const cell = document.createElement('div');
-        cell.className = 'grass-cell';
-        cell.style.backgroundColor = getAdaptiveColor(day.color);
-        
-        cell.setAttribute('title', `${day.contributionCount} contributions on ${day.date}`);
-        cell.setAttribute('role', 'gridcell');
-        cell.setAttribute('aria-label', `${day.contributionCount} contributions on ${day.date}`);
-
-        containerEl.appendChild(cell);
     });
 }
 

@@ -12,6 +12,14 @@
     "tabs",
     "scripting"
   ],
+  "oauth2": {
+    "client_id": "760784834651-dr1fq4ebv8np73e882j989akmu2v268c.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/calendar",
+      "https://www.googleapis.com/auth/tasks",
+      "https://www.googleapis.com/auth/gmail.readonly"
+    ]
+  },
   "host_permissions": [
     "https://*/*",
     "<all_urls>"

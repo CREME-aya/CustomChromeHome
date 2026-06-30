@@ -19,6 +19,8 @@ let dragStartY = 0;
 let elementStartX = 0;
 // 詳細: 変数「elementStartY」を、この後の処理で使う値として用意する。
 let elementStartY = 0;
+// 詳細: 変数「activeDragContainer」を、この後の処理で使う値として用意する。
+let activeDragContainer = null;
 // 連続するresizeイベントを1描画につき1回へまとめ、不要な再計算を避ける。
 // 詳細: 次回のリサイズ処理に対応するrequestAnimationFrameの識別子を保持する。
 let resizeFrameId = null;
@@ -244,14 +246,16 @@ function addPinButton(el) {
             btn.classList.remove('active');
 
             // fixedからabsoluteへ切り替え (コンテナ相対)
+            // 詳細: 変数「container」を、この後の処理で使う値として用意する。
+            const container = document.getElementById('dashboard-main');
             // 詳細: 変数「containerRect」を、この後の処理で使う値として用意する。
-            const containerRect = document.getElementById('dashboard-main').getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
             // 詳細: インラインスタイルを更新して、要素の表示位置や見た目を調整する。
             el.style.position = 'absolute';
             // 詳細: インラインスタイルを更新して、要素の表示位置や見た目を調整する。
-            el.style.left = `${rect.left - containerRect.left}px`;
+            el.style.left = `${rect.left - containerRect.left + container.scrollLeft}px`;
             // 詳細: インラインスタイルを更新して、要素の表示位置や見た目を調整する。
-            el.style.top = `${rect.top - containerRect.top}px`;
+            el.style.top = `${rect.top - containerRect.top + container.scrollTop}px`;
         // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
         }
 
@@ -271,14 +275,8 @@ function addPinButton(el) {
 // ウィジェットをドラッグ可能にする
 // 詳細: 関数「makeElementDraggable」の処理ブロックを開始する。
 function makeElementDraggable(el, container) {
-    // 掴みやすくするため、ヘッダー領域またはウィジェット全体をドラッグ対象にする
-    const handler = el.querySelector('.widget-header') ||
-                    el.querySelector('.ai-panel-header') ||
-                    el.querySelector('.clock-widget') ||
-                    el;
-
     // 詳細: 対象要素のイベントを監視し、ユーザー操作に応じた処理を登録する。
-    handler.addEventListener('mousedown', (e) => {
+    el.addEventListener('mousedown', (e) => {
         // 詳細: 変数「editModeToggle」を、この後の処理で使う値として用意する。
         const editModeToggle = document.getElementById('toggle-edit-mode');
         // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
@@ -286,9 +284,7 @@ function makeElementDraggable(el, container) {
 
         // 入力フォームやクリック可能な要素へのクリック時はドラッグをスキップ
         // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
-        if (['INPUT', 'TEXTAREA', 'BUTTON', 'SELECT', 'A', 'SPAN'].includes(e.target.tagName)) {
-            // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
-            if (e.target.classList.contains('widget-pin-btn')) return; // ピン留め自体は許可
+        if (shouldIgnoreDragStart(e.target)) {
             // 詳細: 呼び出し元へ処理結果を返して、この関数の流れを終える。
             return;
         // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
@@ -311,6 +307,8 @@ function makeElementDraggable(el, container) {
 
         // 詳細: 次の処理行「activeDragElement = el;」の役割を、その場の制御フローに組み込む。
         activeDragElement = el;
+        // 詳細: ドラッグ中の境界計算に使うコンテナを保持する。
+        activeDragContainer = container;
         // 詳細: 次の処理行「e.preventDefault();」の役割を、その場の制御フローに組み込む。
         e.preventDefault();
 
@@ -325,10 +323,10 @@ function makeElementDraggable(el, container) {
             elementStartY = rect.top;
         // 詳細: オブジェクトまたはブロックの境界を定義する。
         } else {
-            // 詳細: 次の処理行「elementStartX = rect.left - containerRect.left;」の役割を、その場の制御フローに組み込む。
-            elementStartX = rect.left - containerRect.left;
-            // 詳細: 次の処理行「elementStartY = rect.top - containerRect.top;」の役割を、その場の制御フローに組み込む。
-            elementStartY = rect.top - containerRect.top;
+            // スクロール済みコンテナ内の見た目座標を、absolute配置で使うCSS座標へ戻す。
+            elementStartX = rect.left - containerRect.left + container.scrollLeft;
+            // 詳細: スクロール位置を含めた開始上座標を保持する。
+            elementStartY = rect.top - containerRect.top + container.scrollTop;
         // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
         }
 
@@ -346,6 +344,24 @@ function makeElementDraggable(el, container) {
 // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
 }
 
+// テキストラベルなど非操作要素はドラッグ開始に使い、入力やボタン操作だけを優先する。
+function shouldIgnoreDragStart(target) {
+    if (!(target instanceof Element)) return true;
+
+    const interactiveSelector = [
+        'input',
+        'textarea',
+        'button',
+        'select',
+        'a',
+        '[role="button"]',
+        '[contenteditable="true"]',
+        '.widget-pin-btn'
+    ].join(',');
+
+    return Boolean(target.closest(interactiveSelector));
+}
+
 // 詳細: 関数「onMouseMove」の処理ブロックを開始する。
 function onMouseMove(e) {
     // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
@@ -356,15 +372,22 @@ function onMouseMove(e) {
     // 詳細: 変数「dy」を、この後の処理で使う値として用意する。
     const dy = e.clientY - dragStartY;
 
-    // 詳細: 変数「newX」を、この後の処理で使う値として用意する。
-    const newX = elementStartX + dx;
-    // 詳細: 変数「newY」を、この後の処理で使う値として用意する。
-    const newY = elementStartY + dy;
+    // 詳細: 変数「proposedX」を、この後の処理で使う値として用意する。
+    const proposedX = elementStartX + dx;
+    // 詳細: 変数「proposedY」を、この後の処理で使う値として用意する。
+    const proposedY = elementStartY + dy;
+    // ドラッグ中から境界内へ制限し、mouseup時に初期位置へ跳ぶような大きな補正を防ぐ。
+    const nextPosition = getConstrainedWidgetPosition(
+        activeDragElement,
+        activeDragContainer,
+        proposedX,
+        proposedY
+    );
 
     // 詳細: インラインスタイルを更新して、要素の表示位置や見た目を調整する。
-    activeDragElement.style.left = `${newX}px`;
+    activeDragElement.style.left = `${nextPosition.left}px`;
     // 詳細: インラインスタイルを更新して、要素の表示位置や見た目を調整する。
-    activeDragElement.style.top = `${newY}px`;
+    activeDragElement.style.top = `${nextPosition.top}px`;
 // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
 }
 
@@ -388,6 +411,8 @@ function onMouseUp() {
     document.removeEventListener('mouseup', onMouseUp);
     // 詳細: 次の処理行「activeDragElement = null;」の役割を、その場の制御フローに組み込む。
     activeDragElement = null;
+    // 詳細: ドラッグ用に保持していたコンテナ参照を解除する。
+    activeDragContainer = null;
 // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
 }
 
@@ -439,6 +464,42 @@ function resolveWidgetDimension(measuredValue, savedValue, inlineValue, fallback
 // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
 }
 
+// ドラッグ中の候補座標を、配置方式に応じた操作可能範囲へ収める。
+function getConstrainedWidgetPosition(el, container, left, top) {
+    // 詳細: コンテナが取得できない場合は、呼び出し元の候補座標をそのまま使用する。
+    if (!container) return { left, top };
+
+    // 詳細: ウィジェットが画面固定配置かどうかを、ピン留めクラスから判定する。
+    const isPinned = el.classList.contains('widget-pinned');
+    // 詳細: 現在描画されているウィジェットの位置と寸法を取得する。
+    const widgetRect = el.getBoundingClientRect();
+    // 詳細: ピン留め状態に応じて、ウィジェットを収める領域の幅を決定する。
+    const boundaryWidth = isPinned
+        ? (document.documentElement.clientWidth || window.innerWidth)
+        : container.clientWidth;
+    // 詳細: ウィジェットの有効な幅を、実測値とインライン値から決定する。
+    const widgetWidth = resolveWidgetDimension(
+        widgetRect.width,
+        null,
+        el.style.width,
+        WIDGET_WIDTH_NORMAL
+    );
+    // 詳細: ウィジェットの右端が境界を超えない最大左座標を計算する。
+    const maxLeft = Math.max(0, boundaryWidth - widgetWidth);
+    // 詳細: fixed配置ではウィジェット下端もビューポート内に収める。
+    const widgetHeight = resolveWidgetDimension(widgetRect.height, null, el.style.height, 0);
+    // 詳細: ピン留め状態に応じて、上座標の最大値を決定する。
+    const maxTop = isPinned
+        ? Math.max(0, (document.documentElement.clientHeight || window.innerHeight) - widgetHeight)
+        : Number.POSITIVE_INFINITY;
+
+    // 詳細: 候補座標を操作可能範囲内へ丸めて返す。
+    return {
+        left: Math.min(Math.max(left, 0), maxLeft),
+        top: Math.min(Math.max(top, 0), maxTop)
+    };
+}
+
 // 基準座標を変更せず、現在の画面で操作できる表示座標へ一時的に補正する。
 // 詳細: 関数「constrainWidgetToVisibleArea」の処理ブロックを開始する。
 function constrainWidgetToVisibleArea(el, container, baseState = null) {
@@ -471,9 +532,9 @@ function constrainWidgetToVisibleArea(el, container, baseState = null) {
     );
     // fixed配置では画面座標、absolute配置ではコンテナ相対座標を実測フォールバックにする。
     // 詳細: 現在の描画位置から、配置方式に対応する左座標を計算する。
-    const measuredLeft = isPinned ? widgetRect.left : widgetRect.left - containerRect.left;
+    const measuredLeft = isPinned ? widgetRect.left : widgetRect.left - containerRect.left + container.scrollLeft;
     // 詳細: 現在の描画位置から、配置方式に対応する上座標を計算する。
-    const measuredTop = isPinned ? widgetRect.top : widgetRect.top - containerRect.top;
+    const measuredTop = isPinned ? widgetRect.top : widgetRect.top - containerRect.top + container.scrollTop;
     // リサイズ時は保存済み基準座標、ユーザー操作時は現在のインライン座標を補正元にする。
     // 詳細: 補正元として使用する左座標のCSS文字列を選択する。
     const sourceLeft = baseState?.left ?? el.style.left;

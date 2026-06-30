@@ -44,7 +44,8 @@ const STORAGE_KEY_GOOGLE_CLIENT_ID = 'custom_google_client_id';
 const GOOGLE_STORAGE_KEYS = {
     accessToken: 'google_access_token',
     refreshToken: 'google_refresh_token',
-    expiresAt: 'google_token_expires_at'
+    expiresAt: 'google_token_expires_at',
+    grantedScopes: 'google_granted_scopes'
 };
 const STORAGE_KEY_GOOGLE_CALENDAR_CACHE = 'custom_google_calendar_cache';
 const STORAGE_KEY_GOOGLE_TASKS_CACHE = 'custom_google_tasks_cache';

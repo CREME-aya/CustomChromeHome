@@ -48,7 +48,7 @@ async function loadIssues(force = false) {
         const url = 'https://api.github.com/search/issues?q=assignee:@me+state:open&per_page=10';
         const res = await fetch(url, {
             headers: {
-                'Authorization': `token ${pat}`,
+                'Authorization': `Bearer ${pat}`,
                 'Accept': 'application/vnd.github.v3+json'
             }
         });

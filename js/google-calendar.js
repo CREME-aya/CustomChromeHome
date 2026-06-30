@@ -76,11 +76,9 @@ async function loadEvents(force = false) {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
-                if (res.status === 401) {
-                    throw new Error("Unauthorized");
+                if (!res.ok) {
+                    throw await GoogleAuth.createApiError(res, 'Google カレンダー');
                 }
-                
-                if (!res.ok) continue;
                 
                 const data = await res.json();
                 if (data.items) {
@@ -88,8 +86,8 @@ async function loadEvents(force = false) {
                 }
             } catch(err) {
                 console.warn(`Failed to fetch events for calendar: ${calendarId}`, err);
-                if (err.message === "Unauthorized") {
-                    throw err; // 401エラーの場合は外側のcatchに再スローして認証エラー処理を行う
+                if (err.status === 401 || err.status === 403) {
+                    throw err; // 認証・権限エラーは外側のcatchに再スローして表示する。
                 }
             }
         }
@@ -112,8 +110,8 @@ async function loadEvents(force = false) {
             window.showNotification("Google カレンダーの更新に失敗しました。キャッシュを表示しています。", "warning");
             window.ApiDiagnostics?.report('google-calendar', 'warning', 'Google カレンダー更新に失敗。キャッシュを表示');
         } else {
-            renderError("予定の取得に失敗しました。再試行してください。");
-            window.ApiDiagnostics?.report('google-calendar', 'error', '予定の取得に失敗');
+            renderError(e.message || "予定の取得に失敗しました。再試行してください。");
+            window.ApiDiagnostics?.report('google-calendar', 'error', e.message || '予定の取得に失敗');
         }
     }
 }
@@ -146,8 +144,7 @@ async function addEvent(summary, startDateStr, startTimeStr, endTimeStr, locatio
         });
 
         if (!res.ok) {
-            const errData = await res.json();
-            throw new Error(errData.error?.message || `HTTP ${res.status}`);
+            throw await GoogleAuth.createApiError(res, 'Google カレンダー');
         }
 
         window.showNotification("予定を追加しました！", "success");

@@ -51,7 +51,9 @@ async function loadEmails(force = false) {
         const listRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?q=is:unread&maxResults=5', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (!listRes.ok) throw new Error(`HTTP ${listRes.status}`);
+        if (!listRes.ok) {
+            throw await GoogleAuth.createApiError(listRes, 'Gmail');
+        }
 
         const listData = await listRes.json();
         const messages = listData.messages || [];
@@ -71,17 +73,15 @@ async function loadEmails(force = false) {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
-                if (detailRes.status === 401) {
-                    throw new Error("Unauthorized");
+                if (!detailRes.ok) {
+                    throw await GoogleAuth.createApiError(detailRes, 'Gmail');
                 }
-                
-                if (!detailRes.ok) continue;
 
                 const detail = await detailRes.json();
                 emailDetails.push(parseEmailData(detail));
             } catch(err) {
                 console.warn(`Failed to fetch email details for id: ${msg.id}`, err);
-                if (err.message === "Unauthorized") {
+                if (err.status === 401 || err.status === 403) {
                     throw err;
                 }
             }
@@ -98,8 +98,8 @@ async function loadEmails(force = false) {
             window.showNotification("Gmailの同期に失敗しました。キャッシュを表示しています。", "warning");
             window.ApiDiagnostics?.report('gmail', 'warning', 'Gmail同期に失敗。キャッシュを表示');
         } else {
-            renderError("メールの同期に失敗しました。");
-            window.ApiDiagnostics?.report('gmail', 'error', 'メールの同期に失敗');
+            renderError(e.message || "メールの同期に失敗しました。");
+            window.ApiDiagnostics?.report('gmail', 'error', e.message || 'メールの同期に失敗');
         }
     }
 }

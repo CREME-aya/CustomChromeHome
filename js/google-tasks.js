@@ -69,10 +69,12 @@ async function loadTaskLists() {
     if (!token) return;
 
     try {
-        const res = await fetch('https://tasks.googleapis.com/v1/users/@me/lists', {
+        const res = await fetch('https://tasks.googleapis.com/tasks/v1/users/@me/lists', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) {
+            throw await GoogleAuth.createApiError(res, 'Google Tasks');
+        }
 
         const data = await res.json();
         currentTaskLists = data.items || [];
@@ -90,7 +92,8 @@ async function loadTaskLists() {
         }
     } catch(e) {
         console.error("Google Tasks load lists failed", e);
-        window.ApiDiagnostics?.report('google-tasks', 'error', 'Google Tasks リスト取得に失敗');
+        renderError(e.message || "Google Tasks リストの取得に失敗しました。");
+        window.ApiDiagnostics?.report('google-tasks', 'error', e.message || 'Google Tasks リスト取得に失敗');
     }
 }
 
@@ -112,10 +115,12 @@ async function loadTasks(listId, showLoadingState = true) {
             return;
         }
 
-        const res = await fetch(`https://tasks.googleapis.com/v1/lists/${listId}/tasks?showCompleted=true&maxResults=50`, {
+        const res = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${listId}/tasks?showCompleted=true&maxResults=50`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) {
+            throw await GoogleAuth.createApiError(res, 'Google Tasks');
+        }
 
         const data = await res.json();
         
@@ -136,8 +141,8 @@ async function loadTasks(listId, showLoadingState = true) {
             window.showNotification("Google Tasksの同期に失敗しました。キャッシュを表示しています。", "warning");
             window.ApiDiagnostics?.report('google-tasks', 'warning', 'Google Tasks 同期に失敗。キャッシュを表示');
         } else {
-            renderError("タスクの同期に失敗しました。");
-            window.ApiDiagnostics?.report('google-tasks', 'error', 'タスクの同期に失敗');
+            renderError(e.message || "タスクの同期に失敗しました。");
+            window.ApiDiagnostics?.report('google-tasks', 'error', e.message || 'タスクの同期に失敗');
         }
     }
 }
@@ -148,7 +153,7 @@ async function addTask(title) {
     if (!token) return false;
 
     try {
-        const res = await fetch(`https://tasks.googleapis.com/v1/lists/${selectedListId}/tasks`, {
+        const res = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${selectedListId}/tasks`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -156,7 +161,9 @@ async function addTask(title) {
             },
             body: JSON.stringify({ title })
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) {
+            throw await GoogleAuth.createApiError(res, 'Google Tasks');
+        }
 
         loadTasks(selectedListId, false);
         return true;
@@ -184,7 +191,7 @@ async function updateTaskStatus(taskId, title, completed) {
     }
 
     try {
-        const res = await fetch(`https://tasks.googleapis.com/v1/lists/${selectedListId}/tasks/${taskId}`, {
+        const res = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${selectedListId}/tasks/${taskId}`, {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -192,7 +199,9 @@ async function updateTaskStatus(taskId, title, completed) {
             },
             body: JSON.stringify(body)
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) {
+            throw await GoogleAuth.createApiError(res, 'Google Tasks');
+        }
 
         loadTasks(selectedListId, false);
         return true;
@@ -209,11 +218,13 @@ async function deleteTask(taskId) {
     if (!token) return false;
 
     try {
-        const res = await fetch(`https://tasks.googleapis.com/v1/lists/${selectedListId}/tasks/${taskId}`, {
+        const res = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${selectedListId}/tasks/${taskId}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) {
+            throw await GoogleAuth.createApiError(res, 'Google Tasks');
+        }
 
         window.showNotification("タスクを削除しました。", "success");
         loadTasks(selectedListId, false);
