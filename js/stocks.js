@@ -41,7 +41,9 @@ function restoreCache() {
 }
 
 function getApiKey() {
-    return localStorage.getItem(STORAGE_KEY_STOCKS_API_KEY)?.trim() || '';
+    return window.EnvConfig?.getStorageBackedValue(STORAGE_KEY_STOCKS_API_KEY, 'NEXUS_ALPHA_VANTAGE_API_KEY')
+        || localStorage.getItem(STORAGE_KEY_STOCKS_API_KEY)?.trim()
+        || '';
 }
 
 function getRegisteredSymbols() {

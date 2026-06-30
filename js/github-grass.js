@@ -43,7 +43,9 @@ function renderFromCache() {
 
 // GitHub GraphQL API から芝生データを取得
 async function fetchGithubGrass() {
-    const pat = localStorage.getItem(STORAGE_KEY_GITHUB_PAT);
+    const pat = window.EnvConfig?.getStorageBackedValue(STORAGE_KEY_GITHUB_PAT, 'NEXUS_GITHUB_PAT')
+        || localStorage.getItem(STORAGE_KEY_GITHUB_PAT)?.trim()
+        || '';
     if (!pat) {
         showGrassError("GitHub PAT が未設定です。設定サイドバーから登録してください。");
         window.ApiDiagnostics?.report('github-grass', 'missing', 'GitHub PAT 未設定');

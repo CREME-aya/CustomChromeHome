@@ -9,13 +9,13 @@ const SERVICE_DEFINITIONS = [
     { id: 'google-calendar', label: 'Google カレンダー', kind: 'google-api' },
     { id: 'google-tasks', label: 'Google Tasks', kind: 'google-api' },
     { id: 'gmail', label: 'Gmail', kind: 'google-api' },
-    { id: 'github', label: 'GitHub', kind: 'storage-key', storageKey: 'STORAGE_KEY_GITHUB_PAT' },
-    { id: 'github-grass', label: 'GitHub 芝生', kind: 'storage-key', storageKey: 'STORAGE_KEY_GITHUB_PAT' },
-    { id: 'stocks', label: 'Alpha Vantage 株価', kind: 'storage-key', storageKey: 'STORAGE_KEY_STOCKS_API_KEY' },
+    { id: 'github', label: 'GitHub', kind: 'storage-key', storageKey: 'STORAGE_KEY_GITHUB_PAT', envName: 'NEXUS_GITHUB_PAT' },
+    { id: 'github-grass', label: 'GitHub 芝生', kind: 'storage-key', storageKey: 'STORAGE_KEY_GITHUB_PAT', envName: 'NEXUS_GITHUB_PAT' },
+    { id: 'stocks', label: 'Alpha Vantage 株価', kind: 'storage-key', storageKey: 'STORAGE_KEY_STOCKS_API_KEY', envName: 'NEXUS_ALPHA_VANTAGE_API_KEY' },
     { id: 'spotify', label: 'Spotify', kind: 'spotify' },
-    { id: 'openai', label: 'OpenAI', kind: 'storage-key', storageKey: 'STORAGE_KEY_OPENAI_API_KEY' },
-    { id: 'anthropic', label: 'Anthropic', kind: 'storage-key', storageKey: 'STORAGE_KEY_ANTHROPIC_API_KEY' },
-    { id: 'gemini', label: 'Gemini', kind: 'storage-key', storageKey: 'STORAGE_KEY_GEMINI_API_KEY' },
+    { id: 'openai', label: 'OpenAI', kind: 'storage-key', storageKey: 'STORAGE_KEY_OPENAI_API_KEY', envName: 'NEXUS_OPENAI_API_KEY' },
+    { id: 'anthropic', label: 'Anthropic', kind: 'storage-key', storageKey: 'STORAGE_KEY_ANTHROPIC_API_KEY', envName: 'NEXUS_ANTHROPIC_API_KEY' },
+    { id: 'gemini', label: 'Gemini', kind: 'storage-key', storageKey: 'STORAGE_KEY_GEMINI_API_KEY', envName: 'NEXUS_GEMINI_API_KEY' },
     { id: 'feed', label: 'RSS / Discover', kind: 'feed' },
     { id: 'weather', label: 'Open-Meteo 天気', kind: 'weather' }
 ];
@@ -79,11 +79,11 @@ function evaluateService(service) {
     if (service.kind === 'spotify') return evaluateSpotify();
     if (service.kind === 'feed') return evaluateFeed();
     if (service.kind === 'weather') return evaluateWeather();
-    return evaluateStorageKey(service.storageKey);
+    return evaluateStorageKey(service);
 }
 
 function evaluateGoogleAuth() {
-    const hasClientId = hasStorageValue(getStorageConstant('STORAGE_KEY_GOOGLE_CLIENT_ID'));
+    const hasClientId = hasConfiguredValue(getStorageConstant('STORAGE_KEY_GOOGLE_CLIENT_ID'), 'NEXUS_GOOGLE_CLIENT_ID');
     const hasSession = Boolean(window.GoogleAuth?.hasStoredSession?.());
     if (hasSession) return { state: 'ok', message: 'Google セッション保存済み' };
     if (hasClientId) return { state: 'idle', message: 'Client ID 設定済み。連携待ち' };
@@ -117,9 +117,9 @@ function evaluateWeather() {
     return { state: 'idle', message: '保存済み地点で取得待ち' };
 }
 
-function evaluateStorageKey(storageKeyName) {
-    const storageKey = getStorageConstant(storageKeyName);
-    return hasStorageValue(storageKey)
+function evaluateStorageKey(service) {
+    const storageKey = getStorageConstant(service.storageKey);
+    return hasConfiguredValue(storageKey, service.envName)
         ? { state: 'idle', message: '認証情報設定済み。直近の通信結果を待機' }
         : { state: 'missing', message: '認証情報未設定' };
 }
@@ -215,8 +215,11 @@ function getStorageConstant(name) {
     }
 }
 
-function hasStorageValue(key) {
-    return Boolean(key && localStorage.getItem(key)?.trim());
+function hasConfiguredValue(key, envName) {
+    return Boolean(
+        window.EnvConfig?.hasStorageBackedValue(key, envName)
+        || (key && localStorage.getItem(key)?.trim())
+    );
 }
 
 function formatCheckedAt(timestamp) {

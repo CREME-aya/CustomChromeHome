@@ -1,7 +1,7 @@
 // ==========================================
 // アプリ全体のエントリーポイント (堅牢化版)
 // ==========================================
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const reportInitializationError = (name, error) => {
         console.error(`[Error] Failed to initialize ${name}:`, error);
     };
@@ -23,6 +23,14 @@ document.addEventListener('DOMContentLoaded', () => {
             reportInitializationError(name, e);
         }
     };
+
+    if (window.EnvConfig?.ready) {
+        try {
+            await window.EnvConfig.ready;
+        } catch (error) {
+            reportInitializationError('EnvConfig', error);
+        }
+    }
 
     safeInit('InputFocusFix', window.initInputFocusFix);
     safeInit('Sidebar', window.initSidebar);

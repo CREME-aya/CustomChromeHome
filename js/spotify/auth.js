@@ -3,8 +3,11 @@
 // ==========================================
 // 詳細: 次の処理行「(function() {」の役割を、その場の制御フローに組み込む。
 (function() {
-// 詳細: 変数「SPOTIFY_CLIENT_ID」を、この後の処理で使う値として用意する。
-const SPOTIFY_CLIENT_ID = '3ed94377fd3840f2b3f3e88967a2ed78';
+function getSpotifyClientId() {
+    return window.EnvConfig?.getSpotifyClientId?.()
+        || window.EnvConfig?.defaultSpotifyClientId
+        || '3ed94377fd3840f2b3f3e88967a2ed78';
+}
 // 詳細: 変数「SPOTIFY_SCOPES」を、この後の処理で使う値として用意する。
 const SPOTIFY_SCOPES = 'user-read-playback-state user-modify-playback-state user-read-currently-playing';
 // 詳細: 他モジュールから利用できるように、処理や値を window に公開する。
@@ -51,7 +54,7 @@ async function authenticate() {
     // 詳細: 変数「authParams」を、この後の処理で使う値として用意する。
     const authParams = new URLSearchParams({
         // 詳細: オブジェクトのプロパティ値を定義する。
-        client_id: SPOTIFY_CLIENT_ID,
+        client_id: getSpotifyClientId(),
         // 詳細: オブジェクトのプロパティ値を定義する。
         response_type: 'code',
         // 詳細: オブジェクトのプロパティ値を定義する。
@@ -345,7 +348,7 @@ async function requestToken(params) {
     // 詳細: 変数「body」を、この後の処理で使う値として用意する。
     const body = new URLSearchParams({
         // 詳細: オブジェクトのプロパティ値を定義する。
-        client_id: SPOTIFY_CLIENT_ID,
+        client_id: getSpotifyClientId(),
         // 詳細: 次の処理行「...params」の役割を、その場の制御フローに組み込む。
         ...params
     // 詳細: 現在の関数呼び出しまたは即時実行関数のブロックを閉じる。

@@ -524,7 +524,9 @@ function createFeedErrorElement(result) {
 }
 
 function summarizeArticle(article) {
-    const apiKey = localStorage.getItem(STORAGE_KEY_GEMINI_API_KEY);
+    const apiKey = window.EnvConfig?.getStorageBackedValue(STORAGE_KEY_GEMINI_API_KEY, 'NEXUS_GEMINI_API_KEY')
+        || localStorage.getItem(STORAGE_KEY_GEMINI_API_KEY)?.trim()
+        || '';
     if (!apiKey) {
         window.showNotification('左上のメニューから Gemini API Key を設定してください。', 'error');
         return;

@@ -1,3 +1,5 @@
 FETCH_HEAD
 .DS_Store
 /docs/*
+.env
+.env.local

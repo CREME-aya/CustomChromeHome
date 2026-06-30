@@ -3,10 +3,19 @@
 // ==========================================
 // 詳細: 次の処理行「(function() {」の役割を、その場の制御フローに組み込む。
 (function() {
-const AI_MODELS = Object.freeze({
-    openai: 'gpt-4o',
-    anthropic: 'claude-sonnet-4-6',
-    gemini: 'gemini-3.5-flash'
+const API_KEY_CONFIG = Object.freeze({
+    openai: {
+        storageKey: STORAGE_KEY_OPENAI_API_KEY,
+        envName: 'NEXUS_OPENAI_API_KEY'
+    },
+    anthropic: {
+        storageKey: STORAGE_KEY_ANTHROPIC_API_KEY,
+        envName: 'NEXUS_ANTHROPIC_API_KEY'
+    },
+    gemini: {
+        storageKey: STORAGE_KEY_GEMINI_API_KEY,
+        envName: 'NEXUS_GEMINI_API_KEY'
+    }
 });
 
 // 詳細: 他モジュールから利用できるように、処理や値を window に公開する。
@@ -59,7 +68,7 @@ function initApiKeys() {
         // 詳細: 条件を確認し、必要な場合だけ内側の処理へ進む。
         if (input) {
             // 詳細: 変数「val」を、この後の処理で使う値として用意する。
-            const val = localStorage.getItem(`custom_${k}_api_key`) || '';
+            const val = getApiKey(k);
             // 詳細: 次の処理行「input.value = val;」の役割を、その場の制御フローに組み込む。
             input.value = val;
             // 詳細: 次の処理行「apiKeys[k] = val;」の役割を、その場の制御フローに組み込む。
@@ -87,7 +96,7 @@ function initApiKeys() {
                     // 詳細: 変数「val」を、この後の処理で使う値として用意する。
                     const val = input.value.trim();
                     // 詳細: ユーザー設定や状態を localStorage に保存する。
-                    localStorage.setItem(`custom_${k}_api_key`, val);
+                    localStorage.setItem(API_KEY_CONFIG[k].storageKey, val);
                     // 詳細: 次の処理行「apiKeys[k] = val;」の役割を、その場の制御フローに組み込む。
                     apiKeys[k] = val;
                 // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
@@ -110,6 +119,19 @@ function initApiKeys() {
     // 詳細: 他モジュールから利用できるように、処理や値を window に公開する。
     window._apiKeys = apiKeys;
 // 詳細: 現在のオブジェクト定義または関数代入を閉じる。
+}
+
+function getApiKey(provider) {
+    const config = API_KEY_CONFIG[provider];
+    return window.EnvConfig?.getStorageBackedValue(config.storageKey, config.envName)
+        || localStorage.getItem(config.storageKey)?.trim()
+        || '';
+}
+
+function getAiModel(provider) {
+    return window.EnvConfig?.getAiModel?.(provider)
+        || window.EnvConfig?.defaultAiModels?.[provider]
+        || '';
 }
 
 // ==========================================
@@ -201,7 +223,7 @@ function initMultiAI() {
                 // 詳細: JavaScriptの値を保存可能なJSON文字列へ変換する。
                 body: JSON.stringify({
                     // 詳細: オブジェクトのプロパティ値を定義する。
-                    model: AI_MODELS.openai,
+                    model: getAiModel('openai'),
                     // 詳細: 次の処理行「messages: [{ role: 'user', content: prompt }]」の役割を、その場の制御フローに組み込む。
                     messages: [{ role: 'user', content: prompt }]
                 // 詳細: 現在の関数呼び出しまたは即時実行関数のブロックを閉じる。
@@ -268,7 +290,7 @@ function initMultiAI() {
                 // 詳細: JavaScriptの値を保存可能なJSON文字列へ変換する。
                 body: JSON.stringify({
                     // 詳細: オブジェクトのプロパティ値を定義する。
-                    model: AI_MODELS.anthropic,
+                    model: getAiModel('anthropic'),
                     // 詳細: オブジェクトのプロパティ値を定義する。
                     max_tokens: 1024,
                     // 詳細: 次の処理行「messages: [{ role: 'user', content: prompt }]」の役割を、その場の制御フローに組み込む。
@@ -319,7 +341,7 @@ function initMultiAI() {
         try {
             // GeminiはAPIキーをクエリパラメータで渡す仕様に合わせる。
             // 詳細: 変数「res」を、この後の処理で使う値として用意する。
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${AI_MODELS.gemini}:generateContent?key=${apiKeys.gemini}`, {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${getAiModel('gemini')}:generateContent?key=${apiKeys.gemini}`, {
                 // 詳細: オブジェクトのプロパティ値を定義する。
                 method: 'POST',
                 // 詳細: オブジェクトのプロパティ値を定義する。

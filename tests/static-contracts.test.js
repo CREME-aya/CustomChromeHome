@@ -72,11 +72,22 @@ test('共通API UIを利用モジュールより先に読み込む', () => {
 });
 
 test('API診断と統合ビューをapp.jsより先に読み込む', () => {
+    const envConfigIndex = html.indexOf('js/env-config.js');
     const diagnosticsIndex = html.indexOf('js/api-diagnostics.js');
     const agendaIndex = html.indexOf('js/unified-agenda.js');
     const appIndex = html.indexOf('js/app.js');
+    assert(envConfigIndex >= 0 && envConfigIndex < diagnosticsIndex, 'env-config.jsの読み込み順が不正です');
     assert(diagnosticsIndex >= 0 && diagnosticsIndex < appIndex, 'api-diagnostics.jsの読み込み順が不正です');
     assert(agendaIndex >= 0 && agendaIndex < appIndex, 'unified-agenda.jsの読み込み順が不正です');
+});
+
+test('.env の雛形があり、実ファイルはgitignore対象', () => {
+    const gitignore = fs.readFileSync('.gitignore', 'utf8');
+    const envExample = fs.readFileSync('.env.example', 'utf8');
+    assert(gitignore.includes('.env'), '.env が gitignore にありません');
+    assert(gitignore.includes('.env.local'), '.env.local が gitignore にありません');
+    assert(envExample.includes('NEXUS_OPENAI_API_KEY'), '.env.example に OpenAI 設定がありません');
+    assert(envExample.includes('NEXUS_SPOTIFY_CLIENT_ID'), '.env.example に Spotify 設定がありません');
 });
 
 test('YouTube操作に必要な拡張権限を持つ', () => {

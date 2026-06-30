@@ -26,7 +26,7 @@ function init() {
         }
     }
 
-    const pat = localStorage.getItem(STORAGE_KEY_GITHUB_PAT);
+    const pat = getGithubPat();
     if (pat) {
         loadIssues();
     } else {
@@ -35,7 +35,7 @@ function init() {
 }
 
 async function loadIssues(force = false) {
-    const pat = localStorage.getItem(STORAGE_KEY_GITHUB_PAT);
+    const pat = getGithubPat();
     if (!pat) {
         renderUnauthenticated();
         window.ApiDiagnostics?.report('github', 'missing', 'GitHub PAT 未設定');
@@ -93,6 +93,12 @@ async function loadIssues(force = false) {
             window.ApiDiagnostics?.report('github', 'error', 'GitHubデータの同期に失敗');
         }
     }
+}
+
+function getGithubPat() {
+    return window.EnvConfig?.getStorageBackedValue(STORAGE_KEY_GITHUB_PAT, 'NEXUS_GITHUB_PAT')
+        || localStorage.getItem(STORAGE_KEY_GITHUB_PAT)?.trim()
+        || '';
 }
 
 function renderIssues() {
@@ -162,7 +168,7 @@ function initSettings() {
     const saveBtn = document.getElementById('save-github-btn');
 
     if (patInput) {
-        patInput.value = localStorage.getItem(STORAGE_KEY_GITHUB_PAT) || '';
+        patInput.value = getGithubPat();
     }
 
     saveBtn?.addEventListener('click', () => {

@@ -22,8 +22,14 @@ function getRedirectUri() {
     return `https://${extId}.chromiumapp.org/google`;
 }
 
+function getGoogleClientId() {
+    return window.EnvConfig?.getStorageBackedValue(STORAGE_KEY_GOOGLE_CLIENT_ID, 'NEXUS_GOOGLE_CLIENT_ID')
+        || localStorage.getItem(STORAGE_KEY_GOOGLE_CLIENT_ID)?.trim()
+        || '';
+}
+
 async function authenticate() {
-    const clientId = localStorage.getItem(STORAGE_KEY_GOOGLE_CLIENT_ID);
+    const clientId = getGoogleClientId();
     if (!clientId) {
         notifyAuthError("Google Client ID が設定されていません。設定サイドバーから入力してください。");
         return false;
@@ -207,7 +213,7 @@ function launchGoogleAuthFlowInTab(authUrl, redirectUri) {
 }
 
 async function requestToken(params) {
-    const clientId = localStorage.getItem(STORAGE_KEY_GOOGLE_CLIENT_ID);
+    const clientId = getGoogleClientId();
     const body = new URLSearchParams({
         client_id: clientId,
         ...params
@@ -313,7 +319,7 @@ function initSettings() {
     const setupBtn = document.getElementById('google-setup-btn');
 
     if (clientIdInput) {
-        clientIdInput.value = localStorage.getItem(STORAGE_KEY_GOOGLE_CLIENT_ID) || '';
+        clientIdInput.value = getGoogleClientId();
     }
 
     setupBtn?.addEventListener('click', () => {

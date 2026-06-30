@@ -210,9 +210,7 @@ function buildWeatherForecastUrl({ lat, lon }) {
         // 詳細: オブジェクトのプロパティ値を定義する。
         hourly: 'precipitation_probability',
         // 詳細: オブジェクトのプロパティ値を定義する。
-        timezone: 'Asia/Tokyo',
-        // 詳細: 次の処理行「models: 'jma_seamless'」の役割を、その場の制御フローに組み込む。
-        models: 'jma_seamless'
+        timezone: 'Asia/Tokyo'
     // 詳細: 現在の関数呼び出しまたは即時実行関数のブロックを閉じる。
     });
 
