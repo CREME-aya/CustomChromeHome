@@ -383,9 +383,7 @@ function initSettings() {
             window.ApiDiagnostics?.refresh?.();
             const success = await authenticate();
             if (success) {
-                window.GoogleCalendar?.loadEvents();
-                window.GoogleTasks?.loadTaskLists();
-                window.Gmail?.loadEmails();
+                dispatchGoogleConnectionEvent('google:connected');
             }
         } finally {
             isAuthenticating = false;
@@ -398,15 +396,17 @@ function initSettings() {
         if (confirm("Googleアカウントとの連携を解除しますか？")) {
             clearToken();
             updateSettingsUI();
-            window.GoogleCalendar?.loadEvents();
-            window.GoogleTasks?.loadTaskLists();
-            window.Gmail?.loadEmails();
+            dispatchGoogleConnectionEvent('google:disconnected');
             window.showNotification("Googleアカウントとの連携を解除しました。", "success");
             window.ApiDiagnostics?.refresh?.();
         }
     });
 
     updateSettingsUI();
+}
+
+function dispatchGoogleConnectionEvent(eventName) {
+    document.dispatchEvent(new CustomEvent(eventName));
 }
 
 function getChromeExtensionId() {

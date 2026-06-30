@@ -2,6 +2,9 @@ const fs = require('fs');
 const vm = require('vm');
 
 global.window = globalThis;
+vm.runInThisContext(fs.readFileSync('js/weather/constants.js', 'utf8'));
+vm.runInThisContext(fs.readFileSync('js/weather/data.js', 'utf8'));
+vm.runInThisContext(fs.readFileSync('js/weather/widget.js', 'utf8'));
 vm.runInThisContext(fs.readFileSync('js/weather.js', 'utf8'));
 
 const buildQueries = window.WeatherCore.buildWeatherSearchQueries;

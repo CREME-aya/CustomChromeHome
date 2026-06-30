@@ -11,6 +11,11 @@ window.GoogleCalendar = {
     addEvent
 };
 
+if (typeof document !== 'undefined') {
+    document.addEventListener('google:connected', () => loadEvents());
+    document.addEventListener('google:disconnected', () => loadEvents());
+}
+
 function init() {
     const syncBtn = document.getElementById('google-calendar-sync-btn');
     const formToggle = document.getElementById('google-calendar-form-toggle');

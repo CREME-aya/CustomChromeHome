@@ -10,6 +10,11 @@ window.Gmail = {
     loadEmails
 };
 
+if (typeof document !== 'undefined') {
+    document.addEventListener('google:connected', () => loadEmails());
+    document.addEventListener('google:disconnected', () => loadEmails());
+}
+
 function init() {
     const syncBtn = document.getElementById('gmail-sync-btn');
     syncBtn?.addEventListener('click', () => loadEmails(true));

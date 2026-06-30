@@ -17,6 +17,11 @@ window.GoogleTasks = {
     deleteTask
 };
 
+if (typeof document !== 'undefined') {
+    document.addEventListener('google:connected', () => loadTaskLists());
+    document.addEventListener('google:disconnected', () => loadTaskLists());
+}
+
 function init() {
     const syncBtn = document.getElementById('google-tasks-sync-btn');
     const addBtn = document.getElementById('google-tasks-add-btn');

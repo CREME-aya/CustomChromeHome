@@ -13,9 +13,9 @@ const SERVICE_DEFINITIONS = [
     { id: 'github-grass', label: 'GitHub 芝生', kind: 'storage-key', storageKey: 'STORAGE_KEY_GITHUB_PAT', envName: 'NEXUS_GITHUB_PAT' },
     { id: 'stocks', label: 'GoogleFinance 株価', kind: 'storage-key', storageKey: 'STORAGE_KEY_STOCKS_SOURCE_URL', envName: 'NEXUS_GOOGLEFINANCE_CSV_URL' },
     { id: 'spotify', label: 'Spotify', kind: 'spotify' },
-    { id: 'openai', label: 'OpenAI', kind: 'storage-key', storageKey: 'STORAGE_KEY_OPENAI_API_KEY', envName: 'NEXUS_OPENAI_API_KEY' },
-    { id: 'anthropic', label: 'Anthropic', kind: 'storage-key', storageKey: 'STORAGE_KEY_ANTHROPIC_API_KEY', envName: 'NEXUS_ANTHROPIC_API_KEY' },
-    { id: 'gemini', label: 'Gemini', kind: 'storage-key', storageKey: 'STORAGE_KEY_GEMINI_API_KEY', envName: 'NEXUS_GEMINI_API_KEY' },
+    { id: 'openai', label: 'OpenAI', kind: 'ai-key', provider: 'openai' },
+    { id: 'anthropic', label: 'Anthropic', kind: 'ai-key', provider: 'anthropic' },
+    { id: 'gemini', label: 'Gemini', kind: 'ai-key', provider: 'gemini' },
     { id: 'feed', label: 'RSS / Discover', kind: 'feed' },
     { id: 'weather', label: 'Open-Meteo 天気', kind: 'weather' }
 ];
@@ -77,6 +77,7 @@ function evaluateService(service) {
     if (service.kind === 'oauth') return evaluateGoogleAuth();
     if (service.kind === 'google-api') return evaluateGoogleApi();
     if (service.kind === 'spotify') return evaluateSpotify();
+    if (service.kind === 'ai-key') return evaluateAiKey(service);
     if (service.kind === 'feed') return evaluateFeed();
     if (service.kind === 'weather') return evaluateWeather();
     return evaluateStorageKey(service);
@@ -103,6 +104,13 @@ function evaluateSpotify() {
         return { state: 'idle', message: 'Spotify 連携済み。再生状態取得を待機' };
     }
     return { state: 'missing', message: 'Spotify 未連携' };
+}
+
+function evaluateAiKey(service) {
+    const config = window.AiConstants?.apiKeys?.[service.provider];
+    return hasConfiguredValue(config?.storageKey, config?.envName)
+        ? { state: 'idle', message: '設定値保存済み。直近の通信結果を待機' }
+        : { state: 'missing', message: '設定値未設定' };
 }
 
 function evaluateFeed() {
@@ -205,10 +213,7 @@ function getStorageConstant(name) {
         const storageConstants = {
             STORAGE_KEY_GOOGLE_CLIENT_ID: typeof STORAGE_KEY_GOOGLE_CLIENT_ID !== 'undefined' ? STORAGE_KEY_GOOGLE_CLIENT_ID : '',
             STORAGE_KEY_GITHUB_PAT: typeof STORAGE_KEY_GITHUB_PAT !== 'undefined' ? STORAGE_KEY_GITHUB_PAT : '',
-            STORAGE_KEY_STOCKS_SOURCE_URL: typeof STORAGE_KEY_STOCKS_SOURCE_URL !== 'undefined' ? STORAGE_KEY_STOCKS_SOURCE_URL : '',
-            STORAGE_KEY_OPENAI_API_KEY: typeof STORAGE_KEY_OPENAI_API_KEY !== 'undefined' ? STORAGE_KEY_OPENAI_API_KEY : '',
-            STORAGE_KEY_ANTHROPIC_API_KEY: typeof STORAGE_KEY_ANTHROPIC_API_KEY !== 'undefined' ? STORAGE_KEY_ANTHROPIC_API_KEY : '',
-            STORAGE_KEY_GEMINI_API_KEY: typeof STORAGE_KEY_GEMINI_API_KEY !== 'undefined' ? STORAGE_KEY_GEMINI_API_KEY : ''
+            STORAGE_KEY_STOCKS_SOURCE_URL: typeof STORAGE_KEY_STOCKS_SOURCE_URL !== 'undefined' ? STORAGE_KEY_STOCKS_SOURCE_URL : ''
         };
         return storageConstants[name] || '';
     } catch (error) {

@@ -46,5 +46,12 @@ window.ApiUI = {
             className: 'empty-state auth-guide',
             message
         });
+    },
+    setStatus(containerId, message, { type = 'info', baseClass = 'api-status' } = {}) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        container.className = `${baseClass} ${type}`.trim();
+        container.textContent = String(message);
     }
 };
