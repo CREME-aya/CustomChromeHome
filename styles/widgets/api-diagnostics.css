@@ -1,11 +1,11 @@
 .api-diagnostics-widget {
-    background: var(--widget-bg);
-    backdrop-filter: blur(16px);
-    border: 1px solid var(--widget-border);
-    border-radius: 8px;
-    padding: 16px;
-    color: var(--text-main);
-    box-shadow: var(--widget-shadow);
+    background: var(--panel-bg);
+    backdrop-filter: var(--panel-blur);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--border-radius-widget);
+    padding: var(--space-lg) var(--space-2xl);
+    color: var(--text-color);
+    box-shadow: var(--panel-shadow);
     display: flex;
     flex-direction: column;
     min-height: 260px;
@@ -73,9 +73,9 @@
 
 .api-diagnostics-badge {
     border-radius: 999px;
-    color: #f8fafc;
-    background: rgba(15, 23, 42, 0.55);
-    border: 1px solid rgba(148, 163, 184, 0.35);
+    color: var(--text-color);
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
     flex: 0 0 auto;
     font-size: 0.72rem;
     padding: 3px 8px;

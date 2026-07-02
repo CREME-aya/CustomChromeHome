@@ -16,8 +16,20 @@ const weatherDataSource = fs.readFileSync('js/weather/data.js', 'utf8');
 const weatherWidgetSource = fs.readFileSync('js/weather/widget.js', 'utf8');
 const feedConstantsSource = fs.readFileSync('js/feed/constants.js', 'utf8');
 const readme = fs.readFileSync('README.md', 'utf8');
+const weatherCssSource = fs.readFileSync('styles/widgets/weather.css', 'utf8');
+const variablesCssSource = fs.readFileSync('styles/variables.css', 'utf8');
+const cssFiles = collectFiles('styles', file => file.endsWith('.css'));
+const cssSources = cssFiles.map(file => [file, fs.readFileSync(file, 'utf8')]);
 const ids = new Set([...html.matchAll(/(?:^|\s)id=["']([^"']+)["']/g)].map(match => match[1]));
 let failed = 0;
+
+function collectFiles(directory, predicate) {
+    return fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+        const path = `${directory}/${entry.name}`;
+        if (entry.isDirectory()) return collectFiles(path, predicate);
+        return predicate(path) ? [path] : [];
+    });
+}
 
 function test(name, callback) {
     try {
@@ -72,6 +84,28 @@ test('予定・タスク統合ビューに必要な操作要素が存在する',
         'unified-agenda-summary',
         'unified-agenda-list'
     ].forEach(id => assert(ids.has(id), `${id} がありません`));
+});
+
+test('CSSのテーマ変数参照はvariables.cssで定義されている', () => {
+    const definedVariables = new Set(
+        [...variablesCssSource.matchAll(/--([a-zA-Z0-9-]+)\s*:/g)].map(match => match[1])
+    );
+    const missingReferences = [];
+
+    for (const [file, source] of cssSources) {
+        for (const match of source.matchAll(/var\(--([a-zA-Z0-9-]+)/g)) {
+            if (!definedVariables.has(match[1])) {
+                missingReferences.push(`${file}: --${match[1]}`);
+            }
+        }
+    }
+
+    assert(missingReferences.length === 0, `未定義CSS変数参照があります: ${missingReferences.join(', ')}`);
+});
+
+test('天気ウィジェットは保存済みサイズをCSSの固定上限で潰さない', () => {
+    const weatherWidgetRule = weatherCssSource.match(/\.weather-widget\s*\{[^}]*\}/)?.[0] || '';
+    assert(!/max-width\s*:/.test(weatherWidgetRule), 'weather-widget に max-width があると保存済み幅が復元されません');
 });
 
 test('廃止済みGoogle Fitを画面と読み込み対象へ残さない', () => {
