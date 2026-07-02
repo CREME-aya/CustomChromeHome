@@ -44,6 +44,10 @@ window.EnvConfig = {
     parseEnvText
 };
 
+/**
+ * 環境変数ファイルをロードする
+ * @returns {Promise<Object>} ロードされた環境変数
+ */
 async function loadEnvFiles() {
     for (const path of ENV_FILE_PATHS) {
         try {
@@ -57,6 +61,11 @@ async function loadEnvFiles() {
     return { ...envValues };
 }
 
+/**
+ * 指定されたパスから環境変数ファイルを取得する
+ * @param {string} path - ファイルパス
+ * @returns {Promise<Object>} パースされた環境変数
+ */
 async function fetchEnvFile(path) {
     if (typeof fetch !== 'function') return {};
 
@@ -67,6 +76,11 @@ async function fetchEnvFile(path) {
     return parseEnvText(text);
 }
 
+/**
+ * 環境変数のURLを解決する
+ * @param {string} path - ファイルパス
+ * @returns {string} 解決されたURL
+ */
 function resolveEnvUrl(path) {
     if (typeof chrome !== 'undefined' && chrome.runtime?.getURL) {
         return chrome.runtime.getURL(path);
@@ -74,6 +88,11 @@ function resolveEnvUrl(path) {
     return path;
 }
 
+/**
+ * 環境変数のテキストをパースする
+ * @param {string} text - 環境変数のテキスト
+ * @returns {Object} パースされた環境変数
+ */
 function parseEnvText(text) {
     return String(text || '')
         .replace(/^\uFEFF/, '')
@@ -85,6 +104,11 @@ function parseEnvText(text) {
         }, {});
 }
 
+/**
+ * 環境変数の一行をパースする
+ * @param {string} rawLine - 未処理の行
+ * @returns {{key: string, value: string}|null} キーと値のペア
+ */
 function parseEnvLine(rawLine) {
     const line = String(rawLine || '').trim();
     if (!line || line.startsWith('#')) return null;
@@ -103,6 +127,11 @@ function parseEnvLine(rawLine) {
     };
 }
 
+/**
+ * 環境変数の値をパースする
+ * @param {string} rawValue - 未処理の値
+ * @returns {string} パースされた値
+ */
 function parseEnvValue(rawValue) {
     if (!rawValue) return '';
 
@@ -115,6 +144,11 @@ function parseEnvValue(rawValue) {
     return stripInlineComment(rawValue).trim();
 }
 
+/**
+ * ダブルクォートで囲まれた値のアンエスケープを行う
+ * @param {string} value - 値
+ * @returns {string} アンエスケープされた値
+ */
 function unescapeDoubleQuotedValue(value) {
     return value
         .replace(/\\n/g, '\n')
@@ -124,26 +158,55 @@ function unescapeDoubleQuotedValue(value) {
         .replace(/\\\\/g, '\\');
 }
 
+/**
+ * インラインコメントを取り除く
+ * @param {string} value - 値
+ * @returns {string} コメントが取り除かれた値
+ */
 function stripInlineComment(value) {
     const commentIndex = value.search(/\s#/);
     return commentIndex >= 0 ? value.slice(0, commentIndex) : value;
 }
 
+/**
+ * 環境変数を取得する
+ * @param {string} name - 環境変数名
+ * @param {string} [fallback=''] - フォールバック値
+ * @returns {string} 環境変数の値
+ */
 function get(name, fallback = '') {
     const value = envValues[name];
     return typeof value === 'string' && value.trim() ? value.trim() : fallback;
 }
 
+/**
+ * ローカルストレージまたは環境変数から値を取得する
+ * @param {string} storageKey - ローカルストレージのキー
+ * @param {string} envName - 環境変数名
+ * @param {string} [fallback=''] - フォールバック値
+ * @returns {string} 取得された値
+ */
 function getStorageBackedValue(storageKey, envName, fallback = '') {
     const storedValue = storageKey ? localStorage.getItem(storageKey)?.trim() : '';
     if (storedValue) return storedValue;
     return get(envName, fallback);
 }
 
+/**
+ * ローカルストレージまたは環境変数に値が存在するか判定する
+ * @param {string} storageKey - ローカルストレージのキー
+ * @param {string} envName - 環境変数名
+ * @returns {boolean} 値が存在するかどうか
+ */
 function hasStorageBackedValue(storageKey, envName) {
     return Boolean(getStorageBackedValue(storageKey, envName));
 }
 
+/**
+ * AIモデル名を取得する
+ * @param {string} provider - プロバイダー名 ('openai'|'anthropic'|'gemini')
+ * @returns {string} AIモデル名
+ */
 function getAiModel(provider) {
     const envNameByProvider = {
         openai: ENV_NAMES.openaiModel,
@@ -153,10 +216,18 @@ function getAiModel(provider) {
     return get(envNameByProvider[provider], DEFAULT_AI_MODELS[provider] || '');
 }
 
+/**
+ * SpotifyのクライアントIDを取得する
+ * @returns {string} SpotifyのクライアントID
+ */
 function getSpotifyClientId() {
     return get(ENV_NAMES.spotifyClientId, DEFAULT_SPOTIFY_CLIENT_ID);
 }
 
+/**
+ * 最後のエラーを取得する
+ * @returns {Error|null} 最後のエラー
+ */
 function getLastLoadError() {
     return lastLoadError;
 }

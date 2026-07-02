@@ -64,6 +64,27 @@ test('FeedData.getStoredFeedUrls は保存値がなければ既定値を返す',
     assertEqual(window.FeedData.getStoredFeedUrls()[0], 'https://example.com/custom.xml');
 });
 
+test('FeedData.parseOpmlFeedUrls はOPMLからHTTP URLだけを重複排除する', () => {
+    const urls = window.FeedData.parseOpmlFeedUrls([
+        '<?xml version="1.0"?>',
+        '<opml version="2.0"><body>',
+        '<outline text="Example" xmlUrl="https://example.com/rss.xml" />',
+        '<outline text="Duplicate" xmlUrl="https://example.com/rss.xml" />',
+        '<outline text="Unsafe" xmlUrl="javascript:alert(1)" />',
+        '</body></opml>'
+    ].join(''));
+
+    assertEqual(urls.length, 1);
+    assertEqual(urls[0], 'https://example.com/rss.xml');
+});
+
+test('FeedData.buildOpmlDocument は保存フィードを書き出せる', () => {
+    const opml = window.FeedData.buildOpmlDocument(['https://example.com/rss.xml']);
+
+    assert(opml.includes('<opml version="2.0">'), 'OPMLヘッダーがありません');
+    assert(opml.includes('xmlUrl="https://example.com/rss.xml"'), 'フィードURLが書き出されていません');
+});
+
 test('FeedData.loadFeedSources は取得結果を正規化してキャッシュする', async () => {
     global.fetch = async (url) => {
         assert(String(url).includes(encodeURIComponent('https://example.com/custom.xml')), 'rss_url がAPI URLへ含まれていません');

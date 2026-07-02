@@ -15,12 +15,20 @@ window.FeedCore = {
     createFeedKey
 };
 
-// 保存値が壊れていても、予測可能な混合表示へ復旧する。
+/**
+ * 保存値が壊れていても、予測可能な混合表示へ復旧する。
+ * @param {string} value - 保存されている表示モード
+ * @returns {string} 正規化された表示モード（'split' または 'mixed'）
+ */
 function normalizeDisplayMode(value) {
     return value === 'split' ? 'split' : 'mixed';
 }
 
-// 外部フィードの日付は不正値を含み得るため、比較可能な値だけを採用する。
+/**
+ * 外部フィードの日付は不正値を含み得るため、比較可能な値だけを採用する。
+ * @param {...string} candidates - 日付文字列の候補
+ * @returns {number|null} パース可能な日時のタイムスタンプ。すべて無効な場合は null
+ */
 function parsePublishedAt(...candidates) {
     for (const candidate of candidates) {
         if (!candidate) continue;
@@ -32,7 +40,11 @@ function parsePublishedAt(...candidates) {
     return null;
 }
 
-// 同じ記事に付いた計測用パラメータを除去し、重複判定を安定させる。
+/**
+ * 同じ記事に付いた計測用パラメータを除去し、重複判定を安定させる。
+ * @param {string} value - 対象のURL
+ * @returns {string} パラメータ除去後のURL
+ */
 function normalizeArticleUrl(value) {
     try {
         const url = new URL(String(value || '').trim());
@@ -55,7 +67,11 @@ function normalizeArticleUrl(value) {
     }
 }
 
-// フィードURLをログやキャッシュの識別に使える短い非可逆キーへ変換する。
+/**
+ * フィードURLをログやキャッシュの識別に使える短い非可逆キーへ変換する。
+ * @param {string} value - フィードURL
+ * @returns {string} 生成されたフィードキー
+ */
 function createFeedKey(value) {
     const text = String(value || '');
     let hash = 2166136261;
@@ -68,7 +84,12 @@ function createFeedKey(value) {
     return `feed-${(hash >>> 0).toString(16)}`;
 }
 
-// RSS / Atom固有の項目を、混合表示とフィード別表示で共通利用できる形へ変換する。
+/**
+ * RSS / Atom固有の項目を、混合表示とフィード別表示で共通利用できる形へ変換する。
+ * @param {Object} item - フィード記事要素
+ * @param {Object} context - フィードのコンテキスト情報
+ * @returns {Object} 正規化された記事オブジェクト
+ */
 function normalizeFeedItem(item, context) {
     const publishedAt = parsePublishedAt(item.pubDate, item.published, item.updated);
     const canonicalUrl = normalizeArticleUrl(item.link);
@@ -103,7 +124,12 @@ function normalizeFeedItem(item, context) {
     };
 }
 
-// サムネイル項目がない場合だけ、本文中の先頭画像を表示候補として利用する。
+/**
+ * サムネイル項目がない場合だけ、本文中の先頭画像を表示候補として利用する。
+ * @param {Object} item - 記事要素
+ * @param {string} description - 記事の本文
+ * @returns {string} サムネイルURL。ない場合は空文字
+ */
 function resolveThumbnail(item, description) {
     const directThumbnail = item.thumbnail || item.enclosure?.link || '';
     if (directThumbnail) return normalizeArticleUrl(directThumbnail);
@@ -112,41 +138,50 @@ function resolveThumbnail(item, description) {
     return match ? normalizeArticleUrl(match[1]) : '';
 }
 
-// URL、GUID、複合キーの順で重複判定キーを決める。
+/**
+ * URL、GUID、複合キーの順で重複判定キーを決める。
+ * @param {Object} article - 記事オブジェクト
+ * @returns {string} 重複判定用キー
+ */
 function getDuplicateKey(article) {
     if (article.canonicalUrl) return `url:${article.canonicalUrl}`;
     if (article.guid) return `guid:${article.guid}`;
     return `fallback:${article.sourceFeedKey}:${article.title}:${article.publishedAt ?? ''}`;
 }
 
-// 情報量が多い記事を代表として残し、設定順を最後の決定条件にする。
+/**
+ * 情報量が多い記事を代表として残し、設定順を最後の決定条件にする。
+ * @param {Object} current - 現在の記事
+ * @param {Object} candidate - 比較対象の記事
+ * @returns {Object} 優先される記事オブジェクト
+ */
 function selectPreferredArticle(current, candidate) {
-    // 1. 有効な公開日時を持つ記事を優先
     const currentHasDate = current.publishedAt !== null;
     const candidateHasDate = candidate.publishedAt !== null;
     if (currentHasDate !== candidateHasDate) {
         return candidateHasDate ? candidate : current;
     }
 
-    // 2. 説明文を持つ記事を優先
     const currentHasDesc = Boolean(current.description);
     const candidateHasDesc = Boolean(candidate.description);
     if (currentHasDesc !== candidateHasDesc) {
         return candidateHasDesc ? candidate : current;
     }
 
-    // 3. サムネイルを持つ記事を優先
     const currentHasThumb = Boolean(current.thumbnail);
     const candidateHasThumb = Boolean(candidate.thumbnail);
     if (currentHasThumb !== candidateHasThumb) {
         return candidateHasThumb ? candidate : current;
     }
 
-    // 4. 設定順が先のフィードの記事を優先
     return candidate.sourceOrder < current.sourceOrder ? candidate : current;
 }
 
-// 複数フィードに同じ記事が含まれても、混合一覧へ重複表示しない。
+/**
+ * 複数フィードに同じ記事が含まれても、混合一覧へ重複表示しない。
+ * @param {Array<Object>} articles - 記事のリスト
+ * @returns {Array<Object>} 重複排除後の記事リスト
+ */
 function deduplicateArticles(articles) {
     const uniqueArticles = new Map();
 
@@ -159,7 +194,11 @@ function deduplicateArticles(articles) {
     return Array.from(uniqueArticles.values());
 }
 
-// 同一入力なら毎回同じ順序になるよう、日時以外の比較条件も固定する。
+/**
+ * 同一入力なら毎回同じ順序になるよう、日時以外の比較条件も固定する。
+ * @param {Array<Object>} articles - 記事のリスト
+ * @returns {Array<Object>} ソート後の記事リスト
+ */
 function sortArticles(articles) {
     return [...articles].sort((left, right) => {
         if (left.publishedAt === null && right.publishedAt !== null) return 1;
@@ -173,7 +212,12 @@ function sortArticles(articles) {
     });
 }
 
-// 検索とお気に入り条件を同じ順序で適用し、表示モード間の結果差を防ぐ。
+/**
+ * 検索とお気に入り条件を同じ順序で適用し、表示モード間の結果差を防ぐ。
+ * @param {Array<Object>} articles - 記事のリスト
+ * @param {Object} [options={}] - フィルタ条件
+ * @returns {Array<Object>} フィルタ後の記事リスト
+ */
 function filterArticles(articles, options = {}) {
     const query = String(options.query || '').trim().toLowerCase();
     const favoriteIds = new Set(options.favoriteIds || []);
@@ -187,7 +231,11 @@ function filterArticles(articles, options = {}) {
     });
 }
 
-// フィード別表示ではユーザーの設定順を維持し、各グループ内だけを時系列化する。
+/**
+ * フィード別表示ではユーザーの設定順を維持し、各グループ内だけを時系列化する。
+ * @param {Array<Object>} articles - 記事のリスト
+ * @returns {Array<Object>} グループ化およびソート後の記事リスト
+ */
 function groupArticlesBySource(articles) {
     const groups = new Map();
 

@@ -2,10 +2,18 @@
 // GitHub Contribution Grass (芝生) ウィジェット処理
 // ==========================================
 (function() {
+/**
+ * @type {number|null}
+ * @description 自動更新のポーリングインターバルID
+ */
 let grassPollInterval = null;
 
 window.initGithubGrass = initGithubGrass;
 
+/**
+ * GitHub芝生ウィジェットの初期化
+ * イベントの登録やキャッシュからの描画、定期更新タイマーのセットを行う
+ */
 function initGithubGrass() {
     const widget = document.getElementById('github-grass-widget');
     if (!widget) return;
@@ -31,7 +39,10 @@ function initGithubGrass() {
     }
 }
 
-// キャッシュがあれば先にレンダリングする
+/**
+ * キャッシュから芝生データを描画する
+ * @returns {boolean} キャッシュが存在して描画できたかどうかの真偽値
+ */
 function renderFromCache() {
     const cached = readJsonFromStorage(STORAGE_KEY_GITHUB_GRASS_CACHE, null);
     if (cached !== null) {
@@ -41,7 +52,10 @@ function renderFromCache() {
     return false;
 }
 
-// GitHub GraphQL API から芝生データを取得
+/**
+ * GitHub GraphQL API から芝生データ（Contributions）を非同期で取得する
+ * @returns {Promise<void>}
+ */
 async function fetchGithubGrass() {
     const pat = window.EnvConfig?.getStorageBackedValue(STORAGE_KEY_GITHUB_PAT, 'NEXUS_GITHUB_PAT')
         || localStorage.getItem(STORAGE_KEY_GITHUB_PAT)?.trim()
@@ -123,7 +137,13 @@ async function fetchGithubGrass() {
     }
 }
 
-// UIの描画更新
+/**
+ * 取得した芝生データをもとにUIを描画・更新する
+ * @param {object} data - 取得した芝生データペイロード
+ * @param {string} data.login - GitHubユーザー名
+ * @param {number} data.totalContributions - 総コントリビューション数
+ * @param {Array<object>} data.weeks - 週間単位のコントリビューション配列
+ */
 function updateUI(data) {
     const errorEl = document.getElementById('github-grass-error');
     const contentEl = document.getElementById('github-grass-content');
@@ -158,6 +178,11 @@ function updateUI(data) {
     });
 }
 
+/**
+ * ダークモード等に合わせてセルの色を調整する
+ * @param {string} color - APIから返された色コード
+ * @returns {string} 調整後の色コード
+ */
 function getAdaptiveColor(color) {
     if (color === '#ebedf0') {
         const isDark = document.body.classList.contains('dark-theme') ||
@@ -167,6 +192,10 @@ function getAdaptiveColor(color) {
     return color;
 }
 
+/**
+ * 芝生描画におけるエラー状態を表示する
+ * @param {string} msg - 表示するエラーメッセージ
+ */
 function showGrassError(msg) {
     const errorEl = document.getElementById('github-grass-error');
     const contentEl = document.getElementById('github-grass-content');

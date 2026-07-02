@@ -2,12 +2,23 @@
 // アプリ全体のエントリーポイント (堅牢化版)
 // ==========================================
 document.addEventListener('DOMContentLoaded', async () => {
+    /**
+     * 初期化エラーをコンソールに報告する
+     *
+     * @param {string} name - 初期化に失敗したモジュール名
+     * @param {Error|any} error - 発生したエラー
+     */
     const reportInitializationError = (name, error) => {
         console.error(`[Error] Failed to initialize ${name}:`, error);
     };
 
-    // 各モジュールの初期化を安全に実行するヘルパー
-    // 1つのウィジェットのエラーが他の無関係な機能（時計、天気など）の初期化を妨げないようにする
+    /**
+     * 各モジュールの初期化を安全に実行するヘルパー
+     * 1つのウィジェットのエラーが他の無関係な機能（時計、天気など）の初期化を妨げないようにする
+     *
+     * @param {string} name - 初期化対象のモジュール名
+     * @param {Function} initFn - 初期化を実行する関数
+     */
     const safeInit = (name, initFn) => {
         try {
             if (typeof initFn === 'function') {
@@ -51,7 +62,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     safeInit('CalendarTodoImport', window.initCalendarTodoImport);
     safeInit('UnifiedAgenda', window.UnifiedAgenda?.init);
 
-    // Google / GitHub / 拡張ウィジェットの初期化
+    /**
+     * グローバルオブジェクトのメソッドを安全に実行する初期化ヘルパー
+     * 主にGoogle/GitHub等の外部ウィジェット連携用
+     *
+     * @param {string} name - グローバルオブジェクトの名称
+     * @param {Object} obj - グローバルオブジェクト（window.GoogleAuthなど）
+     * @param {string} method - 実行するメソッド名
+     */
     const safeMethodInit = (name, obj, method) => {
         try {
             if (obj && typeof obj[method] === 'function') {
@@ -85,7 +103,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.loadFeed(window.getStoredFeedUrls ? window.getStoredFeedUrls() : []);
         }
     });
-    
+
     safeInit('LoadWeather', () => {
         if (typeof window.loadWeather === 'function') {
             window.loadWeather();

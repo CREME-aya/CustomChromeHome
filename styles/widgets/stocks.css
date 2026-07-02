@@ -1,4 +1,8 @@
-/* ========== 株価ウィジェット ========== */
+/* =========================================
+   株価ウィジェット (Stocks)
+========================================= */
+
+/* ウィジェットのルートコンテナ */
 .stocks-widget {
   background: var(--panel-bg);
   backdrop-filter: var(--panel-blur);
@@ -13,6 +17,7 @@
   transition: var(--transition-default);
 }
 
+/* 株価リストとスクロール設定 */
 .stocks-list {
   display: flex;
   flex-direction: column;
@@ -23,7 +28,7 @@
   padding-right: 4px;
 }
 
-/* スクロールバーのカスタマイズ */
+/* スクロールバーのカスタマイズ (Webkit) */
 .stocks-list::-webkit-scrollbar {
   width: 6px;
 }
@@ -39,6 +44,7 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
+/* 個別の銘柄アイテム */
 .stock-item {
   display: flex;
   align-items: center;
@@ -77,6 +83,7 @@
   max-width: 90px;
 }
 
+/* チャート領域 */
 .stock-chart {
   flex: 1;
   display: flex;
@@ -112,7 +119,7 @@
   text-align: right;
 }
 
-/* 騰落率のカラー定義 */
+/* 騰落率のステータスカラー */
 .stock-up {
   color: #10b981;
   background: rgba(16, 185, 129, 0.1);
@@ -128,7 +135,7 @@
   background: rgba(148, 163, 184, 0.1);
 }
 
-/* 設定用リストアイテムのスタイル */
+/* 設定リストのアイテム */
 .stock-setting-item {
   display: flex;
   align-items: center;

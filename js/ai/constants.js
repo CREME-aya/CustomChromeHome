@@ -1,6 +1,14 @@
 (function() {
+    /**
+     * 利用可能なAIプロバイダーのリスト
+     * @type {readonly string[]}
+     */
     const PROVIDERS = Object.freeze(['openai', 'anthropic', 'gemini']);
 
+    /**
+     * 各プロバイダーのAPIキーとUIバインディングの設定
+     * @type {Readonly<Object>}
+     */
     const API_KEYS = Object.freeze({
         openai: Object.freeze({
             storageKey: 'custom_openai_api_key',
@@ -25,6 +33,9 @@
         })
     });
 
+    /**
+     * グローバルなAI関連定数
+     */
     window.AiConstants = Object.freeze({
         providers: PROVIDERS,
         apiKeys: API_KEYS

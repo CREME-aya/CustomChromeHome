@@ -1,4 +1,9 @@
 (function() {
+    /**
+     * 検索クエリからジオコーディングAPI用の検索候補リストを生成する。
+     * @param {string} query - ユーザーの入力クエリ
+     * @returns {Array<string>} 検索クエリのリスト
+     */
     function buildWeatherSearchQueries(query) {
         const normalized = String(query || '').trim();
         if (!normalized) return [];
@@ -9,6 +14,11 @@
             : [normalized];
     }
 
+    /**
+     * 都市名から緯度経度情報を取得する。
+     * @param {string} query - 検索する都市名
+     * @returns {Promise<Object|null>} 緯度経度情報を含むオブジェクト。見つからない場合は null
+     */
     async function fetchWeatherLocationByCity(query) {
         let result = null;
 
@@ -31,6 +41,13 @@
         };
     }
 
+    /**
+     * 地域情報をローカルストレージに保存する。
+     * @param {Object} location - 保存する地域情報
+     * @param {string} location.lat - 緯度
+     * @param {string} location.lon - 経度
+     * @param {string} location.name - 地域名
+     */
     function saveWeatherLocation({ lat, lon, name }) {
         const { storageKeys } = window.WeatherConstants;
         localStorage.setItem(storageKeys.lat, lat);
@@ -38,6 +55,11 @@
         localStorage.setItem(storageKeys.name, name);
     }
 
+    /**
+     * ローカルストレージから保存された地域情報を取得する。
+     * 保存されていない場合はデフォルト値を返す。
+     * @returns {Object} 地域情報 (lat, lon, name)
+     */
     function getStoredWeatherLocation() {
         const { defaultLocation, storageKeys } = window.WeatherConstants;
 
@@ -48,6 +70,13 @@
         };
     }
 
+    /**
+     * Open-Meteo API の天気予報取得用 URL を構築する。
+     * @param {Object} location - 地域情報
+     * @param {string} location.lat - 緯度
+     * @param {string} location.lon - 経度
+     * @returns {string} 構築された URL 文字列
+     */
     function buildWeatherForecastUrl({ lat, lon }) {
         const params = new URLSearchParams({
             latitude: lat,
@@ -60,6 +89,13 @@
         return `https://api.open-meteo.com/v1/forecast?${params.toString()}`;
     }
 
+    /**
+     * Open-Meteo API から天気予報データを取得する。
+     * @param {Object} location - 地域情報
+     * @param {string} location.lat - 緯度
+     * @param {string} location.lon - 経度
+     * @returns {Promise<Object>} APIレスポンスデータ
+     */
     async function fetchWeatherForecast(location) {
         const response = await fetch(buildWeatherForecastUrl(location));
         if (!response.ok) throw new Error('HTTP Error');

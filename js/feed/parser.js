@@ -9,6 +9,11 @@ window.FeedParser = {
     stripHtml
 };
 
+/**
+ * HTML文字列をサニタイズしてプレビュー用のDOMツリー（DocumentFragment）を作成する
+ * @param {string} html - 元のHTML文字列
+ * @returns {DocumentFragment} サニタイズされたDOMツリー
+ */
 function createSanitizedPreview(html) {
     const template = document.createElement('template');
     template.innerHTML = String(html || '<p>プレビュー内容がありません。</p>');
@@ -16,6 +21,10 @@ function createSanitizedPreview(html) {
     return template.content;
 }
 
+/**
+ * 指定したDOMツリー内の危険な要素や属性を再帰的に取り除く
+ * @param {DocumentFragment|Element} root - サニタイズ対象のルートノード
+ */
 function sanitizeNodeTree(root) {
     const allowedTags = new Set([
         'P', 'BR', 'UL', 'OL', 'LI', 'STRONG', 'EM', 'B', 'I',
@@ -64,6 +73,11 @@ function sanitizeNodeTree(root) {
     });
 }
 
+/**
+ * 指定された文字列が安全なHTTP(S) URLであるか検証し、正規化して返す
+ * @param {string} value - 検証するURL文字列
+ * @returns {string} 安全なURL。無効な場合は空文字列を返す。
+ */
 function getSafeHttpUrl(value) {
     try {
         const url = new URL(String(value || '').trim());
@@ -73,6 +87,11 @@ function getSafeHttpUrl(value) {
     }
 }
 
+/**
+ * フィードのURLから表示用のホスト名（www.を除去したもの）を取得する
+ * @param {string} feedUrl - フィードのURL
+ * @returns {string} ホスト名。取得できない場合は空文字列。
+ */
 function getFeedHostname(feedUrl) {
     try {
         return new URL(feedUrl).hostname.replace(/^www\./, '');
@@ -81,6 +100,11 @@ function getFeedHostname(feedUrl) {
     }
 }
 
+/**
+ * HTML文字列からテキストコンテンツのみを抽出する（タグの除去）
+ * @param {string} value - 元のHTML文字列
+ * @returns {string} タグが除去されたプレーンテキスト
+ */
 function stripHtml(value) {
     const template = document.createElement('template');
     template.innerHTML = String(value || '');

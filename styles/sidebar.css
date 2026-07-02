@@ -1,4 +1,8 @@
-/* サイドバーとオーバーレイ */
+/* =========================================
+   Sidebar & Overlay
+   ========================================= */
+
+/* サイドバー背面のオーバーレイ（暗転・ぼかし） */
 .sidebar-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -14,6 +18,7 @@
   pointer-events: none;
 }
 
+/* サイドバー本体 */
 .sidebar {
   position: fixed;
   top: 0; left: 0; bottom: 0;
@@ -33,6 +38,7 @@
   transform: translateX(-100%);
 }
 
+/* サイドバー上部のヘッダー領域 */
 .sidebar-header {
   display: flex;
   justify-content: space-between;
@@ -47,6 +53,7 @@
   color: #e2e8f0;
 }
 
+/* サイドバー内のコンテンツ領域 */
 .sidebar-content {
   padding: var(--space-2xl);
   display: flex;
@@ -62,7 +69,11 @@
   font-weight: 600;
 }
 
-/* フォーム要素 */
+/* =========================================
+   Form Elements
+   ========================================= */
+
+/* URL等のテキスト入力フィールド */
 .url-input {
   width: 100%;
   box-sizing: border-box;
@@ -84,7 +95,7 @@
   box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
 }
 
-/* その他の入力欄も一律で保護 */
+/* ウィジェット上での入力が正しく機能するよう、選択・クリックイベントを保護 */
 input, textarea, select {
   user-select: auto !important;
   -webkit-user-select: auto !important;
@@ -131,6 +142,7 @@ input, textarea, select {
   background: rgba(255, 255, 255, 0.1);
 }
 
+/* 複数ボタンのグループ化レイアウト */
 .btn-group {
   display: flex;
   gap: 8px;
@@ -144,6 +156,7 @@ input, textarea, select {
   line-height: 1.55;
 }
 
+/* Spotify連携エラー時のメッセージ表示 */
 .spotify-settings-error {
   padding: 10px 12px;
   border: 1px solid rgba(248, 113, 113, 0.35);

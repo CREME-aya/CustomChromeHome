@@ -1,4 +1,9 @@
-/* ========== マルチAI ウィジェット ========== */
+/* ==========================================================================
+ * マルチAI ウィジェット
+ * AI検索バー、パネル、メモ機能などのスタイルを定義
+ * ========================================================================== */
+
+/* --- 検索バーエリア --- */
 .ai-search-bar.search-bar-style {
   width: 100%;
   background: var(--panel-bg);
@@ -55,7 +60,7 @@
   transform: scale(1.1);
 }
 
-/* 3連AIパネル */
+/* --- AIパネルエリア（3連） --- */
 .ai-panels-grid {
   display: flex;
   gap: var(--space-lg);
@@ -107,7 +112,7 @@
   padding-right: 4px;
 }
 
-/* メモ（タスク）ウィジェット */
+/* --- メモ（タスク）エリア --- */
 .memo-widget {
   background: rgba(15, 23, 42, 0.65);
   backdrop-filter: var(--panel-blur);
@@ -191,6 +196,7 @@
   border-color: #a78bfa;
 }
 
+/* --- チャットメッセージ --- */
 .chat-msg {
   padding: 10px 14px;
   border-radius: var(--border-radius-input);

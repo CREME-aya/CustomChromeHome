@@ -1,8 +1,13 @@
-/* Shared utility classes */
+/* =========================================
+   Utility Classes (汎用クラス)
+   ========================================= */
+
+/* ウィジェットの非表示用 */
 .hidden-widget {
   display: none !important;
 }
 
+/* アイコンのみのボタンスタイル */
 .icon-btn {
   background: none;
   border: none;
@@ -20,6 +25,7 @@
   color: #55c500;
 }
 
+/* フォーム保存・主要アクション用ボタン */
 .save-btn {
   flex: 1;
   padding: var(--space-md);
@@ -42,6 +48,7 @@
   transform: translateY(0);
 }
 
+/* 破壊的アクション（削除・キャンセルなど）用のアウトラインボタン */
 .outline-btn {
   padding: var(--space-md);
   border-radius: var(--border-radius-md);
@@ -58,6 +65,7 @@
   background: rgba(239, 68, 68, 0.1);
 }
 
+/* エラーメッセージ用の共通スタイル */
 .error-msg {
   color: #f87171;
   text-align: center;

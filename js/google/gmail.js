@@ -2,7 +2,10 @@
 // Gmail 簡易未読メールウィジェット
 // ==========================================
 (function() {
+/** @type {Object} Google認証オブジェクトの参照 */
 const GoogleAuth = window.GoogleAuth;
+
+/** @type {Array<Object>} 現在取得されているメールのリスト */
 let currentEmails = [];
 
 window.Gmail = {
@@ -15,6 +18,9 @@ if (typeof document !== 'undefined') {
     document.addEventListener('google:disconnected', () => loadEmails());
 }
 
+/**
+ * Gmailウィジェットを初期化する
+ */
 function init() {
     const syncBtn = document.getElementById('gmail-sync-btn');
     syncBtn?.addEventListener('click', () => loadEmails(true));
@@ -36,6 +42,10 @@ function init() {
     }
 }
 
+/**
+ * 未読メール一覧をロードする
+ * @param {boolean} [force=false] - 強制的に再取得するかどうか
+ */
 async function loadEmails(force = false) {
     if (!GoogleAuth.hasStoredSession()) {
         renderUnauthenticated();
@@ -109,6 +119,11 @@ async function loadEmails(force = false) {
     }
 }
 
+/**
+ * Gmailのメッセージペイロードを整形する
+ * @param {Object} message - Gmail APIのメッセージオブジェクト
+ * @returns {Object} 必要な情報を抽出したメールデータ
+ */
 function parseEmailData(message) {
     const headers = message.payload?.headers || [];
     const subjectHeader = headers.find(h => h.name.toLowerCase() === 'subject');
@@ -133,6 +148,9 @@ function parseEmailData(message) {
     };
 }
 
+/**
+ * 取得したメール一覧をDOMにレンダリングする
+ */
 function renderEmails() {
     const list = document.getElementById('gmail-list');
     if (!list) return;
@@ -178,21 +196,37 @@ function renderEmails() {
     });
 }
 
+/**
+ * 未認証時のUIをレンダリングする
+ */
 function renderUnauthenticated() {
     window.ApiUI.setAuthGuide('gmail-list', 'Google アカウントと未連携です。設定サイドバーの Google 連携設定を行ってください。');
     window.ApiDiagnostics?.report('gmail', 'missing', 'Google 連携が必要');
 }
 
+/**
+ * エラー時のUIをレンダリングする
+ * @param {string} message - エラーメッセージ
+ */
 function renderError(message) {
     window.ApiUI.setError('gmail-list', message);
 }
 
+/**
+ * ローディング状態を切り替える
+ * @param {boolean} isLoading - ローディング中かどうか
+ */
 function setLoading(isLoading) {
     if (isLoading) {
         window.ApiUI.setLoading('gmail-list', 'Gmail から同期中...');
     }
 }
 
+/**
+ * メールの日時をフォーマットする（当日は時刻、それ以外は日付）
+ * @param {string} dateIso - ISO形式の日時文字列
+ * @returns {string} フォーマット済みの文字列
+ */
 function formatEmailTime(dateIso) {
     const d = new Date(dateIso);
     const now = new Date();

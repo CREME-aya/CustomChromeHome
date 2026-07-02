@@ -1,4 +1,8 @@
-/* Toast notifications */
+/* =========================================
+   Toast Notifications (トースト通知)
+   ========================================= */
+
+/* 通知を画面右下にスタックするためのコンテナ */
 .notification-container {
   position: fixed;
   right: var(--space-xl);
@@ -10,6 +14,7 @@
   pointer-events: none;
 }
 
+/* トースト通知本体の基本スタイル */
 .notification {
   min-width: 260px;
   max-width: 420px;
@@ -32,6 +37,7 @@
   transform: translateY(0);
 }
 
+/* 各ステータス（成功、エラー、警告、情報）に応じた枠線カラー */
 .notification.success {
   border-color: rgba(34, 197, 94, 0.45);
 }

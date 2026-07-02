@@ -1,20 +1,31 @@
 (function() {
+    /**
+     * 天気関連の定数定義
+     */
     window.WeatherConstants = Object.freeze({
+        /** ストレージキー */
         storageKeys: Object.freeze({
             lat: 'custom_weather_lat',
             lon: 'custom_weather_lon',
             name: 'custom_weather_name'
         }),
+        /** デフォルトの地域情報（東京） */
         defaultLocation: Object.freeze({
             lat: '35.6895',
             lon: '139.6917',
             name: '東京都'
         }),
+        /** ステータス表示をリセットするまでのミリ秒数 */
         statusResetDelayMs: 3000,
+        /** チャートに表示する時間数 */
         chartHours: 6,
+        /** チャートバーの最大高さ (px) */
         chartBarMaxHeight: 36,
+        /** チャートバーの最小高さ (px) */
         chartBarMinHeight: 4,
+        /** データが0の時のチャートバーの高さ (px) */
         chartEmptyBarHeight: 2,
+        /** WMO 天気コードと絵文字・テキストのマッピング */
         wmoWeather: Object.freeze({
             0: { emoji: '☀️', text: '快晴' },
             1: { emoji: '🌤️', text: '晴れ' },

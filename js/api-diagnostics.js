@@ -2,8 +2,16 @@
 // API 接続状態・診断ウィジェット
 // ==========================================
 (function() {
+/**
+ * 診断ステータスのストレージ保存キー
+ * @type {string}
+ */
 const STATUS_STORAGE_KEY = 'custom_api_diagnostics_statuses_v1';
 
+/**
+ * サービス定義の配列
+ * @type {Array<Object>}
+ */
 const SERVICE_DEFINITIONS = [
     { id: 'google-auth', label: 'Google OAuth', kind: 'oauth' },
     { id: 'google-calendar', label: 'Google カレンダー', kind: 'google-api' },
@@ -20,6 +28,10 @@ const SERVICE_DEFINITIONS = [
     { id: 'weather', label: 'Open-Meteo 天気', kind: 'weather' }
 ];
 
+/**
+ * 各状態のメタデータ定義
+ * @type {Object}
+ */
 const STATE_META = {
     ok: { label: '正常', rank: 4 },
     warning: { label: '注意', rank: 3 },
@@ -28,6 +40,7 @@ const STATE_META = {
     error: { label: '失敗', rank: 0 }
 };
 
+/** @type {Object} 現在報告されているステータス情報 */
 let reportedStatuses = readReportedStatuses();
 
 window.ApiDiagnostics = {
@@ -38,16 +51,29 @@ window.ApiDiagnostics = {
     evaluateConfiguredServices
 };
 
+/**
+ * 診断ウィジェットを初期化する
+ */
 function init() {
     document.getElementById('api-diagnostics-refresh-btn')
         ?.addEventListener('click', refresh);
     renderDiagnostics();
 }
 
+/**
+ * 診断表示を再レンダリングする
+ */
 function refresh() {
     renderDiagnostics();
 }
 
+/**
+ * 指定されたサービスのステータスを報告して記録する
+ * @param {string} serviceId - サービスID
+ * @param {'ok'|'warning'|'idle'|'missing'|'error'} state - 現在のステータス
+ * @param {string} message - 状態に関するメッセージ
+ * @param {Object} [details={}] - 詳細情報
+ */
 function report(serviceId, state, message, details = {}) {
     if (!STATE_META[state]) return;
 
@@ -61,10 +87,18 @@ function report(serviceId, state, message, details = {}) {
     renderDiagnostics();
 }
 
+/**
+ * 設定による評価と実行時の報告をマージしてステータス一覧を取得する
+ * @returns {Array<Object>} ステータス一覧
+ */
 function getStatuses() {
     return mergeRuntimeReports(evaluateConfiguredServices(), reportedStatuses);
 }
 
+/**
+ * 各サービスの設定状態を評価する
+ * @returns {Array<Object>} 各サービスの設定評価結果
+ */
 function evaluateConfiguredServices() {
     return SERVICE_DEFINITIONS.map((service) => ({
         id: service.id,
@@ -73,6 +107,11 @@ function evaluateConfiguredServices() {
     }));
 }
 
+/**
+ * 単一サービスの設定状況を判定する
+ * @param {Object} service - 評価対象のサービス定義
+ * @returns {Object} 判定結果（state, messageなど）
+ */
 function evaluateService(service) {
     if (service.kind === 'oauth') return evaluateGoogleAuth();
     if (service.kind === 'google-api') return evaluateGoogleApi();
@@ -83,6 +122,10 @@ function evaluateService(service) {
     return evaluateStorageKey(service);
 }
 
+/**
+ * Google Auth設定の評価
+ * @returns {Object} 評価結果
+ */
 function evaluateGoogleAuth() {
     const hasClientId = Boolean(window.GoogleAuth?.getConfiguredClientId?.())
         || hasConfiguredValue(getStorageConstant('STORAGE_KEY_GOOGLE_CLIENT_ID'), 'NEXUS_GOOGLE_CLIENT_ID');
@@ -92,6 +135,10 @@ function evaluateGoogleAuth() {
     return { state: 'missing', message: 'manifest の Google Client ID 未設定' };
 }
 
+/**
+ * Google API連携の評価
+ * @returns {Object} 評価結果
+ */
 function evaluateGoogleApi() {
     if (window.GoogleAuth?.hasStoredSession?.()) {
         return { state: 'idle', message: 'Google 連携済み。直近の同期結果を待機' };
@@ -99,6 +146,10 @@ function evaluateGoogleApi() {
     return { state: 'missing', message: 'Google 連携が必要' };
 }
 
+/**
+ * Spotify連携の評価
+ * @returns {Object} 評価結果
+ */
 function evaluateSpotify() {
     if (window.SpotifyAuth?.hasStoredSession?.()) {
         return { state: 'idle', message: 'Spotify 連携済み。再生状態取得を待機' };
@@ -106,6 +157,11 @@ function evaluateSpotify() {
     return { state: 'missing', message: 'Spotify 未連携' };
 }
 
+/**
+ * AI APIキー設定の評価
+ * @param {Object} service - AIサービス定義
+ * @returns {Object} 評価結果
+ */
 function evaluateAiKey(service) {
     const config = window.AiConstants?.apiKeys?.[service.provider];
     return hasConfiguredValue(config?.storageKey, config?.envName)
@@ -113,6 +169,10 @@ function evaluateAiKey(service) {
         : { state: 'missing', message: '設定値未設定' };
 }
 
+/**
+ * フィード設定の評価
+ * @returns {Object} 評価結果
+ */
 function evaluateFeed() {
     const urls = typeof window.getStoredFeedUrls === 'function'
         ? window.getStoredFeedUrls()
@@ -122,10 +182,19 @@ function evaluateFeed() {
         : { state: 'missing', message: 'フィードURL未設定' };
 }
 
+/**
+ * 天気設定の評価
+ * @returns {Object} 評価結果
+ */
 function evaluateWeather() {
     return { state: 'idle', message: '保存済み地点で取得待ち' };
 }
 
+/**
+ * ストレージキー依存のサービス評価
+ * @param {Object} service - ストレージキー依存のサービス定義
+ * @returns {Object} 評価結果
+ */
 function evaluateStorageKey(service) {
     const storageKey = getStorageConstant(service.storageKey);
     return hasConfiguredValue(storageKey, service.envName)
@@ -133,6 +202,12 @@ function evaluateStorageKey(service) {
         : { state: 'missing', message: '設定値未設定' };
 }
 
+/**
+ * 基本のステータス情報に、実行時に報告されたステータス情報をマージする
+ * @param {Array<Object>} baseStatuses - 初期または設定評価からのステータス配列
+ * @param {Object} reports - ランタイム報告されたステータスマップ
+ * @returns {Array<Object>} マージされたステータス配列
+ */
 function mergeRuntimeReports(baseStatuses, reports) {
     return baseStatuses.map((baseStatus) => {
         const reportStatus = reports[baseStatus.id];
@@ -149,6 +224,9 @@ function mergeRuntimeReports(baseStatuses, reports) {
     });
 }
 
+/**
+ * 診断ステータス一覧をDOMにレンダリングする
+ */
 function renderDiagnostics() {
     const list = document.getElementById('api-diagnostics-list');
     const summary = document.getElementById('api-diagnostics-summary');
@@ -165,6 +243,11 @@ function renderDiagnostics() {
     }
 }
 
+/**
+ * 個別のステータス要素を生成する
+ * @param {Object} status - ステータス情報
+ * @returns {HTMLElement} 生成されたDOM要素
+ */
 function createStatusRow(status) {
     const item = document.createElement('div');
     item.className = `api-diagnostics-item state-${status.state}`;
@@ -191,6 +274,10 @@ function createStatusRow(status) {
     return item;
 }
 
+/**
+ * ローカルストレージから報告済みステータスを読み取る
+ * @returns {Object} キャッシュされたステータスマップ
+ */
 function readReportedStatuses() {
     try {
         return JSON.parse(localStorage.getItem(STATUS_STORAGE_KEY) || '{}');
@@ -200,6 +287,10 @@ function readReportedStatuses() {
     }
 }
 
+/**
+ * 報告済みステータスをローカルストレージに書き込む
+ * @param {Object} statuses - 保存するステータスマップ
+ */
 function writeReportedStatuses(statuses) {
     try {
         localStorage.setItem(STATUS_STORAGE_KEY, JSON.stringify(statuses));
@@ -208,6 +299,11 @@ function writeReportedStatuses(statuses) {
     }
 }
 
+/**
+ * グローバルなストレージ関連定数を安全に取得する
+ * @param {string} name - 取得する定数名
+ * @returns {string} 定数値（未定義の場合は空文字列）
+ */
 function getStorageConstant(name) {
     try {
         const storageConstants = {
@@ -221,6 +317,12 @@ function getStorageConstant(name) {
     }
 }
 
+/**
+ * 設定値（ストレージまたは環境変数相当）が存在するか判定する
+ * @param {string} key - ローカルストレージのキー
+ * @param {string} envName - 環境変数名
+ * @returns {boolean} 値が設定されていればtrue
+ */
 function hasConfiguredValue(key, envName) {
     return Boolean(
         window.EnvConfig?.hasStorageBackedValue(key, envName)
@@ -228,6 +330,11 @@ function hasConfiguredValue(key, envName) {
     );
 }
 
+/**
+ * タイムスタンプをフォーマットする
+ * @param {number} timestamp - 時刻のミリ秒
+ * @returns {string} フォーマットされた時刻文字列
+ */
 function formatCheckedAt(timestamp) {
     return new Date(timestamp).toLocaleTimeString('ja-JP', {
         hour: '2-digit',

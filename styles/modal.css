@@ -1,4 +1,8 @@
-/* モーダル */
+/* =========================================
+   Modal Components
+   ========================================= */
+
+/* モーダル背景のオーバーレイ */
 .modal {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -17,6 +21,7 @@
   pointer-events: none;
 }
 
+/* モーダル本体のコンテナ */
 .modal-content {
   background: #1e293b;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -37,6 +42,7 @@
   transform: translateY(20px);
 }
 
+/* モーダルを閉じるボタン */
 .close-btn {
   position: absolute;
   top: 16px;
@@ -66,6 +72,7 @@
   padding-bottom: 16px;
 }
 
+/* モーダル内のコンテンツ領域 */
 .modal-body {
   flex: 1;
   overflow-y: auto;
@@ -81,6 +88,7 @@
   border-radius: var(--border-radius-md);
 }
 
+/* モーダル下部のアクション領域 */
 .modal-footer {
   display: flex;
   justify-content: flex-end;

@@ -16,6 +16,9 @@ if (typeof document !== 'undefined') {
     document.addEventListener('google:disconnected', () => loadEvents());
 }
 
+/**
+ * Google カレンダーウィジェットを初期化し、イベントリスナーを設定する。
+ */
 function init() {
     const syncBtn = document.getElementById('google-calendar-sync-btn');
     const formToggle = document.getElementById('google-calendar-form-toggle');
@@ -31,7 +34,7 @@ function init() {
 
     addBtn?.addEventListener('click', handleAddEventSubmit);
 
-    // キャッシュがあれば先に読み込む
+    addBtn?.addEventListener('click', handleAddEventSubmit);
     const cached = localStorage.getItem(STORAGE_KEY_GOOGLE_CALENDAR_CACHE);
     if (cached) {
         try {
@@ -49,6 +52,11 @@ function init() {
     }
 }
 
+/**
+ * Google カレンダーからイベントを読み込む。
+ * @param {boolean} [force=false] - 強制的に再読み込みするかどうか
+ * @returns {Promise<void>}
+ */
 async function loadEvents(force = false) {
     if (!GoogleAuth.hasStoredSession()) {
         renderUnauthenticated();
@@ -92,7 +100,7 @@ async function loadEvents(force = false) {
             } catch(err) {
                 console.warn(`Failed to fetch events for calendar: ${calendarId}`, err);
                 if (err.status === 401 || err.status === 403) {
-                    throw err; // 認証・権限エラーは外側のcatchに再スローして表示する。
+                    throw err;
                 }
             }
         }
@@ -110,7 +118,6 @@ async function loadEvents(force = false) {
     } catch (e) {
         console.error("Google Calendar load failed", e);
         if (currentEvents.length > 0) {
-            // ローディング表示をキャッシュ済み予定へ戻してから、更新失敗だけを通知する。
             renderEvents();
             window.showNotification("Google カレンダーの更新に失敗しました。キャッシュを表示しています。", "warning");
             window.ApiDiagnostics?.report('google-calendar', 'warning', 'Google カレンダー更新に失敗。キャッシュを表示');
@@ -121,6 +128,15 @@ async function loadEvents(force = false) {
     }
 }
 
+/**
+ * 新しい予定を Google カレンダーに追加する。
+ * @param {string} summary - 予定のタイトル
+ * @param {string} startDateStr - 開始日
+ * @param {string} startTimeStr - 開始時間
+ * @param {string} endTimeStr - 終了時間
+ * @param {string} [location=''] - 場所
+ * @returns {Promise<boolean>} 追加に成功したかどうか
+ */
 async function addEvent(summary, startDateStr, startTimeStr, endTimeStr, location = '') {
     const token = await GoogleAuth.getValidAccessToken();
     if (!token) {
@@ -162,6 +178,10 @@ async function addEvent(summary, startDateStr, startTimeStr, endTimeStr, locatio
     }
 }
 
+/**
+ * 予定追加フォームの送信イベントを処理する。
+ * @returns {Promise<void>}
+ */
 async function handleAddEventSubmit() {
     const summaryInput = document.getElementById('google-calendar-title-input');
     const dateInput = document.getElementById('google-calendar-date-input');
@@ -191,6 +211,9 @@ async function handleAddEventSubmit() {
     }
 }
 
+/**
+ * 取得した予定を UI に描画する。
+ */
 function renderEvents() {
     const list = document.getElementById('google-calendar-events-list');
     if (!list) return;
@@ -271,21 +294,36 @@ function renderEvents() {
     window.UnifiedAgenda?.refresh?.();
 }
 
+/**
+ * 未認証状態の UI を描画する。
+ */
 function renderUnauthenticated() {
     window.ApiUI.setAuthGuide('google-calendar-events-list', 'Google アカウントと未連携です。設定サイドバーの Google 連携設定を行ってください。');
     window.ApiDiagnostics?.report('google-calendar', 'missing', 'Google 連携が必要');
 }
 
+/**
+ * エラー状態の UI を描画する。
+ * @param {string} message - 表示するエラーメッセージ
+ */
 function renderError(message) {
     window.ApiUI.setError('google-calendar-events-list', message);
 }
 
+/**
+ * ローディング状態を切り替える。
+ * @param {boolean} isLoading - ローディング中かどうか
+ */
 function setLoading(isLoading) {
     if (isLoading) {
         window.ApiUI.setLoading('google-calendar-events-list', 'Google カレンダーから同期中...');
     }
 }
 
+/**
+ * 選択されているカレンダーのIDリストを取得する。
+ * @returns {Array<string>} カレンダーIDのリスト
+ */
 function getSelectedCalendars() {
     try {
         const val = localStorage.getItem(STORAGE_KEY_GOOGLE_SELECTED_CALENDARS);
@@ -295,6 +333,11 @@ function getSelectedCalendars() {
     }
 }
 
+/**
+ * ISO形式の文字列を時刻の文字列にフォーマットする。
+ * @param {string} isoStr - ISO 8601 形式の日時文字列
+ * @returns {string} フォーマットされた時刻文字列 (例: "14:30")
+ */
 function formatTime(isoStr) {
     const d = new Date(isoStr);
     return d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });

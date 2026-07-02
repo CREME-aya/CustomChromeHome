@@ -1,3 +1,8 @@
+/* =========================================
+   Spotify ウィジェット
+========================================= */
+
+/* コントロール用ボタン */
 .spotify-ctrl-btn {
   flex: 0 0 34px;
   width: 34px;
@@ -29,11 +34,11 @@
   text-align: center;
 }
 
-/* Horizontal Spotify Widget */
+/* ウィジェットのルートコンテナ (横長レイアウト) */
 .spotify-horizontal {
   width: var(--spotify-horizontal-width);
   padding: var(--space-md) var(--space-lg);
-  min-height: 72px; /* 高さを少しコンパクトに */
+  min-height: 72px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -42,7 +47,7 @@
   top: 10px;
 }
 
-/* Spotify プレイヤー（横長レイアウト） */
+/* プレイヤー内部行レイアウト */
 .spotify-player-row {
   display: none;
   flex-direction: column;
@@ -59,6 +64,7 @@
   width: 100%;
 }
 
+/* アートワーク表示 */
 .spotify-art {
   width: 48px;
   height: 48px;
@@ -97,6 +103,7 @@
   text-overflow: ellipsis;
 }
 
+/* 再生コントロール系 */
 .spotify-controls {
   display: flex;
   justify-content: flex-start;
@@ -121,6 +128,7 @@
   width: 100%;
 }
 
+/* 認証・ログアウト系 */
 .spotify-logout-inline {
   flex: 0 0 auto;
   margin-left: 0;
@@ -149,4 +157,37 @@
   font-size: 0.8rem;
   border-color: #1DB954;
   color: #1DB954;
+}
+
+@container (max-width: 300px) {
+  .spotify-now-playing {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .spotify-art {
+    width: 56px;
+    height: 56px;
+    flex-basis: 56px;
+  }
+
+  .spotify-player-actions {
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--space-sm);
+  }
+
+  .spotify-controls {
+    justify-content: center;
+  }
+
+  .spotify-track-name,
+  .spotify-artist-name {
+    white-space: normal;
+  }
+
+  .spotify-logout-inline {
+    margin-left: 0;
+  }
 }

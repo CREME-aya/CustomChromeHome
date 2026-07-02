@@ -1,4 +1,6 @@
-/* ピン留めボタンのスタイル */
+/* ==========================================
+   Widget Pin Button (ピン留めボタン)
+   ========================================== */
 .widget-pin-btn {
   position: absolute;
   top: 10px;
@@ -32,7 +34,10 @@
   border-color: #2563eb;
 }
 
-/* モバイル対応：画面幅が極端に狭い時はabsoluteを縦並びにするための簡易スタイル */
+/* ==========================================
+   Mobile Adjustments
+   ========================================== */
+/* 画面幅が極端に狭い時はabsoluteを縦並びにするための簡易スタイル */
 @media (max-width: 768px) {
   .dashboard-main > .sortable-item {
     position: relative !important;
@@ -48,7 +53,7 @@
 }
 
 /* ==========================================
-   レイアウト編集モードがアクティブなときのデザイン演出
+   Layout Edit Mode (レイアウト編集モードのアクティブ時)
    ========================================== */
 .layout-edit-active .sortable-item {
   cursor: grab !important;
@@ -79,6 +84,7 @@
   z-index: 1001;
 }
 
+/* インタラクション演出 */
 .layout-edit-active .sortable-item:hover {
   box-shadow: 0 8px 30px rgba(96, 165, 250, 0.4) !important;
 }
@@ -88,14 +94,14 @@
   transform: scale(0.98);
 }
 
-/* ドラッグ位置プレースホルダー（半透明のダミー表示 - 今回は絶対配置なのでダミーはほぼ使いませんが残します） */
+/* ドラッグ位置プレースホルダー (半透明のダミー表示) */
 .layout-edit-active .sortable-ghost {
   opacity: 0.3 !important;
   border: 1.5px dashed #93c5fd !important;
   background: rgba(59, 130, 246, 0.1) !important;
 }
 
-/* 編集用ドラッグハンドルのラベル演出 */
+/* 編集用ドラッグハンドルのラベル演出 (上部) */
 .layout-edit-active .sortable-item::before {
   content: "⋮⋮ ドラッグして移動";
   position: absolute;

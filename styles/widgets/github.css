@@ -1,4 +1,8 @@
-/* GitHub ウィジェット */
+/* =========================================
+   GitHub Widget Styles
+   ========================================= */
+
+/* ウィジェット本体のコンテナ */
 .github-widget {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
@@ -11,6 +15,7 @@
   box-sizing: border-box;
 }
 
+/* --- リスト表示 --- */
 .github-list {
   display: flex;
   flex-direction: column;
@@ -28,6 +33,7 @@
   padding-bottom: 0;
 }
 
+/* --- アイテムメタ情報（リポジトリ名・番号） --- */
 .github-item-meta {
   display: flex;
   justify-content: space-between;
@@ -49,12 +55,14 @@
   color: #64748b;
 }
 
+/* --- アイテムメインコンテンツ --- */
 .github-item-content {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
+/* 状態・種別バッジ (PR/Issueなど) */
 .github-item-badge {
   font-size: 0.7rem;
   font-weight: 600;

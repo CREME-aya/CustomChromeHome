@@ -1,4 +1,8 @@
-/* ========== ユーティリティウィジェット群 ========== */
+/* =========================================
+   Utility & ToDo Widget Styles
+   ========================================= */
+
+/* ユーティリティウィジェット全体のレイアウトコンテナ */
 .utility-widgets-container {
   display: flex;
   gap: var(--space-xl);
@@ -12,7 +16,9 @@
   }
 }
 
+/* 共通ウィジェットスタイル */
 .todo-widget, .spotify-widget {
+  container-type: inline-size;
   flex: 1;
   background: var(--panel-bg);
   backdrop-filter: var(--panel-blur);
@@ -41,7 +47,7 @@
   line-height: 1.4;
 }
 
-/* ToDo List */
+/* --- ToDoウィジェット ヘッダー部 --- */
 .todo-widget-header {
   display: flex;
   align-items: center;
@@ -70,6 +76,7 @@
   color: #dbeafe;
 }
 
+/* --- ToDo入力フォーム --- */
 .todo-input-container {
   display: flex;
   gap: var(--space-sm);
@@ -110,6 +117,7 @@
   transform: scale(1.05);
 }
 
+/* --- ToDoリストコンテナ --- */
 .todo-list {
   list-style: none;
   padding: 0;
@@ -121,7 +129,6 @@
   overflow-y: auto;
 }
 
-/* スクロールバー装飾 */
 .todo-list::-webkit-scrollbar {
   width: 6px;
 }
@@ -136,6 +143,7 @@
   border-radius: 3px;
 }
 
+/* --- ToDoアイテム --- */
 .todo-item {
   display: flex;
   align-items: center;
@@ -178,6 +186,7 @@
   font-weight: 600;
 }
 
+/* 完了済みアイテムのスタイル */
 .todo-item.completed .todo-text {
   text-decoration: line-through;
   color: #64748b;
@@ -187,6 +196,7 @@
   color: #64748b;
 }
 
+/* 削除ボタン */
 .todo-delete-btn {
   background: none;
   border: none;

@@ -1,17 +1,20 @@
-// ==========================================
-// メディアコントローラー (Spotify / YouTube 切り替え)
-// ==========================================
+/**
+ * メディアコントローラー (Spotify / YouTube 切り替え)
+ */
 (function() {
+/** @type {number|null} メディア状態のポーリングインターバルID */
 let mediaPollInterval = null;
 
 window.initMediaController = initMediaController;
 
+/**
+ * メディアコントローラーの初期化処理
+ */
 function initMediaController() {
     configureYouTubeAvailability();
     setupMediaModeSettings();
     applyMediaMode();
 
-    // モード切り替えを監視して適用
     const mediaRadios = document.querySelectorAll('input[name="media-mode"]');
     mediaRadios.forEach(radio => {
         radio.addEventListener('change', () => {
@@ -20,7 +23,6 @@ function initMediaController() {
         });
     });
 
-    // キャプチャフェーズでイベントをインターセプトする
     const playBtn = document.getElementById('spotify-play-btn');
     const nextBtn = document.getElementById('spotify-next-btn');
     const prevBtn = document.getElementById('spotify-prev-btn');
@@ -53,6 +55,10 @@ function initMediaController() {
     }
 }
 
+/**
+ * YouTubeの制御が可能かどうかを判定する
+ * @returns {boolean} 制御可能な場合はtrue
+ */
 function canControlYouTube() {
     return Boolean(
         typeof chrome !== 'undefined' &&
@@ -61,6 +67,9 @@ function canControlYouTube() {
     );
 }
 
+/**
+ * YouTube連携の利用可能性を設定し、UIに反映する
+ */
 function configureYouTubeAvailability() {
     const youtubeRadio = document.querySelector('input[name="media-mode"][value="youtube"]');
     if (!youtubeRadio || canControlYouTube()) return;
@@ -80,17 +89,26 @@ function configureYouTubeAvailability() {
     }
 }
 
+/**
+ * 現在のメディアモードを取得する
+ * @returns {string} 'spotify' または 'youtube'
+ */
 function getMediaMode() {
     return localStorage.getItem(STORAGE_KEY_MEDIA_MODE) || 'spotify';
 }
 
+/**
+ * メディアモードの設定UIを初期化する
+ */
 function setupMediaModeSettings() {
     const stored = getMediaMode();
     const radio = document.querySelector(`input[name="media-mode"][value="${stored}"]`);
     if (radio) radio.checked = true;
 }
 
-// メディアモードの適用
+/**
+ * 現在のメディアモードをUIと状態に適用する
+ */
 function applyMediaMode() {
     const mode = getMediaMode();
     const widgetHeader = document.querySelector('#spotify-widget .widget-header span');
@@ -127,8 +145,10 @@ function applyMediaMode() {
     }
 }
 
-// --- YouTube コントロールロジック ---
-
+/**
+ * 再生中のYouTubeタブを取得する
+ * @returns {Promise<chrome.tabs.Tab|null>} YouTubeのタブオブジェクト
+ */
 async function getYouTubeTab() {
     return new Promise((resolve) => {
         if (typeof chrome === 'undefined' || !chrome.tabs) {
@@ -146,6 +166,11 @@ async function getYouTubeTab() {
     });
 }
 
+/**
+ * YouTubeタブでスクリプトを実行する
+ * @param {Function} func 実行する関数
+ * @returns {Promise<any>} 実行結果
+ */
 async function executeOnYouTube(func) {
     if (!canControlYouTube()) {
         window.showNotification?.('YouTube操作に必要な拡張権限がありません。', 'warning');
@@ -174,6 +199,9 @@ async function executeOnYouTube(func) {
     });
 }
 
+/**
+ * YouTubeの再生状態を定期的に取得するポーリングを開始する
+ */
 function startYouTubePolling() {
     updateYouTubeUI({
         title: "読込中...",
@@ -231,6 +259,10 @@ function startYouTubePolling() {
     mediaPollInterval = setInterval(poll, 2000);
 }
 
+/**
+ * YouTubeの情報をUIに反映する
+ * @param {Object} info 再生情報のオブジェクト
+ */
 function updateYouTubeUI(info) {
     const trackEl = document.getElementById('spotify-track');
     const artistEl = document.getElementById('spotify-artist');
@@ -246,6 +278,10 @@ function updateYouTubeUI(info) {
     updatePlayButtonIcon(info.playing);
 }
 
+/**
+ * 再生・一時停止ボタンのアイコンを更新する
+ * @param {boolean} isPlaying 再生中かどうか
+ */
 function updatePlayButtonIcon(isPlaying) {
     const playBtn = document.getElementById('spotify-play-btn');
     const playIcon = document.getElementById('spotify-play-icon');
@@ -255,6 +291,9 @@ function updatePlayButtonIcon(isPlaying) {
     }
 }
 
+/**
+ * YouTubeの再生状態を切り替える
+ */
 async function toggleYouTubePlay() {
     const tab = await getYouTubeTab();
     if (!tab) {
@@ -282,6 +321,10 @@ async function toggleYouTubePlay() {
     });
 }
 
+/**
+ * YouTubeのメディアコントロール（次へ/前へ）を実行する
+ * @param {string} action 'next' または 'prev'
+ */
 async function controlYouTube(action) {
     const tab = await getYouTubeTab();
     if (!tab) return;

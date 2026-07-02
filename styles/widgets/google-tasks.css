@@ -1,4 +1,9 @@
-/* Google Tasks (ToDo) ウィジェット */
+/* ==========================================================================
+ * Google Tasks ウィジェット
+ * タスクリストを表示・管理するウィジェットのスタイル
+ * ========================================================================== */
+
+/* ウィジェット本体 */
 .google-tasks-widget {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
@@ -11,6 +16,7 @@
   box-sizing: border-box;
 }
 
+/* --- タスクリスト選択ドロップダウン --- */
 #google-tasks-list-select {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);

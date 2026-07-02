@@ -1,4 +1,8 @@
-/* Gmail ウィジェット */
+/* =========================================
+   Gmail Widget Styles
+   ========================================= */
+
+/* ウィジェット本体のコンテナ */
 .gmail-widget {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
@@ -11,6 +15,7 @@
   box-sizing: border-box;
 }
 
+/* --- メールリスト --- */
 .gmail-list {
   display: flex;
   flex-direction: column;
@@ -28,6 +33,7 @@
   padding-bottom: 0;
 }
 
+/* --- メールアイテム メタ情報 --- */
 .gmail-item-meta {
   display: flex;
   justify-content: space-between;
@@ -41,6 +47,7 @@
   color: #818cf8;
 }
 
+/* --- メールの件名（省略表示対応） --- */
 .gmail-item-subject {
   display: block;
   font-size: 0.9rem;

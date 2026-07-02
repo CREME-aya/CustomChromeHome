@@ -1,5 +1,10 @@
-/* クイックリンク（ショートカット）ウィジェット */
+/* =========================================
+   Quick Links ウィジェット
+========================================= */
+
+/* ウィジェットのルートコンテナ */
 .quick-links-widget {
+  container-type: inline-size;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -13,6 +18,19 @@
   max-width: 600px;
 }
 
+@container (max-width: 300px) {
+  .quick-links-grid {
+    flex-wrap: nowrap;
+    scroll-snap-type: x proximity;
+  }
+
+  .quick-link-item {
+    scroll-snap-align: start;
+  }
+
+}
+
+/* リンクアイテムのグリッドコンテナ */
 .quick-links-grid {
   display: flex;
   gap: var(--space-md);
@@ -21,7 +39,7 @@
   padding-bottom: var(--space-xs);
 }
 
-/* Webkit系（Chrome等）のスクロールバーを非表示にする（見た目重視） */
+/* スクロールバーのカスタマイズ (Webkit) */
 .quick-links-grid::-webkit-scrollbar {
   height: 4px;
 }
@@ -31,6 +49,7 @@
   border-radius: 4px;
 }
 
+/* 個別のリンクアイテム */
 .quick-link-item {
   display: flex;
   flex-direction: column;
@@ -54,6 +73,7 @@
   transform: translateY(-2px);
 }
 
+/* アイコンとテキスト情報 */
 .quick-link-icon {
   width: 24px;
   height: 24px;
@@ -69,6 +89,7 @@
   max-width: 50px;
 }
 
+/* リンク削除ボタン */
 .delete-link-btn {
   position: absolute;
   top: -6px;
@@ -91,6 +112,7 @@
   display: flex;
 }
 
+/* リンク追加ボタン */
 .add-link-btn {
   width: 40px;
   height: 40px;

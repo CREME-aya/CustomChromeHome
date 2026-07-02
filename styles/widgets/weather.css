@@ -1,5 +1,10 @@
-/* ========== 天気ウィジェット ========== */
+/* =========================================
+   Weather Widget Styles
+   ========================================= */
+
+/* ウィジェット本体のコンテナ */
 .weather-widget {
+  container-type: inline-size;
   background: var(--panel-bg);
   backdrop-filter: var(--panel-blur);
   border: 1px solid var(--panel-border);
@@ -15,6 +20,21 @@
   margin-bottom: var(--space-xl);
 }
 
+@container (max-width: 300px) {
+  .weather-chart-container {
+    display: none;
+  }
+
+  .weather-icon-container {
+    font-size: 2.25rem;
+  }
+
+  .weather-desc {
+    font-size: 1rem;
+  }
+}
+
+/* --- 天気情報（テキスト部） --- */
 .weather-info {
   display: flex;
   flex-direction: column;
@@ -28,6 +48,7 @@
   text-shadow: 0 1px 3px rgba(0,0,0,0.5);
 }
 
+/* --- 気温情報 --- */
 .weather-temp-container {
   display: flex;
   align-items: baseline;
@@ -49,12 +70,14 @@
   border-radius: var(--border-radius-input);
 }
 
+/* --- 天気アイコン --- */
 .weather-icon-container {
   font-size: 3rem;
   line-height: 1;
   filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
 }
 
+/* --- 状態表示（ローディング・エラー） --- */
 .weather-loading {
   font-size: 0.9rem;
   color: #94a3b8;
@@ -69,7 +92,7 @@
   width: 100%;
 }
 
-/* 降水確率グラフ */
+/* --- 降水確率チャート --- */
 .weather-chart-container {
   display: flex;
   gap: var(--space-sm);
@@ -90,6 +113,7 @@
   gap: var(--space-xs);
 }
 
+/* チャートのバー表現 */
 .weather-chart-bar {
   width: 12px;
   background: linear-gradient(to top, #3b82f6, #60a5fa);

@@ -1,4 +1,8 @@
 (function() {
+    /**
+     * 天気情報を読み込み、ウィジェットに描画する。
+     * @returns {Promise<void>}
+     */
     async function loadWeather() {
         const weatherWidget = document.getElementById('weather-widget');
         if (!weatherWidget) return;
@@ -17,6 +21,9 @@
         }
     }
 
+    /**
+     * 天気設定のUIとイベントリスナーを初期化する。
+     */
     function initWeatherSettings() {
         const cityInput = document.getElementById('weather-city-input');
         const cityButton = document.getElementById('weather-city-btn');
@@ -29,15 +36,29 @@
         }
     }
 
+    /**
+     * 設定された地域名をステータス要素に反映する。
+     * @param {HTMLElement} status - ステータスを表示するDOM要素
+     */
     function updateWeatherCityStatus(status) {
         if (!status) return;
         status.textContent = `現在: ${window.WeatherData.getStoredWeatherLocation().name}`;
     }
 
+    /**
+     * 一定時間後にステータス表示を現在の地域名にリセットする。
+     * @param {HTMLElement} status - ステータスを表示するDOM要素
+     */
     function resetWeatherCityStatus(status) {
         setTimeout(() => updateWeatherCityStatus(status), window.WeatherConstants.statusResetDelayMs);
     }
 
+    /**
+     * 都市名検索の入力を処理し、天気を更新する。
+     * @param {HTMLInputElement} input - 都市名入力フィールド
+     * @param {HTMLElement} status - ステータスを表示するDOM要素
+     * @returns {Promise<void>}
+     */
     async function handleWeatherCitySearch(input, status) {
         const query = input.value.trim();
         if (!query) return;
@@ -62,6 +83,11 @@
         }
     }
 
+    /**
+     * ステータス要素にメッセージを設定する。
+     * @param {HTMLElement} status - ステータスを表示するDOM要素
+     * @param {string} message - 表示するメッセージ
+     */
     function setWeatherStatus(status, message) {
         if (!status) return;
 
@@ -71,6 +97,12 @@
         });
     }
 
+    /**
+     * 天気ウィジェットの HTML 文字列を生成する。
+     * @param {string} locationName - 地域名
+     * @param {Object} meteoData - Open-Meteo から取得した天気データ
+     * @returns {string} ウィジェットの HTML 文字列
+     */
     function renderWeatherWidget(locationName, meteoData) {
         const current = meteoData.current_weather;
         const weather = window.WeatherConstants.wmoWeather[current.weathercode] || { emoji: '🌡️', text: '不明' };
@@ -94,6 +126,12 @@
         `;
     }
 
+    /**
+     * 降水確率のチャートHTML文字列を生成する。
+     * @param {Array<string>} times - 予測日時のリスト
+     * @param {Array<number>} precipitationProbabilities - 降水確率のリスト
+     * @returns {string} チャートの HTML 文字列
+     */
     function renderWeatherChart(times, precipitationProbabilities) {
         const startIndex = findForecastStartIndex(times);
         const chartItems = [];
@@ -119,12 +157,22 @@
         return `<div class="weather-chart-container">${chartItems.join('')}</div>`;
     }
 
+    /**
+     * 現在時刻に最も近い予測データの開始インデックスを取得する。
+     * @param {Array<string>} times - 予測日時のリスト
+     * @returns {number} 開始インデックス
+     */
     function findForecastStartIndex(times) {
         const oneHourAgo = Date.now() - 3600000;
         const index = times.findIndex(time => new Date(time).getTime() >= oneHourAgo);
         return index === -1 ? 0 : index;
     }
 
+    /**
+     * 降水確率に応じたチャートバーの高さを計算する。
+     * @param {number} probability - 降水確率 (0-100)
+     * @returns {number} バーの高さ (px)
+     */
     function getWeatherChartBarHeight(probability) {
         if (probability <= 0) return window.WeatherConstants.chartEmptyBarHeight;
         return Math.max(
@@ -133,6 +181,11 @@
         );
     }
 
+    /**
+     * 地域名から主要部分のみを抽出してフォーマットする。
+     * @param {string} name - 元の地域名
+     * @returns {string} フォーマットされた地域名
+     */
     function formatWeatherLocationName(name) {
         return name.split(',')[0];
     }

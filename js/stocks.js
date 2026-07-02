@@ -1,10 +1,13 @@
-// ==========================================
-// 株価・市場ウィジェット (Google Sheets / GOOGLEFINANCE)
-// ==========================================
+/**
+ * 株価・市場ウィジェット (Google Sheets / GOOGLEFINANCE連携)
+ */
 (function() {
+/** @type {string[]} デフォルトの表示銘柄リスト */
 const DEFAULT_SYMBOLS = ['NASDAQ:AAPL', 'NASDAQ:MSFT', 'NYSE:IBM'];
+/** @type {string} GoogleFinanceのCSV URLを格納する環境変数名 */
 const GOOGLEFINANCE_CSV_ENV_NAME = 'NEXUS_GOOGLEFINANCE_CSV_URL';
 
+/** @type {Object<string, string[]>} CSVヘッダーのエイリアスマッピング */
 const HEADER_ALIASES = {
     symbol: ['symbol', 'ticker', 'code', '銘柄', 'シンボル', 'ティッカー'],
     name: ['name', 'company', '銘柄名', '名称', '名前'],
@@ -16,6 +19,7 @@ const HEADER_ALIASES = {
     prices: ['prices', 'history', 'sparkline', '履歴', '推移']
 };
 
+/** @type {Object<string, Object>} 現在キャッシュされている株価データ */
 let currentStocksData = {};
 
 window.StocksWidget = {
@@ -26,6 +30,9 @@ window.StocksWidget = {
     parseGoogleFinanceCsv
 };
 
+/**
+ * ウィジェットの初期化処理
+ */
 function init() {
     document.getElementById('stocks-sync-btn')
         ?.addEventListener('click', () => loadStocksData(true));
@@ -40,6 +47,9 @@ function init() {
     }
 }
 
+/**
+ * ローカルストレージから株価キャッシュを復元する
+ */
 function restoreCache() {
     const cached = localStorage.getItem(STORAGE_KEY_STOCKS_CACHE);
     if (!cached) return;
@@ -52,12 +62,20 @@ function restoreCache() {
     }
 }
 
+/**
+ * 設定されたGoogleFinanceのCSV URLを取得する
+ * @returns {string} CSV URL
+ */
 function getSourceUrl() {
     return window.EnvConfig?.getStorageBackedValue(STORAGE_KEY_STOCKS_SOURCE_URL, GOOGLEFINANCE_CSV_ENV_NAME)
         || localStorage.getItem(STORAGE_KEY_STOCKS_SOURCE_URL)?.trim()
         || '';
 }
 
+/**
+ * 登録されている銘柄リストを取得する
+ * @returns {string[]} 銘柄リスト
+ */
 function getRegisteredSymbols() {
     const stored = localStorage.getItem(STORAGE_KEY_STOCKS);
     if (!stored) return [...DEFAULT_SYMBOLS];
@@ -71,10 +89,18 @@ function getRegisteredSymbols() {
     }
 }
 
+/**
+ * 銘柄リストをローカルストレージに保存する
+ * @param {string[]} symbols 銘柄リスト
+ */
 function saveRegisteredSymbols(symbols) {
     localStorage.setItem(STORAGE_KEY_STOCKS, JSON.stringify(symbols));
 }
 
+/**
+ * 株価データを取得・更新する
+ * @param {boolean} [force=false] 強制更新フラグ
+ */
 async function loadStocksData(force = false) {
     const sourceUrl = getSourceUrl();
     if (!sourceUrl) {
@@ -134,6 +160,11 @@ async function loadStocksData(force = false) {
     }
 }
 
+/**
+ * GoogleFinanceのCSVを取得する
+ * @param {string} sourceUrl CSV URL
+ * @returns {Promise<Object[]>} 解析済みの株価データ配列
+ */
 async function fetchStocksFromGoogleFinance(sourceUrl) {
     const response = await fetch(normalizeGoogleFinanceCsvUrl(sourceUrl), { cache: 'no-store' });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -142,6 +173,10 @@ async function fetchStocksFromGoogleFinance(sourceUrl) {
     return parseGoogleFinanceCsv(csvText);
 }
 
+/**
+ * 株価取得失敗時のエラー表示とキャッシュのフォールバックを行う
+ * @param {string} message エラーメッセージ
+ */
 function renderFetchFailure(message) {
     if (Object.keys(currentStocksData).length > 0) {
         renderStocks();
@@ -153,6 +188,11 @@ function renderFetchFailure(message) {
     window.ApiDiagnostics?.report('stocks', 'error', '株価を取得できませんでした');
 }
 
+/**
+ * Google SheetsのURLをCSV出力用のURLに正規化する
+ * @param {string} input 入力されたURL
+ * @returns {string} 正規化されたCSV URL
+ */
 function normalizeGoogleFinanceCsvUrl(input) {
     const rawUrl = String(input || '').trim();
     if (!rawUrl) return '';
@@ -187,6 +227,11 @@ function normalizeGoogleFinanceCsvUrl(input) {
     }
 }
 
+/**
+ * CSVテキストをパースして株価データオブジェクトの配列に変換する
+ * @param {string} csvText CSV文字列
+ * @returns {Object[]} パース済みの株価データ配列
+ */
 function parseGoogleFinanceCsv(csvText) {
     const rows = parseCsvRows(csvText);
     if (rows.length < 2) throw new Error('CSVにデータ行がありません。');
@@ -201,6 +246,11 @@ function parseGoogleFinanceCsv(csvText) {
         .filter(Boolean);
 }
 
+/**
+ * CSV文字列を行とセルに分割する
+ * @param {string} csvText CSV文字列
+ * @returns {string[][]} セル単位に分割された2次元配列
+ */
 function parseCsvRows(csvText) {
     const rows = [];
     let row = [];
@@ -245,6 +295,11 @@ function parseCsvRows(csvText) {
     return rows;
 }
 
+/**
+ * ヘッダー行から各列のインデックスマップを作成する
+ * @param {string[]} headerRow ヘッダー行の配列
+ * @returns {Object<string, number>} ヘッダーインデックス
+ */
 function createHeaderIndexes(headerRow) {
     return headerRow.reduce((indexes, header, index) => {
         const normalizedHeader = normalizeHeader(header);
@@ -257,6 +312,12 @@ function createHeaderIndexes(headerRow) {
     }, {});
 }
 
+/**
+ * 個別の株価データ行をパースする
+ * @param {string[]} row データ行
+ * @param {Object} indexes ヘッダーインデックス
+ * @returns {Object|null} 株価データオブジェクト
+ */
 function parseStockRow(row, indexes) {
     const symbol = getCell(row, indexes.symbol).toUpperCase();
     const price = parseNumber(getCell(row, indexes.price));
@@ -284,10 +345,21 @@ function parseStockRow(row, indexes) {
     };
 }
 
+/**
+ * 行から指定インデックスのセル値を取得する
+ * @param {string[]} row データ行
+ * @param {number|undefined} index 列インデックス
+ * @returns {string} セルの値
+ */
 function getCell(row, index) {
     return index === undefined ? '' : String(row[index] || '').trim();
 }
 
+/**
+ * ヘッダー文字列を正規化（小文字化・空白等の除去）する
+ * @param {string} header ヘッダー文字列
+ * @returns {string} 正規化されたヘッダー
+ */
 function normalizeHeader(header) {
     return String(header || '')
         .trim()
@@ -295,11 +367,21 @@ function normalizeHeader(header) {
         .replace(/[\s_\-（）()]/g, '');
 }
 
+/**
+ * 任意の数値をパースする（失敗時はNaN）
+ * @param {string|number} value 対象の値
+ * @returns {number} パースされた数値またはNaN
+ */
 function parseOptionalNumber(value) {
     const parsed = parseNumber(value);
     return Number.isFinite(parsed) ? parsed : NaN;
 }
 
+/**
+ * 通貨記号などを除去して数値をパースする
+ * @param {string|number} value 対象の値
+ * @returns {number} パースされた数値またはNaN
+ */
 function parseNumber(value) {
     const normalized = String(value || '')
         .replace(/[,%$¥€£]/g, '')
@@ -308,18 +390,36 @@ function parseNumber(value) {
     return Number(normalized);
 }
 
+/**
+ * 騰落率から価格変動額を計算する
+ * @param {number} price 現在の価格
+ * @param {number} changePercent 騰落率（%）
+ * @returns {number} 価格変動額
+ */
 function calculateChangeFromPercent(price, changePercent) {
     if (!Number.isFinite(changePercent)) return 0;
     const previousPrice = price / (1 + (changePercent / 100));
     return price - previousPrice;
 }
 
+/**
+ * 価格変動額から騰落率を計算する
+ * @param {number} price 現在の価格
+ * @param {number} change 価格変動額
+ * @returns {number} 騰落率（%）
+ */
 function calculateChangePercent(price, change) {
     if (!Number.isFinite(change) || change === 0) return 0;
     const previousPrice = price - change;
     return previousPrice === 0 ? 0 : (change / previousPrice) * 100;
 }
 
+/**
+ * 履歴データをパースして価格配列を生成する
+ * @param {string} value 履歴データの文字列
+ * @param {number} fallbackPrice データ不足時のフォールバック価格
+ * @returns {number[]} 価格配列
+ */
 function parsePrices(value, fallbackPrice) {
     const prices = String(value || '')
         .split(/[;|\s]+/)
@@ -328,6 +428,12 @@ function parsePrices(value, fallbackPrice) {
     return prices.length >= 2 ? prices.slice(-30) : [fallbackPrice, fallbackPrice];
 }
 
+/**
+ * 株価データ配列から指定の銘柄を検索する
+ * @param {Object[]} stocks 株価データ配列
+ * @param {string} requestedSymbol 要求された銘柄シンボル
+ * @returns {Object|undefined} 株価データ
+ */
 function findStockData(stocks, requestedSymbol) {
     const requestedKeys = createSymbolKeys(requestedSymbol);
     return stocks.find(stock => {
@@ -336,16 +442,31 @@ function findStockData(stocks, requestedSymbol) {
     });
 }
 
+/**
+ * 銘柄シンボルから検索用のキー配列を生成する
+ * @param {string} symbol 銘柄シンボル
+ * @returns {string[]} キー配列
+ */
 function createSymbolKeys(symbol) {
     const normalized = String(symbol || '').trim().toUpperCase();
     const withoutExchange = normalized.includes(':') ? normalized.split(':').at(-1) : normalized;
     return [...new Set([normalized, withoutExchange])].filter(Boolean);
 }
 
+/**
+ * 銘柄シンボルから通貨を推測する
+ * @param {string} symbol 銘柄シンボル
+ * @returns {string} 推測される通貨コード
+ */
 function inferCurrency(symbol) {
     return /(^TYO:|\.T$|\.JP$)/i.test(symbol) ? 'JPY' : 'USD';
 }
 
+/**
+ * 価格履歴からスパークライン（簡易チャート）用のSVG要素を生成する
+ * @param {number[]} prices 価格配列
+ * @returns {SVGElement|null} SVG要素
+ */
 function generateSparklineSvg(prices) {
     if (!prices || prices.length < 2) return null;
 
@@ -377,6 +498,9 @@ function generateSparklineSvg(prices) {
     return svg;
 }
 
+/**
+ * 株価ウィジェットのUIをレンダリングする
+ */
 function renderStocks() {
     const container = document.getElementById('stocks-container');
     if (!container) return;
@@ -398,6 +522,11 @@ function renderStocks() {
     container.replaceChildren(list);
 }
 
+/**
+ * 1銘柄分の表示要素を生成する
+ * @param {Object} data 株価データ
+ * @returns {Element} 銘柄項目の要素
+ */
 function createStockItem(data) {
     const item = document.createElement('div');
     item.className = 'stock-item';
@@ -437,16 +566,30 @@ function createStockItem(data) {
     return item;
 }
 
+/**
+ * 通貨コードから通貨記号を取得する
+ * @param {string} currency 通貨コード
+ * @returns {string} 通貨記号
+ */
 function getCurrencySymbol(currency) {
     return currency === 'JPY' ? '¥' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '$';
 }
 
+/**
+ * 通貨に応じた数値のフォーマットを行う
+ * @param {number} value 数値
+ * @param {string} currency 通貨コード
+ * @returns {string} フォーマットされた文字列
+ */
 function formatNumber(value, currency) {
     return currency === 'JPY'
         ? Math.round(value).toLocaleString()
         : Number(value).toFixed(2);
 }
 
+/**
+ * 設定ガイドUIをレンダリングする
+ */
 function renderSourceGuide() {
     window.ApiUI.setAuthGuide(
         'stocks-container',
@@ -454,6 +597,9 @@ function renderSourceGuide() {
     );
 }
 
+/**
+ * 株価ウィジェットの設定UIを初期化する
+ */
 function initSettings() {
     const sourceInput = document.getElementById('stock-source-url');
     const saveSourceButton = document.getElementById('save-stock-source-btn');

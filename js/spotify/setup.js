@@ -35,6 +35,10 @@ document.addEventListener('DOMContentLoaded', () => {
         errorTime.textContent = formatErrorTime(lastError.occurredAt);
     }
 
+    /**
+     * ページ上にエラーメッセージを表示する
+     * @param {string} message 表示するエラーメッセージ
+     */
     function showPageError(message) {
         errorPanel.hidden = false;
         errorMessage.textContent = message;
@@ -42,6 +46,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+/**
+ * エラー発生日時をロケールに応じた文字列にフォーマットする
+ * @param {string} occurredAt ISO 8601形式などの日時文字列
+ * @returns {string} フォーマットされた日時文字列、または無効な日時の場合は空文字
+ */
 function formatErrorTime(occurredAt) {
     const date = new Date(occurredAt);
     if (Number.isNaN(date.getTime())) return '';

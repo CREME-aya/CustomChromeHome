@@ -1,4 +1,8 @@
-/* Google カレンダー ウィジェット */
+/* =========================================
+   Google Calendar Widget Styles
+   ========================================= */
+
+/* ウィジェット本体のコンテナ */
 .google-calendar-widget {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
@@ -11,6 +15,7 @@
   box-sizing: border-box;
 }
 
+/* --- 日付グループ表示 --- */
 .calendar-day-group {
   margin-bottom: var(--space-md);
 }
@@ -24,6 +29,7 @@
   padding-bottom: 4px;
 }
 
+/* --- イベントアイテム --- */
 .calendar-event-item {
   display: flex;
   justify-content: space-between;
@@ -37,6 +43,7 @@
   min-width: 0;
 }
 
+/* イベントタイトル（省略表示対応） */
 .calendar-event-title {
   display: block;
   font-size: 0.95rem;
@@ -63,6 +70,7 @@
   white-space: nowrap;
 }
 
+/* Todo追加・アクションボタン */
 .calendar-event-todo-btn {
   background: rgba(85, 197, 0, 0.15);
   border: 1px solid rgba(85, 197, 0, 0.3);
@@ -80,6 +88,7 @@
   color: #fff;
 }
 
+/* --- カレンダー入力フォーム --- */
 .google-calendar-form {
   margin-top: var(--space-md);
   border-top: 1px solid rgba(255, 255, 255, 0.1);

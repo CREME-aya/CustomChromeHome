@@ -1,6 +1,8 @@
 // Spotify 連携設定で共有する Redirect URI と直近エラーを管理する。
 (function() {
+/** @constant {string} Spotifyのリダイレクト先パス */
 const SPOTIFY_REDIRECT_PATH = 'spotify';
+/** @constant {string} Spotify認証エラーの保存キー */
 const SPOTIFY_AUTH_ERROR_KEY = 'spotify_auth_error';
 
 window.SpotifyConfig = {
@@ -10,6 +12,10 @@ window.SpotifyConfig = {
     saveAuthError
 };
 
+/**
+ * 拡張機能として読み込まれている場合、Spotify用のリダイレクトURIを取得する
+ * @returns {string} リダイレクトURI。取得できない場合は空文字
+ */
 function getRedirectUri() {
     if (typeof chrome === 'undefined' || !chrome.identity?.getRedirectURL) {
         return '';
@@ -18,6 +24,11 @@ function getRedirectUri() {
     return chrome.identity.getRedirectURL(SPOTIFY_REDIRECT_PATH);
 }
 
+/**
+ * 認証エラーのメッセージと発生日時を保存する
+ * @param {string} message エラーメッセージ
+ * @returns {Object} 保存されたエラー情報オブジェクト
+ */
 function saveAuthError(message) {
     const errorRecord = {
         message: String(message || '不明なエラーが発生しました。'),
@@ -27,6 +38,10 @@ function saveAuthError(message) {
     return errorRecord;
 }
 
+/**
+ * 保存されている直近の認証エラーを取得する
+ * @returns {Object|null} エラー情報オブジェクト、または存在しない場合はnull
+ */
 function getLastAuthError() {
     const storedValue = localStorage.getItem(SPOTIFY_AUTH_ERROR_KEY);
     if (!storedValue) return null;
@@ -41,6 +56,9 @@ function getLastAuthError() {
     }
 }
 
+/**
+ * 保存されている認証エラーをクリアする
+ */
 function clearAuthError() {
     localStorage.removeItem(SPOTIFY_AUTH_ERROR_KEY);
 }

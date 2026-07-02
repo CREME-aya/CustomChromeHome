@@ -3,7 +3,7 @@ const fs = require('fs');
 const html = fs.readFileSync('index.html', 'utf8');
 const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
 const constantsSource = fs.readFileSync('js/constants.js', 'utf8');
-const googleAuthSource = fs.readFileSync('js/google-auth.js', 'utf8');
+const googleAuthSource = fs.readFileSync('js/google/auth.js', 'utf8');
 const baseWidgetSource = fs.readFileSync('js/core/base-widget.js', 'utf8');
 const aiConstantsSource = fs.readFileSync('js/ai/constants.js', 'utf8');
 const aiSettingsSource = fs.readFileSync('js/ai/settings.js', 'utf8');
@@ -76,6 +76,14 @@ test('API診断ウィジェットに必要な操作要素が存在する', () =>
     ].forEach(id => assert(ids.has(id), `${id} がありません`));
 });
 
+test('DiscoverのOPML操作要素が存在する', () => {
+    [
+        'opml-import-input',
+        'opml-export-btn',
+        'feed-container'
+    ].forEach(id => assert(ids.has(id), `${id} がありません`));
+});
+
 test('予定・タスク統合ビューに必要な操作要素が存在する', () => {
     [
         'toggle-unified-agenda',
@@ -113,10 +121,30 @@ test('廃止済みGoogle Fitを画面と読み込み対象へ残さない', () =
     assert(!html.includes('js/google-fit.js'), 'Google Fitスクリプトが読み込まれています');
 });
 
+test('Google / GitHub 連携モジュールはディレクトリ配下から読み込む', () => {
+    [
+        'js/google/auth.js',
+        'js/google/calendar.js',
+        'js/google/tasks.js',
+        'js/google/gmail.js',
+        'js/github/issues.js',
+        'js/github/grass.js'
+    ].forEach(path => assert(html.includes(path), `${path} が読み込まれていません`));
+
+    [
+        'js/google-auth.js',
+        'js/google-calendar.js',
+        'js/google-tasks.js',
+        'js/gmail.js',
+        'js/github.js',
+        'js/github-grass.js'
+    ].forEach(path => assert(!html.includes(path), `${path} の旧読み込みが残っています`));
+});
+
 test('共通API UIを利用モジュールより先に読み込む', () => {
     const apiUiIndex = html.indexOf('js/api-ui.js');
     const baseWidgetIndex = html.indexOf('js/core/base-widget.js');
-    const calendarIndex = html.indexOf('js/google-calendar.js');
+    const calendarIndex = html.indexOf('js/google/calendar.js');
     assert(apiUiIndex >= 0 && apiUiIndex < calendarIndex, 'api-ui.jsの読み込み順が不正です');
     assert(baseWidgetIndex >= 0 && apiUiIndex < baseWidgetIndex, 'base-widget.js は api-ui.js より後に読み込んでください');
     assert(baseWidgetIndex < calendarIndex, 'base-widget.js の読み込み順が不正です');

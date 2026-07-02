@@ -2,10 +2,16 @@
 // Google Tasks (Google ToDo) ウィジェット
 // ==========================================
 (function() {
+/** @type {Object} Google認証オブジェクトの参照 */
 const GoogleAuth = window.GoogleAuth;
+
+/** @type {Array<Object>} 現在取得されているタスクリスト */
 let currentTaskLists = [];
+/** @type {Array<Object>} 現在取得されているタスク */
 let currentTasks = [];
+/** @type {string} 選択中のタスクリストID */
 let selectedListId = '';
+/** @type {number|null} 定期更新用のインターバルID */
 let pollIntervalId = null;
 
 window.GoogleTasks = {
@@ -22,6 +28,9 @@ if (typeof document !== 'undefined') {
     document.addEventListener('google:disconnected', () => loadTaskLists());
 }
 
+/**
+ * Google Tasksウィジェットを初期化する
+ */
 function init() {
     const syncBtn = document.getElementById('google-tasks-sync-btn');
     const addBtn = document.getElementById('google-tasks-add-btn');
@@ -60,6 +69,9 @@ function init() {
     }
 }
 
+/**
+ * タスクの定期更新（ポーリング）を開始する
+ */
 function startPolling() {
     if (pollIntervalId) clearInterval(pollIntervalId);
     pollIntervalId = setInterval(() => {
@@ -69,6 +81,9 @@ function startPolling() {
     }, 60000);
 }
 
+/**
+ * Google Tasksのタスクリスト一覧を取得する
+ */
 async function loadTaskLists() {
     const token = await GoogleAuth.getValidAccessToken();
     if (!token) return;
@@ -102,6 +117,11 @@ async function loadTaskLists() {
     }
 }
 
+/**
+ * 指定されたタスクリストのタスク一覧を取得する
+ * @param {string} listId - タスクリストID
+ * @param {boolean} [showLoadingState=true] - ローディングUIを表示するかどうか
+ */
 async function loadTasks(listId, showLoadingState = true) {
     if (!listId) return;
     if (!GoogleAuth.hasStoredSession()) {
@@ -152,6 +172,11 @@ async function loadTasks(listId, showLoadingState = true) {
     }
 }
 
+/**
+ * 新しいタスクを追加する
+ * @param {string} title - タスクのタイトル
+ * @returns {Promise<boolean>} 追加に成功したかどうか
+ */
 async function addTask(title) {
     if (!selectedListId) return false;
     const token = await GoogleAuth.getValidAccessToken();
@@ -179,6 +204,13 @@ async function addTask(title) {
     }
 }
 
+/**
+ * タスクの完了状態を更新する
+ * @param {string} taskId - タスクID
+ * @param {string} title - タスクのタイトル
+ * @param {boolean} completed - 完了したかどうか
+ * @returns {Promise<boolean>} 更新に成功したかどうか
+ */
 async function updateTaskStatus(taskId, title, completed) {
     if (!selectedListId) return false;
     const token = await GoogleAuth.getValidAccessToken();
@@ -217,6 +249,11 @@ async function updateTaskStatus(taskId, title, completed) {
     }
 }
 
+/**
+ * タスクを削除する
+ * @param {string} taskId - 削除するタスクID
+ * @returns {Promise<boolean>} 削除に成功したかどうか
+ */
 async function deleteTask(taskId) {
     if (!selectedListId) return false;
     const token = await GoogleAuth.getValidAccessToken();
@@ -241,6 +278,9 @@ async function deleteTask(taskId) {
     }
 }
 
+/**
+ * タスク追加フォームの送信を処理する
+ */
 async function handleAddTaskSubmit() {
     const input = document.getElementById('google-tasks-input');
     if (!input || !input.value.trim()) return;
@@ -252,6 +292,9 @@ async function handleAddTaskSubmit() {
     }
 }
 
+/**
+ * タスクリスト選択用のドロップダウンをレンダリングする
+ */
 function renderTaskListsDropdown() {
     const select = document.getElementById('google-tasks-list-select');
     if (!select) return;
@@ -266,6 +309,9 @@ function renderTaskListsDropdown() {
     select.value = selectedListId;
 }
 
+/**
+ * タスク一覧をDOMにレンダリングする
+ */
 function renderTasks() {
     const listEl = document.getElementById('google-tasks-list');
     if (!listEl) return;
@@ -316,15 +362,26 @@ function renderTasks() {
     window.UnifiedAgenda?.refresh?.();
 }
 
+/**
+ * 未認証時のUIをレンダリングする
+ */
 function renderUnauthenticated() {
     window.ApiUI.setAuthGuide('google-tasks-list', 'Google アカウントと未連携です。設定サイドバーの Google 連携設定を行ってください。');
     window.ApiDiagnostics?.report('google-tasks', 'missing', 'Google 連携が必要');
 }
 
+/**
+ * エラー時のUIをレンダリングする
+ * @param {string} message - エラーメッセージ
+ */
 function renderError(message) {
     window.ApiUI.setError('google-tasks-list', message);
 }
 
+/**
+ * ローディング状態を切り替える
+ * @param {boolean} isLoading - ローディング中かどうか
+ */
 function setLoading(isLoading) {
     if (isLoading) {
         window.ApiUI.setLoading('google-tasks-list', 'Google Tasks と同期中...');

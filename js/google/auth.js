@@ -28,6 +28,10 @@ window.GoogleAuth = {
     createApiError
 };
 
+/**
+ * リダイレクトURIを取得する
+ * @returns {string} リダイレクトURI
+ */
 function getRedirectUri() {
     if (typeof chrome !== 'undefined' && chrome.identity && chrome.identity.getRedirectURL) {
         return chrome.identity.getRedirectURL();
@@ -36,10 +40,18 @@ function getRedirectUri() {
     return `https://${extId}.chromiumapp.org/`;
 }
 
+/**
+ * 設定されたGoogle Client IDを取得する
+ * @returns {string} Client ID
+ */
 function getGoogleClientId() {
     return getManifestGoogleClientId();
 }
 
+/**
+ * Google OAuth 2.0 認証を実行する
+ * @returns {Promise<boolean>} 認証が成功したかどうか
+ */
 async function authenticate() {
     const clientId = getGoogleClientId();
     if (!clientId) {
@@ -89,6 +101,11 @@ async function authenticate() {
     }
 }
 
+/**
+ * トークンレスポンスをパースする
+ * @param {Response} res - フェッチレスポンス
+ * @returns {Promise<Object>} パースされたオブジェクト
+ */
 async function parseTokenResponse(res) {
     try {
         return await res.json();
@@ -97,6 +114,10 @@ async function parseTokenResponse(res) {
     }
 }
 
+/**
+ * トークン情報を保存する
+ * @param {Object} data - トークン情報
+ */
 function saveToken(data) {
     if (data.access_token) {
         localStorage.setItem(GOOGLE_STORAGE_KEYS.accessToken, data.access_token);
@@ -110,16 +131,27 @@ function saveToken(data) {
     }
 }
 
+/**
+ * トークン情報をクリアする
+ */
 function clearToken() {
     removeCachedGoogleToken(localStorage.getItem(GOOGLE_STORAGE_KEYS.accessToken));
     Object.values(GOOGLE_STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
     window.ApiDiagnostics?.report('google-auth', 'missing', 'Google 連携なし');
 }
 
+/**
+ * 保存されたセッションが存在するか判定する
+ * @returns {boolean} セッションが存在するかどうか
+ */
 function hasStoredSession() {
     return Boolean(localStorage.getItem(GOOGLE_STORAGE_KEYS.accessToken));
 }
 
+/**
+ * 有効なアクセストークンを取得する
+ * @returns {Promise<string|null>} アクセストークン
+ */
 async function getValidAccessToken() {
     const missingScopes = getMissingRequiredScopes();
     if (missingScopes.length > 0) {
@@ -144,6 +176,10 @@ async function getValidAccessToken() {
     return isTokenExpiring ? null : token;
 }
 
+/**
+ * アクセストークンをリフレッシュする
+ * @returns {Promise<string|null>} リフレッシュされたアクセストークン
+ */
 async function refreshAccessToken() {
     try {
         const tokenResult = await getGoogleIdentityToken(false);
@@ -166,6 +202,11 @@ async function refreshAccessToken() {
     }
 }
 
+/**
+ * Google Identity API を使用してトークンを取得する
+ * @param {boolean} interactive - ユーザーのインタラクションを求めるかどうか
+ * @returns {Promise<{token: string, grantedScopes: string[]}|null>} トークン情報
+ */
 function getGoogleIdentityToken(interactive) {
     return new Promise((resolve, reject) => {
         const clientId = getGoogleClientId();
@@ -219,6 +260,10 @@ function getGoogleIdentityToken(interactive) {
     });
 }
 
+/**
+ * キャッシュされたGoogleトークンを削除する
+ * @param {string} token - 削除するトークン
+ */
 function removeCachedGoogleToken(token) {
     if (!token || typeof chrome === 'undefined' || !chrome.identity?.removeCachedAuthToken) {
         return;
@@ -226,12 +271,21 @@ function removeCachedGoogleToken(token) {
     chrome.identity.removeCachedAuthToken({ token }, () => void chrome.runtime.lastError);
 }
 
+/**
+ * トークンの有効期限が近いか判定する
+ * @returns {boolean} 有効期限が近いかどうか
+ */
 function isTokenExpiringSoon() {
     const expiresAt = Number(localStorage.getItem(GOOGLE_STORAGE_KEYS.expiresAt) || '0');
     if (!expiresAt) return false;
     return Date.now() + 60000 >= expiresAt;
 }
 
+/**
+ * 不足している必須スコープを取得する
+ * @param {string} [grantedScopeString] - 許可されたスコープの文字列
+ * @returns {string[]} 不足しているスコープの配列
+ */
 function getMissingRequiredScopes(grantedScopeString = localStorage.getItem(GOOGLE_STORAGE_KEYS.grantedScopes)) {
     if (!grantedScopeString) return [];
 
@@ -239,6 +293,11 @@ function getMissingRequiredScopes(grantedScopeString = localStorage.getItem(GOOG
     return GOOGLE_SCOPE_LIST.filter(scope => !grantedScopes.has(scope));
 }
 
+/**
+ * スコープ文字列を正規化する
+ * @param {string} scopeString - スコープ文字列
+ * @returns {string} 正規化されたスコープ文字列
+ */
 function normalizeScopeString(scopeString) {
     return String(scopeString || '')
         .split(/\s+/)
@@ -247,14 +306,30 @@ function normalizeScopeString(scopeString) {
         .join(' ');
 }
 
+/**
+ * スコープ配列を文字列に変換する
+ * @param {string[]|string} scopes - スコープ配列または文字列
+ * @returns {string} スコープ文字列
+ */
 function scopeListToString(scopes) {
     return normalizeScopeString(Array.isArray(scopes) ? scopes.join(' ') : GOOGLE_SCOPES);
 }
 
+/**
+ * スコープのラベルをフォーマットする
+ * @param {string[]} scopes - スコープの配列
+ * @returns {string} フォーマットされた文字列
+ */
 function formatScopeLabels(scopes) {
     return scopes.map(scope => GOOGLE_SCOPE_LABELS[scope] || scope).join('、');
 }
 
+/**
+ * APIエラーオブジェクトを作成する
+ * @param {Response} res - フェッチレスポンス
+ * @param {string} serviceLabel - サービス名
+ * @returns {Promise<Error>} エラーオブジェクト
+ */
 async function createApiError(res, serviceLabel) {
     const data = await parseTokenResponse(res);
     const apiMessage = data.error?.message || data.error_description || data.error || `HTTP ${res.status}`;
@@ -279,16 +354,32 @@ async function createApiError(res, serviceLabel) {
     return error;
 }
 
+/**
+ * スコープエラーかどうか判定する
+ * @param {string} apiMessage - APIのメッセージ
+ * @param {string} reason - エラーの理由
+ * @returns {boolean} スコープエラーかどうか
+ */
 function isScopeError(apiMessage, reason) {
     return reason === 'insufficientPermissions'
         || /insufficient authentication scopes/i.test(apiMessage)
         || /insufficient permissions/i.test(apiMessage);
 }
 
+/**
+ * 認証エラーを通知する
+ * @param {string} message - エラーメッセージ
+ * @param {Object} [options={}] - 通知オプション
+ */
 function notifyAuthError(message, options = {}) {
     window.showNotification(message, 'error', options);
 }
 
+/**
+ * Google認証エラーのメッセージをフォーマットする
+ * @param {Error|string} error - エラーオブジェクトまたはメッセージ
+ * @returns {string} フォーマットされたメッセージ
+ */
 function formatGoogleAuthError(error) {
     const message = error?.message || String(error || '');
     if (/Invalid OAuth2 Client ID/i.test(message)) {
@@ -300,12 +391,19 @@ function formatGoogleAuthError(error) {
     return `Googleの認証に失敗しました。詳細: ${message}`;
 }
 
+/**
+ * manifest.jsonからGoogle Client IDを取得する
+ * @returns {string} Client ID
+ */
 function getManifestGoogleClientId() {
     return typeof chrome !== 'undefined' && chrome.runtime?.getManifest
         ? chrome.runtime.getManifest().oauth2?.client_id || ''
         : '';
 }
 
+/**
+ * 設定画面の初期化とイベントリスナーの登録を行う
+ */
 function initSettings() {
     const clientIdDisplay = document.getElementById('google-client-id');
     const extensionIdDisplay = document.getElementById('google-extension-id');
@@ -405,14 +503,25 @@ function initSettings() {
     updateSettingsUI();
 }
 
+/**
+ * Google連携のカスタムイベントを発火する
+ * @param {string} eventName - イベント名
+ */
 function dispatchGoogleConnectionEvent(eventName) {
     document.dispatchEvent(new CustomEvent(eventName));
 }
 
+/**
+ * Chrome拡張機能のIDを取得する
+ * @returns {string} 拡張機能ID
+ */
 function getChromeExtensionId() {
     return typeof chrome !== 'undefined' && chrome.runtime?.id ? chrome.runtime.id : '拡張機能ID';
 }
 
+/**
+ * 設定UIの状態を更新する
+ */
 function updateSettingsUI() {
     const connectBtn = document.getElementById('google-connect-btn');
     const disconnectBtn = document.getElementById('google-disconnect-btn');

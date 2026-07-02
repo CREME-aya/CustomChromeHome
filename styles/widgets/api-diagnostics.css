@@ -1,3 +1,9 @@
+/* ==========================================================================
+ * API診断ウィジェット
+ * 各種APIの接続状態やエラー情報を一覧表示するウィジェットのスタイル
+ * ========================================================================== */
+
+/* ウィジェット本体 */
 .api-diagnostics-widget {
     background: var(--panel-bg);
     backdrop-filter: var(--panel-blur);
@@ -19,6 +25,7 @@
     margin-top: 8px;
 }
 
+/* --- 診断リストエリア --- */
 .api-diagnostics-list {
     display: flex;
     flex-direction: column;
@@ -28,6 +35,7 @@
     flex: 1;
 }
 
+/* --- 診断アイテム（個別項目） --- */
 .api-diagnostics-item {
     display: flex;
     justify-content: space-between;
@@ -38,6 +46,7 @@
     min-height: 48px;
 }
 
+/* 状態別ステータスカラー（左ボーダーで表現） */
 .api-diagnostics-item.state-ok {
     border-left-color: #10b981;
 }

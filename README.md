@@ -1,6 +1,6 @@
 # Nexus Dash
 
-Chrome の新しいタブを、時計、天気、ToDo、カレンダー取り込み、AI チャット、Spotify、RSS フィードをまとめたダッシュボードに置き換える拡張機能です。
+Chrome の新しいタブを、時計、天気、ToDo、カレンダー取り込み、AI チャット、Spotify、RSS フィード、GitHub 連携をまとめたダッシュボードに置き換える拡張機能です。
 
 HTML / CSS / Vanilla JavaScript だけで構成しており、ビルド手順や外部ライブラリは不要です。
 
@@ -10,11 +10,13 @@ HTML / CSS / Vanilla JavaScript だけで構成しており、ビルド手順や
 
 - 時計と日付の表示
 - 背景画像のローカル画像設定
-- Chrome 風のランダム背景
+- Chrome 風 of ランダム背景
 - ウィジェットごとの表示 / 非表示切り替え
+- ウィジェットの自由な配置（ドラッグ）およびリサイズ（右下ハンドルドラッグ）
 - クイックリンクの追加と削除
 - API接続状態の診断
 - 予定・タスク統合ビュー
+- 画面サイズ変更時や表示切替時における位置の自動補正（境界クランプ）および元の配置の復元
 
 ### 天気
 
@@ -76,10 +78,24 @@ OAuth 連携ではなく iCal URL 方式です。Google カレンダーの設定
 
 ### RSS / Discover
 
-- 複数の RSS / Atom フィードの読み込み
-- 記事検索
-- お気に入り登録
-- 記事プレビューのモーダル表示
+- 複数の RSS / Atom フィードの読み込みと表示モード（混合表示 / フィード別表示）の切り替え
+- 「混合表示」：全フィードの記事を公開日時の新しい順にソートして一括表示。トラッキングパラメータ除去を含む重複排除、出典（フィード名）の表示
+- 「フィード別表示」：設定した順でフィードごとにグループ分けして表示。一部フィードの取得失敗時も他の成功フィードの表示を妨げない部分失敗表示
+- 記事検索およびお気に入り登録（`localStorage` に保存）
+- 記事プレビューのモーダル表示と、元記事の別タブ表示
+- プレビュー HTML のサニタイズ（`script` やイベント属性、危険な URL スキームの除去）による安全な表示
+- タイムアウト（1フィードあたり10秒）および同時接続数制限（最大4件）による負荷軽減と安定動作
+- stale cache（キャッシュ）機能：オフラインや API 障害時でも直近のキャッシュ（最大24時間）を表示可能
+
+### GitHub 連携
+
+- GitHub PAT (個人アクセストークン) を使用して、自分にアサインされたオープン状態の Issue および PR を最大10件取得・表示
+- 同期動作のキャッシュ化と、同期失敗時のキャッシュ自動表示
+
+### GitHub Contribution Grass（芝生）
+
+- GitHub GraphQL API を用いて、ユーザーの年間コントリビューション（芝生）をダッシュボード上にグリッド表示
+- ダークモードとライトテーマに適応するカラー表示（`getAdaptiveColor`）
 
 ### API 診断
 
@@ -162,6 +178,21 @@ Google カレンダー、Google Tasks、Gmail ウィジェットを使うには�
 
 認証後に Calendar / Tasks / Gmail のいずれかへアクセスできない場合は、設定サイドバーで Google 連携を解除してから再連携してください。再連携時に一部の権限を拒否すると、対象 API は利用できません。
 
+## GitHub 連携および芝生ウィジェットの設定
+
+GitHub Issues/PR およびコントリビューション芝生を表示するには、GitHub の個人アクセストークン（Personal Access Token: PAT）が必要です。
+
+1. GitHub の「Settings」 > 「Developer settings」 > 「Personal Access Tokens」 > 「Tokens (classic)」を開く
+2. 「Generate new token (classic)」を押す
+3. 必要なスコープを選択する：
+   - 芝生の取得とアサインされた Issue/PR 取得のために `repo` または `read:user` を付与する
+4. 生成されたトークンをコピーする
+5. Nexus Dash の設定サイドバーを開く
+6. 「GitHub 連携設定」に PAT を貼り付け、「保存」を押す
+7. 芝生およびアサイン済み Issue/PR リストが表示されることを確認する
+
+トークンをクリアしたい場合は、設定サイドバーの入力欄を空にして「保存」を押すと設定が解除されます。
+
 ## Spotify 連携の設定
 
 Spotify 認証を使うには、Spotify Developer Dashboard の対象アプリで Redirect URI を登録する必要があります。再生・一時停止・曲送り・曲戻しには Spotify Premium プランが必要です。
@@ -221,7 +252,8 @@ NEXUS_SPOTIFY_CLIENT_ID=3ed94377fd3840f2b3f3e88967a2ed78
 
 - `identity`: Google / Spotify 認証に使うため
 - `tabs`: 認証ページを通常タブで開くフォールバックに使うため
-- `host_permissions`: RSS、天気、カレンダー、Google、AI、Spotify API へアクセスするため
+- `scripting`: 認証や処理に必要な一部のスクリプト実行などに使用するため
+- `host_permissions`: `<all_urls>` および `https://*/*` を指定し、RSS、天気、カレンダー、Google、AI、Spotify API 等へアクセスするため
 
 ## ファイル構成
 
@@ -231,33 +263,82 @@ NEXUS_SPOTIFY_CLIENT_ID=3ed94377fd3840f2b3f3e88967a2ed78
 ├── manifest.json     # Chrome 拡張設定
 ├── privacy.html      # Chrome Web Store 用プライバシーポリシー
 ├── js/
+│   ├── ai/           # AI チャットウィジェット
+│   │   ├── constants.js
+│   │   ├── providers.js # OpenAI / Anthropic / Gemini API 呼び出し
+│   │   ├── settings.js
+│   │   └── widget.js
+│   ├── core/
+│   │   └── base-widget.js # ウィジェットの共通ベースクラス
+│   ├── feed/         # RSS / Discover
+│   │   ├── constants.js
+│   │   ├── data.js   # フィード取得・キャッシュ・並行制御
+│   │   ├── parser.js # XML/JSON パースとサニタイズ
+│   │   ├── renderer.js
+│   │   └── search.js # 検索・フィルタ
+│   ├── layout/       # レイアウト管理
+│   │   ├── drag.js   # ドラッグ＆ドロップ、リサイズ
+│   │   └── widget.js # 状態保存・復元・リサイズ時クランプ
+│   ├── spotify/      # Spotify
+│   │   ├── auth.js   # PKCE 認証とトークン管理
+│   │   ├── api.js    # Spotify Web API 呼び出し
+│   │   └── ui.js     # Spotify UI と polling
+│   ├── weather/      # 天気
+│   │   ├── constants.js
+│   │   ├── data.js   # API 通信・位置情報管理
+│   │   └── widget.js
+│   ├── google/       # Google OAuth / Calendar / Tasks / Gmail
+│   │   ├── auth.js
+│   │   ├── calendar.js
+│   │   ├── tasks.js
+│   │   └── gmail.js
+│   ├── github/       # GitHub Issues / PR / Contribution Grass
+│   │   ├── issues.js
+│   │   └── grass.js
 │   ├── app.js        # DOMContentLoaded と初期化順序
 │   ├── api-diagnostics.js # API接続状態の集約表示
-│   ├── constants.js  # ストレージキー、定数、天気コード、背景プリセット
-│   ├── storage.js    # localStorage helper
-│   ├── feed.js       # RSS / Discover
-│   ├── layout-defaults.js
-│   ├── layout.js     # ウィジェット配置、ドラッグ、ピン留め
+│   ├── api-ui.js     # ローディング/エラー共通UI
+│   ├── background.js # 背景画像管理
 │   ├── calendar.js   # Google カレンダー ToDo 化
+│   ├── clock.js      # 時計
+│   ├── constants.js  # ストレージキー、定数、背景プリセット等
+│   ├── env-config.js # .env 設定値管理
+│   ├── ical-parser.js # iCal パーサー
+│   ├── input-fix.js  # テキスト入力のフォーカス修正
+│   ├── layout-defaults.js # 初期配置計算
+│   ├── media-controller.js # Spotify/YouTube 切替制御
+│   ├── notifications.js # 通知トースト
+│   ├── quick-links.js # クイックリンク
+│   ├── sidebar.js    # 設定サイドバー
+│   ├── stocks.js     # 株価ウィジェット
+│   ├── storage.js    # localStorage helper
+│   ├── theme.js      # UIテーマ切替
+│   ├── todo.js       # ToDo
 │   ├── unified-agenda.js # 予定・タスク統合ビュー
-│   ├── ical-parser.js
-│   ├── notifications.js
-│   └── spotify/
-│       ├── auth.js   # PKCE 認証とトークン管理
-│       ├── api.js    # Spotify Web API 呼び出し
-│       └── ui.js     # Spotify UI と polling
+│   └── widget-toggles.js # ウィジェット表示/非表示トグル
 ├── styles/
-│   ├── variables.css
-│   ├── base.css
-│   ├── sidebar.css
-│   ├── utilities.css
-│   ├── layout-edit.css
-│   ├── modal.css
-│   ├── notifications.css
-│   └── widgets/
-└── tests/
+│   ├── variables.css # CSS 変数とテーマ定義
+│   ├── base.css      # 基本レイアウトと共通スタイル
+│   ├── sidebar.css   # サイドバー用
+│   ├── utilities.css # ユーティリティ
+│   ├── layout-edit.css # 編集モード
+│   ├── modal.css     # モーダル
+│   ├── notifications.css # トースト
+│   ├── spotify-setup.css # Spotify 設定ガイド用
+│   └── widgets/      # 各ウィジェット個別 CSS
+│       ├── ai.css, clock.css, discover.css, github.css, github-grass.css,
+│       ├── gmail.css, google-calendar.css, google-tasks.css,
+│       ├── quick-links.css, spotify.css, stocks.css, todo.css,
+│       └── unified-agenda.css, weather.css, api-diagnostics.css
+└── tests/            # テストコード
+    ├── env-config.test.js
+    ├── feed-core.test.js
+    ├── ical-parser.test.js
     ├── ical-parser.test.html
-    └── ical-parser.test.js
+    ├── static-contracts.test.js
+    ├── stocks-core.test.js
+    ├── unified-agenda.test.js
+    └── weather-core.test.js
 ```
 
 ## 開発メモ
@@ -267,7 +348,7 @@ NEXUS_SPOTIFY_CLIENT_ID=3ed94377fd3840f2b3f3e88967a2ed78
 全 JavaScript の構文確認:
 
 ```sh
-for file in js/*.js js/spotify/*.js tests/*.js; do node --check "$file" || exit 1; done
+for file in js/*.js js/*/*.js tests/*.js; do node --check "$file" || exit 1; done
 ```
 
 iCal parser のテスト:

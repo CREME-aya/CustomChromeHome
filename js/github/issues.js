@@ -2,14 +2,26 @@
 // GitHub 連携ウィジェット
 // ==========================================
 (function() {
+/**
+ * @type {Array<object>}
+ * @description 取得したGitHubのIssueおよびPRデータを保持する
+ */
 let currentIssues = [];
 
+/**
+ * @constant {object} GitHub
+ * @description GitHub連携ウィジェットの外部公開API
+ */
 window.GitHub = {
     init,
     initSettings,
     loadIssues
 };
 
+/**
+ * GitHubウィジェットの初期化
+ * イベントの登録やキャッシュからの描画、初期データ読み込みを行う
+ */
 function init() {
     const syncBtn = document.getElementById('github-sync-btn');
     syncBtn?.addEventListener('click', () => loadIssues(true));
@@ -34,6 +46,11 @@ function init() {
     }
 }
 
+/**
+ * GitHubからアサインされたIssue・PRを非同期で取得する
+ * @param {boolean} [force=false] - キャッシュを無視して強制同期するかどうか
+ * @returns {Promise<void>}
+ */
 async function loadIssues(force = false) {
     const pat = getGithubPat();
     if (!pat) {
@@ -95,12 +112,19 @@ async function loadIssues(force = false) {
     }
 }
 
+/**
+ * ストレージからGitHub PAT（Personal Access Token）を取得する
+ * @returns {string}
+ */
 function getGithubPat() {
     return window.EnvConfig?.getStorageBackedValue(STORAGE_KEY_GITHUB_PAT, 'NEXUS_GITHUB_PAT')
         || localStorage.getItem(STORAGE_KEY_GITHUB_PAT)?.trim()
         || '';
 }
 
+/**
+ * 取得したIssue一覧をDOMに描画する
+ */
 function renderIssues() {
     const list = document.getElementById('github-list');
     if (!list) return;
@@ -150,19 +174,34 @@ function renderIssues() {
     });
 }
 
+/**
+ * 未認証（PAT未設定）状態を描画する
+ */
 function renderUnauthenticated() {
     window.ApiUI.setAuthGuide('github-list', 'GitHub PAT が設定されていません。設定サイドバーの GitHub 連携設定を行ってください。');
 }
 
+/**
+ * エラー状態を描画する
+ * @param {string} message - エラーメッセージ
+ */
 function renderError(message) {
     window.ApiUI.setError('github-list', message);
 }
 
+/**
+ * ローディング状態を制御する
+ * @param {boolean} isLoading - ローディング中かどうかのフラグ
+ */
 function setLoading(isLoading) {
     if (isLoading) {
         window.ApiUI.setLoading('github-list', 'GitHub から同期中...');
     }
 }
+
+/**
+ * 設定画面の初期化、イベントリスナーの登録を行う
+ */
 function initSettings() {
     const patInput = document.getElementById('github-pat');
     const saveBtn = document.getElementById('save-github-btn');

@@ -1,4 +1,7 @@
 (function() {
+    /**
+     * APIキー未設定時にスローされるカスタムエラー
+     */
     class MissingApiKeyError extends Error {
         constructor(providerLabel) {
             super(`${providerLabel} APIキーが未設定です。`);
@@ -6,6 +9,11 @@
         }
     }
 
+    /**
+     * AI設定モジュールを取得する
+     * @returns {Object} AiSettings オブジェクト
+     * @throws {Error} 設定モジュールが未定義の場合
+     */
     function getSettings() {
         if (!window.AiSettings) {
             throw new Error('AI設定モジュールが読み込まれていません。');
@@ -14,17 +22,35 @@
         return window.AiSettings;
     }
 
+    /**
+     * 指定されたプロバイダーのAPIキーを取得する
+     * @param {string} provider - プロバイダー名
+     * @returns {string} APIキー、存在しない場合は空文字列
+     */
     function getApiKey(provider) {
         const key = getSettings().getApiKeys()[provider];
         return key || '';
     }
 
+    /**
+     * 指定されたプロバイダーのAPIキーを取得し、未設定の場合はエラーをスローする
+     * @param {string} provider - プロバイダー名
+     * @param {string} label - エラーメッセージ用の表示ラベル
+     * @returns {string} APIキー
+     * @throws {MissingApiKeyError} APIキーが未設定の場合
+     */
     function requireApiKey(provider, label) {
         const key = getApiKey(provider);
         if (!key) throw new MissingApiKeyError(label);
         return key;
     }
 
+    /**
+     * レスポンスをJSONとして安全にパースする
+     * @param {Response} response - fetch APIのレスポンスオブジェクト
+     * @returns {Promise<Object>} パースされたJSONオブジェクト
+     * @throws {Error} JSONのパースに失敗した場合
+     */
     async function readJsonResponse(response) {
         try {
             return await response.json();
@@ -33,6 +59,11 @@
         }
     }
 
+    /**
+     * OpenAI APIにプロンプトを送信し、回答を取得する
+     * @param {string} prompt - 送信するプロンプト
+     * @returns {Promise<string>} AIからの回答テキスト
+     */
     async function fetchOpenAI(prompt) {
         const apiKey = requireApiKey('openai', 'OpenAI');
         const model = getSettings().getAiModel('openai');
@@ -57,6 +88,11 @@
         return responseText;
     }
 
+    /**
+     * Anthropic APIにプロンプトを送信し、回答を取得する
+     * @param {string} prompt - 送信するプロンプト
+     * @returns {Promise<string>} AIからの回答テキスト
+     */
     async function fetchAnthropic(prompt) {
         const apiKey = requireApiKey('anthropic', 'Anthropic');
         const model = getSettings().getAiModel('anthropic');
@@ -84,6 +120,11 @@
         return responseText;
     }
 
+    /**
+     * Gemini APIにプロンプトを送信し、回答を取得する
+     * @param {string} prompt - 送信するプロンプト
+     * @returns {Promise<string>} AIからの回答テキスト
+     */
     async function fetchGemini(prompt) {
         const apiKey = requireApiKey('gemini', 'Gemini');
         const model = getSettings().getAiModel('gemini');
