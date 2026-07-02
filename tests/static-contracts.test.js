@@ -84,6 +84,11 @@ test('DiscoverのOPML操作要素が存在する', () => {
     ].forEach(id => assert(ids.has(id), `${id} がありません`));
 });
 
+test('プライバシーポリシーへアクセスできる導線がある', () => {
+    assert(html.includes('https://creme-aya.github.io/privacy/'), 'プライバシーポリシーのリンクがありません');
+    assert(html.includes('rel="noopener noreferrer"'), '外部リンクのrel属性が不足しています');
+});
+
 test('予定・タスク統合ビューに必要な操作要素が存在する', () => {
     [
         'toggle-unified-agenda',
