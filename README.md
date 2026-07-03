@@ -163,15 +163,15 @@ H2: 190;192;191;195
 
 ## Google OAuth 連携の設定
 
-Google カレンダー、Google Tasks、Gmail ウィジェットを使うには、Chrome 拡張用の OAuth クライアント ID が必要です。Web アプリケーション用クライアント ID ではなく、Chrome 拡張機能用クライアント ID を作成してください。
+Google カレンダー、Google Tasks、Gmail ウィジェットを使うには、Web アプリケーション用の OAuth クライアント ID が必要です。この拡張機能は `chrome.identity.launchWebAuthFlow` で Google の認証画面を開き、Chrome 拡張のリダイレクト URI へ戻ってきたアクセストークンを使います。
 
 1. Google Cloud Console でプロジェクトを作成または選択する
 2. 「APIとサービス」から Google Calendar API、Google Tasks API、Gmail API を有効化する
 3. 「OAuth 同意画面」で Calendar / Tasks / Gmail のスコープを追加する
 4. テスト公開中の場合は、利用する Google アカウントをテストユーザーへ追加する
 5. 「認証情報」から OAuth クライアント ID を作成する
-6. アプリケーションの種類に「Chrome 拡張機能」を選ぶ
-7. 拡張機能 ID に `manifest.json` の `key` から固定される拡張機能 ID、または Chrome の拡張機能ページに表示される ID を登録する
+6. アプリケーションの種類に「Web アプリケーション」を選ぶ
+7. 「承認済みのリダイレクト URI」に `https://<拡張機能ID>.chromiumapp.org/` を登録する
 8. 作成されたクライアント ID が `manifest.json` の `oauth2.client_id` と一致していることを確認する
 9. Chrome の拡張機能ページで Nexus Dash をリロードする
 10. Nexus Dash の設定サイドバーで「Googleと連携」を押し、Calendar / Tasks / Gmail の権限をすべて許可する

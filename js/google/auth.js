@@ -59,7 +59,7 @@ async function authenticate() {
         return false;
     }
 
-    if (typeof chrome === 'undefined' || !chrome.identity || !chrome.identity.getAuthToken) {
+    if (typeof chrome === 'undefined' || !chrome.identity || !chrome.identity.launchWebAuthFlow) {
         notifyAuthError("Chrome拡張機能として動作していないか、identity権限がありません。");
         return false;
     }
@@ -209,11 +209,7 @@ async function refreshAccessToken() {
  */
 function getGoogleIdentityToken(interactive) {
     return new Promise((resolve, reject) => {
-        const clientId = getGoogleClientId();
-        const redirectUri = getRedirectUri();
-        const scopes = encodeURIComponent(GOOGLE_SCOPE_LIST.join(' '));
-        const prompt = interactive ? 'select_account' : 'none';
-        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&prompt=${prompt}`;
+        const authUrl = buildGoogleAuthUrl(interactive);
 
         const timeoutId = setTimeout(() => {
             if (interactive) {
@@ -236,17 +232,13 @@ function getGoogleIdentityToken(interactive) {
                     return;
                 }
                 try {
-                    const url = new URL(redirectUrl.replace('#', '?'));
-                    const token = url.searchParams.get('access_token');
-                    if (!token) {
+                    const tokenResult = parseGoogleAuthRedirectUrl(redirectUrl);
+                    if (!tokenResult?.token) {
                         if (!interactive) return resolve(null);
                         reject(new Error('トークンが取得できませんでした。'));
                         return;
                     }
-                    resolve({
-                        token,
-                        grantedScopes: GOOGLE_SCOPE_LIST
-                    });
+                    resolve(tokenResult);
                 } catch (e) {
                     if (!interactive) return resolve(null);
                     reject(e);
@@ -258,6 +250,41 @@ function getGoogleIdentityToken(interactive) {
             reject(e);
         }
     });
+}
+
+/**
+ * Google OAuth 認証URLを生成する
+ * @param {boolean} interactive - ユーザーのインタラクションを求めるかどうか
+ * @returns {string} 認証URL
+ */
+function buildGoogleAuthUrl(interactive) {
+    const params = new URLSearchParams({
+        client_id: getGoogleClientId(),
+        response_type: 'token',
+        redirect_uri: getRedirectUri(),
+        scope: GOOGLE_SCOPE_LIST.join(' '),
+        prompt: interactive ? 'select_account' : 'none',
+        include_granted_scopes: 'true'
+    });
+
+    return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+}
+
+/**
+ * Google OAuth のリダイレクトURLからトークン情報を取り出す
+ * @param {string} redirectUrl - リダイレクトURL
+ * @returns {{token: string, grantedScopes: string[]}|null} トークン情報
+ */
+function parseGoogleAuthRedirectUrl(redirectUrl) {
+    const url = new URL(redirectUrl.replace('#', '?'));
+    const token = url.searchParams.get('access_token');
+    const scope = url.searchParams.get('scope');
+    if (!token) return null;
+
+    return {
+        token,
+        grantedScopes: scope ? scope.split(/\s+/).filter(Boolean) : GOOGLE_SCOPE_LIST
+    };
 }
 
 /**
@@ -442,12 +469,9 @@ function initSettings() {
                     <li>「OAuth 同意画面」で Calendar / Tasks / Gmail のスコープを追加します。テスト公開中の場合は、利用する Google アカウントをテストユーザーに追加します。</li>
                     <li>「APIとサービス」 &gt; 「認証情報」に移動します。</li>
                     <li>「認証情報を作成」 &gt; 「OAuth クライアント ID」を選択します。</li>
-                    <li>アプリケーションの種類として <strong>「Web アプリケーション」</strong> (または「Chrome 拡張機能」) を選択します。</li>
-                    <li>「Web アプリケーション」を選んだ場合、「承認済みのリダイレクト URI」に以下のURIを追加してください：<br>
+                    <li>アプリケーションの種類として <strong>「Web アプリケーション」</strong> を選択します。</li>
+                    <li>「承認済みのリダイレクト URI」に以下の URI を追加します：<br>
                         <code>${redirectUri}</code>
-                    </li>
-                    <li>拡張機能 ID に以下の値を登録します（Chrome 拡張機能を選んだ場合）：<br>
-                        <code>${getChromeExtensionId()}</code>
                     </li>
                     <li>この拡張機能の <code>manifest.json</code> に設定されている Client ID は以下です：<br>
                         <code>${manifestClientId || '未設定'}</code>
@@ -455,7 +479,7 @@ function initSettings() {
                     <li>作成された <strong>クライアント ID</strong> が <code>manifest.json</code> の <code>oauth2.client_id</code> と一致していることを確認します。</li>
                     <li>「Googleと連携」ボタンを押し、Calendar / Tasks / Gmail の権限をすべて許可してください。</li>
                 </ol>
-                <p>この拡張機能で使うリダイレクト URI は <code>${redirectUri}</code> です。通常は Chrome 拡張機能クライアント ID と拡張機能 ID の組み合わせで認証します。</p>
+                <p>この拡張機能は Chrome の <code>identity.launchWebAuthFlow</code> で Google の認証画面を開き、<code>${redirectUri}</code> へ戻ってきたアクセストークンを使います。Chrome 拡張機能用クライアント ID ではなく、上記リダイレクト URI を登録した Web アプリケーション用クライアント ID を使ってください。</p>
             </body>
             </html>
         `;

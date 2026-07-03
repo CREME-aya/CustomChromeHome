@@ -303,11 +303,15 @@ test('Google OAuthはスコープ不足を検出できる', () => {
     assert(manifest.oauth2?.scopes?.includes('https://www.googleapis.com/auth/calendar'), 'Google Calendar scope が manifest にありません');
     assert(manifest.oauth2?.scopes?.includes('https://www.googleapis.com/auth/tasks'), 'Google Tasks scope が manifest にありません');
     assert(manifest.oauth2?.scopes?.includes('https://www.googleapis.com/auth/gmail.readonly'), 'Gmail readonly scope が manifest にありません');
-    assert(googleAuthSource.includes('chrome.identity.getAuthToken'), 'Google OAuth が chrome.identity.getAuthToken を使っていません');
+    assert(googleAuthSource.includes('chrome.identity.launchWebAuthFlow'), 'Google OAuth が launchWebAuthFlow を使っていません');
+    assert(googleAuthSource.includes('accounts.google.com/o/oauth2/v2/auth'), 'Google OAuth の認証URLがありません');
+    assert(googleAuthSource.includes('redirect_uri'), 'Google OAuth のリダイレクトURI指定がありません');
+    assert(googleAuthSource.includes('parseGoogleAuthRedirectUrl'), 'Google OAuth のリダイレクトURL解析が分離されていません');
     assert(constantsSource.includes("grantedScopes: 'google_granted_scopes'"), 'Google OAuthの取得済みスコープ保存キーがありません');
     assert(googleAuthSource.includes('getMissingRequiredScopes'), 'Google OAuthのスコープ不足検出がありません');
     assert(googleAuthSource.includes('Google Calendar API'), 'Google API有効化の案内がありません');
-    assert(readme.includes('Chrome 拡張機能用クライアント ID'), 'READMEにChrome拡張用OAuthクライアントIDの説明がありません');
+    assert(readme.includes('Web アプリケーション用の OAuth クライアント ID'), 'READMEにWebアプリ用OAuthクライアントIDの説明がありません');
+    assert(readme.includes('https://<拡張機能ID>.chromiumapp.org/'), 'READMEにGoogle OAuthのリダイレクトURI説明がありません');
 });
 
 test('Phase 1 の共通Widget基盤が存在する', () => {
