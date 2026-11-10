@@ -94,7 +94,7 @@ function getRegisteredSymbols() {
  * @param {string[]} symbols 銘柄リスト
  */
 function saveRegisteredSymbols(symbols) {
-    localStorage.setItem(STORAGE_KEY_STOCKS, JSON.stringify(symbols));
+    writeJsonToStorage(STORAGE_KEY_STOCKS, symbols);
 }
 
 /**
@@ -135,7 +135,7 @@ async function loadStocksData(force = false) {
 
         if (succeeded > 0) {
             currentStocksData = updatedData;
-            localStorage.setItem(STORAGE_KEY_STOCKS_CACHE, JSON.stringify(currentStocksData));
+            writeJsonToStorage(STORAGE_KEY_STOCKS_CACHE, currentStocksData);
             renderStocks();
             window.ApiDiagnostics?.report(
                 'stocks',

@@ -111,7 +111,7 @@ async function loadEvents(force = false) {
             return dateA - dateB;
         });
 
-        localStorage.setItem(STORAGE_KEY_GOOGLE_CALENDAR_CACHE, JSON.stringify(currentEvents));
+        writeJsonToStorage(STORAGE_KEY_GOOGLE_CALENDAR_CACHE, currentEvents);
         renderEvents();
         window.ApiDiagnostics?.report('google-calendar', 'ok', `${currentEvents.length}件の予定を取得`);
         window.UnifiedAgenda?.refresh?.();
@@ -325,12 +325,7 @@ function setLoading(isLoading) {
  * @returns {Array<string>} カレンダーIDのリスト
  */
 function getSelectedCalendars() {
-    try {
-        const val = localStorage.getItem(STORAGE_KEY_GOOGLE_SELECTED_CALENDARS);
-        return val ? JSON.parse(val) : [];
-    } catch(e) {
-        return [];
-    }
+    return readJsonFromStorage(STORAGE_KEY_GOOGLE_SELECTED_CALENDARS, []);
 }
 
 /**

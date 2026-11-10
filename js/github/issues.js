@@ -96,7 +96,7 @@ async function loadIssues(force = false) {
             };
         });
 
-        localStorage.setItem(STORAGE_KEY_GITHUB_CACHE, JSON.stringify(currentIssues));
+        writeJsonToStorage(STORAGE_KEY_GITHUB_CACHE, currentIssues);
         renderIssues();
         window.ApiDiagnostics?.report('github', 'ok', `${currentIssues.length}件のIssue/PRを取得`);
     } catch(e) {

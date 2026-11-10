@@ -13,28 +13,85 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     /**
-     * 各モジュールの初期化を安全に実行するヘルパー
-     * 1つのウィジェットのエラーが他の無関係な機能（時計、天気など）の初期化を妨げないようにする
+     * 初期化対象の一覧（この順番で実行する）
+     * resolve は実行時にグローバルから初期化関数を取り出す。
+     * 未定義なら警告だけ出して次へ進み、1つの失敗が他のウィジェットを止めないようにする。
      *
-     * @param {string} name - 初期化対象のモジュール名
-     * @param {Function} initFn - 初期化を実行する関数
+     * @type {Array<{name: string, resolve: () => (Function|undefined)}>}
      */
-    const safeInit = (name, initFn) => {
-        try {
-            if (typeof initFn === 'function') {
-                const result = initFn();
-                // async 初期化の失敗も未処理のPromiseにせず、対象ウィジェット名付きで記録する。
-                if (result && typeof result.catch === 'function') {
-                    result.catch(error => reportInitializationError(name, error));
+    const bindMethod = (obj, method) => (obj && typeof obj[method] === 'function')
+        ? obj[method].bind(obj)
+        : undefined;
+
+    const modules = [
+        { name: 'InputFocusFix', resolve: () => window.initInputFocusFix },
+        { name: 'Sidebar', resolve: () => window.initSidebar },
+        { name: 'Feed', resolve: () => window.initFeed },
+        { name: 'Background', resolve: () => window.initBackground },
+        { name: 'Search', resolve: () => window.initSearch },
+        { name: 'Clock', resolve: () => window.initClock },
+        { name: 'QuickLinks', resolve: () => window.initQuickLinks },
+        { name: 'WidgetToggles', resolve: () => window.initWidgetToggles },
+        { name: 'ApiKeys', resolve: () => window.initApiKeys },
+        { name: 'ApiDiagnostics', resolve: () => bindMethod(window.ApiDiagnostics, 'init') },
+        { name: 'MultiAI', resolve: () => window.initMultiAI },
+        { name: 'ThemeSettings', resolve: () => window.initThemeSettings },
+        { name: 'WidgetSortable', resolve: () => window.initWidgetSortable },
+        { name: 'WeatherSettings', resolve: () => window.initWeatherSettings },
+        { name: 'Spotify', resolve: () => window.initSpotify },
+        { name: 'Todo', resolve: () => window.initTodo },
+        { name: 'CalendarTodoImport', resolve: () => window.initCalendarTodoImport },
+        { name: 'UnifiedAgenda', resolve: () => bindMethod(window.UnifiedAgenda, 'init') },
+        { name: 'GoogleAuth.initSettings', resolve: () => bindMethod(window.GoogleAuth, 'initSettings') },
+        { name: 'GoogleCalendar.init', resolve: () => bindMethod(window.GoogleCalendar, 'init') },
+        { name: 'GoogleTasks.init', resolve: () => bindMethod(window.GoogleTasks, 'init') },
+        { name: 'Gmail.init', resolve: () => bindMethod(window.Gmail, 'init') },
+        { name: 'GitHub.init', resolve: () => bindMethod(window.GitHub, 'init') },
+        { name: 'GithubGrass', resolve: () => window.initGithubGrass },
+        { name: 'MediaController', resolve: () => window.initMediaController },
+        { name: 'Stocks', resolve: () => bindMethod(window.StocksWidget, 'init') },
+        // 初期データのロード（未定義なら何もしない。戻り値は待たない）
+        {
+            name: 'LoadFeed',
+            resolve: () => () => {
+                if (typeof window.loadFeed === 'function') {
+                    window.loadFeed(window.getStoredFeedUrls ? window.getStoredFeedUrls() : []);
                 }
-            } else {
+            }
+        },
+        {
+            name: 'LoadWeather',
+            resolve: () => () => {
+                if (typeof window.loadWeather === 'function') {
+                    window.loadWeather();
+                }
+            }
+        }
+    ];
+
+    /**
+     * 1つのモジュールを安全に初期化する
+     * 同期の例外も async の reject も、モジュール名付きで記録する。
+     *
+     * @param {{name: string, resolve: Function}} module - 初期化対象
+     */
+    const safeInit = ({ name, resolve }) => {
+        try {
+            const initFn = resolve();
+            if (typeof initFn !== 'function') {
                 console.warn(`[Warn] Initialization function for "${name}" is not registered or failed to load.`);
+                return;
+            }
+            const result = initFn();
+            if (result && typeof result.catch === 'function') {
+                result.catch(error => reportInitializationError(name, error));
             }
         } catch (e) {
             reportInitializationError(name, e);
         }
     };
 
+    // .env の読み込みを待ってから初期化する（失敗しても初期化は続ける）
     if (window.EnvConfig?.ready) {
         try {
             await window.EnvConfig.ready;
@@ -43,72 +100,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    safeInit('InputFocusFix', window.initInputFocusFix);
-    safeInit('Sidebar', window.initSidebar);
-    safeInit('Feed', window.initFeed);
-    safeInit('Background', window.initBackground);
-    safeInit('Search', window.initSearch);
-    safeInit('Clock', window.initClock);
-    safeInit('QuickLinks', window.initQuickLinks);
-    safeInit('WidgetToggles', window.initWidgetToggles);
-    safeInit('ApiKeys', window.initApiKeys);
-    safeInit('ApiDiagnostics', window.ApiDiagnostics?.init);
-    safeInit('MultiAI', window.initMultiAI);
-    safeInit('ThemeSettings', window.initThemeSettings);
-    safeInit('WidgetSortable', window.initWidgetSortable);
-    safeInit('WeatherSettings', window.initWeatherSettings);
-    safeInit('Spotify', window.initSpotify);
-    safeInit('Todo', window.initTodo);
-    safeInit('CalendarTodoImport', window.initCalendarTodoImport);
-    safeInit('UnifiedAgenda', window.UnifiedAgenda?.init);
-
-    /**
-     * グローバルオブジェクトのメソッドを安全に実行する初期化ヘルパー
-     * 主にGoogle/GitHub等の外部ウィジェット連携用
-     *
-     * @param {string} name - グローバルオブジェクトの名称
-     * @param {Object} obj - グローバルオブジェクト（window.GoogleAuthなど）
-     * @param {string} method - 実行するメソッド名
-     */
-    const safeMethodInit = (name, obj, method) => {
-        try {
-            if (obj && typeof obj[method] === 'function') {
-                const result = obj[method]();
-                if (result && typeof result.catch === 'function') {
-                    result.catch(error => reportInitializationError(`${name}.${method}`, error));
-                }
-            } else if (!obj) {
-                console.warn(`[Warn] Global object "${name}" is not defined.`);
-            } else {
-                console.warn(`[Warn] Method "${method}" on "${name}" is not defined.`);
-            }
-        } catch (e) {
-            console.error(`[Error] Failed to initialize Google/GitHub ${name}.${method}:`, e);
-        }
-    };
-
-    safeMethodInit('GoogleAuth', window.GoogleAuth, 'initSettings');
-    safeMethodInit('GoogleCalendar', window.GoogleCalendar, 'init');
-    safeMethodInit('GoogleTasks', window.GoogleTasks, 'init');
-    safeMethodInit('Gmail', window.Gmail, 'init');
-    safeMethodInit('GitHub', window.GitHub, 'init');
-
-    safeInit('GithubGrass', window.initGithubGrass);
-    safeInit('MediaController', window.initMediaController);
-    safeInit('Stocks', window.StocksWidget?.init);
-
-    // 初期データのロード
-    safeInit('LoadFeed', () => {
-        if (typeof window.loadFeed === 'function') {
-            window.loadFeed(window.getStoredFeedUrls ? window.getStoredFeedUrls() : []);
-        }
-    });
-
-    safeInit('LoadWeather', () => {
-        if (typeof window.loadWeather === 'function') {
-            window.loadWeather();
-        }
-    });
+    modules.forEach(safeInit);
 
     // テーマの適用
     try {
