@@ -155,7 +155,7 @@ async function loadTasks(listId, showLoadingState = true) {
             return new Date(b.updated) - new Date(a.updated);
         });
 
-        localStorage.setItem(STORAGE_KEY_GOOGLE_TASKS_CACHE, JSON.stringify(currentTasks));
+        writeJsonToStorage(STORAGE_KEY_GOOGLE_TASKS_CACHE, currentTasks);
         renderTasks();
         window.ApiDiagnostics?.report('google-tasks', 'ok', `${currentTasks.length}件のタスクを取得`);
         window.UnifiedAgenda?.refresh?.();

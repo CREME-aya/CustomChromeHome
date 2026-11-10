@@ -293,7 +293,7 @@ function readReportedStatuses() {
  */
 function writeReportedStatuses(statuses) {
     try {
-        localStorage.setItem(STATUS_STORAGE_KEY, JSON.stringify(statuses));
+        writeJsonToStorage(STATUS_STORAGE_KEY, statuses);
     } catch (error) {
         console.warn('API診断キャッシュを保存できませんでした。', error);
     }

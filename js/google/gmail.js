@@ -75,7 +75,7 @@ async function loadEmails(force = false) {
 
         if (messages.length === 0) {
             currentEmails = [];
-            localStorage.setItem(STORAGE_KEY_GMAIL_CACHE, JSON.stringify(currentEmails));
+            writeJsonToStorage(STORAGE_KEY_GMAIL_CACHE, currentEmails);
             renderEmails();
             window.ApiDiagnostics?.report('gmail', 'ok', '未読メールはありません');
             return;
@@ -103,7 +103,7 @@ async function loadEmails(force = false) {
         }
 
         currentEmails = emailDetails;
-        localStorage.setItem(STORAGE_KEY_GMAIL_CACHE, JSON.stringify(currentEmails));
+        writeJsonToStorage(STORAGE_KEY_GMAIL_CACHE, currentEmails);
         renderEmails();
         window.ApiDiagnostics?.report('gmail', 'ok', `${currentEmails.length}件の未読メールを取得`);
     } catch(e) {

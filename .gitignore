@@ -3,3 +3,5 @@ FETCH_HEAD
 /docs/*
 .env
 .env.local
+dist/
+*.zip

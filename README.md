@@ -253,7 +253,7 @@ NEXUS_SPOTIFY_CLIENT_ID=3ed94377fd3840f2b3f3e88967a2ed78
 - `identity`: Google / Spotify 認証に使うため
 - `tabs`: 認証ページを通常タブで開くフォールバックに使うため
 - `scripting`: 認証や処理に必要な一部のスクリプト実行などに使用するため
-- `host_permissions`: `<all_urls>` および `https://*/*` を指定し、RSS、天気、カレンダー、Google、AI、Spotify API 等へアクセスするため
+- `host_permissions`: `<all_urls>` を指定し（任意の iCal URL を取得するため絞り込めない）、RSS、天気、カレンダー、Google、AI、Spotify API 等へアクセスするため
 
 ## ファイル構成
 

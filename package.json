@@ -1,5 +1,6 @@
 {
   "scripts": {
-    "test": "node tests/run-all.js"
+    "test": "node tests/run-all.js",
+    "package": "sh scripts/package.sh"
   }
 }
