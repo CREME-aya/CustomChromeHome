@@ -5,6 +5,7 @@
 const FeedCore = window.FeedCore;
 const FeedConstants = window.FeedConstants;
 const FeedParser = window.FeedParser;
+const FeedXml = window.FeedXml;
 
 /**
  * 現在実行中のフィード読み込みの世代（非同期処理の競合・上書き防止用）
@@ -295,11 +296,56 @@ async function loadSingleFeed(feedUrl, sourceOrder) {
 }
 
 /**
+ * 配信元から直接フィードを取得し、XML を解析する
+ * @param {string} feedUrl - 対象のRSS/AtomフィードURL
+ * @returns {Promise<Object>} 解析したフィードデータ
+ */
+async function fetchFeedData(feedUrl) {
+    const controller = new AbortController();
+    activeControllers.push(controller);
+    const timeoutId = setTimeout(() => controller.abort('timeout'), FeedConstants.requestTimeoutMs);
+    try {
+        const response = await fetch(feedUrl, { signal: controller.signal });
+        if (!response.ok) {
+            const error = new Error(`HTTP ${response.status}`);
+            error.code = `http-${response.status}`;
+            error.status = response.status;
+            throw error;
+        }
+        const text = typeof response.arrayBuffer === 'function'
+            ? FeedXml.decodeFeedBytes(await response.arrayBuffer(), response.headers?.get?.('content-type'))
+            : await response.text();
+        try {
+            return FeedXml.parseFeedXml(text);
+        } catch (error) {
+            if (error.code) throw error;
+            throw FeedXml.createParseError();
+        }
+    } catch (error) {
+        if (controller.signal.aborted) {
+            const timedOut = controller.signal.reason === 'timeout';
+            const abortError = new Error(timedOut ? 'フィードの取得がタイムアウトしました。' : 'フィードの取得が中断されました。');
+            abortError.code = timedOut ? 'timeout' : 'abort';
+            throw abortError;
+        }
+        // 拡張機能内は host_permissions により CORS を越えて直接取得できるため rss2json は使わない。
+        // ローカル HTML で開いた開発時だけ CORS 等で TypeError になるので、そのときに限り rss2json に切り替える。
+        if ((typeof chrome === 'undefined' || !chrome.runtime?.id) && error instanceof TypeError) {
+            return fetchFeedDataViaRss2json(feedUrl);
+        }
+        throw error;
+    } finally {
+        clearTimeout(timeoutId);
+        activeControllers = activeControllers.filter(active => active !== controller);
+    }
+}
+
+/**
  * rss2json API を経由してフィードのJSONデータを取得する
  * @param {string} feedUrl - 対象のRSS/AtomフィードURL
  * @returns {Promise<Object>} APIから返されたJSONデータ
  */
-async function fetchFeedData(feedUrl) {
+async function fetchFeedDataViaRss2json(feedUrl) {
     const controller = new AbortController();
     activeControllers.push(controller);
     const timeoutId = setTimeout(() => controller.abort('timeout'), FeedConstants.requestTimeoutMs);

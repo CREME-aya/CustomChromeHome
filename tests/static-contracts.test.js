@@ -159,6 +159,7 @@ test('Feed Phase 2 の分割モジュールを正しい順序で読み込む', (
     const feedCoreIndex = html.indexOf('js/feed-core.js');
     const feedConstantsIndex = html.indexOf('js/feed/constants.js');
     const feedParserIndex = html.indexOf('js/feed/parser.js');
+    const feedXmlIndex = html.indexOf('js/feed/xml.js');
     const feedDataIndex = html.indexOf('js/feed/data.js');
     const feedSearchIndex = html.indexOf('js/feed/search.js');
     const feedRendererIndex = html.indexOf('js/feed/renderer.js');
@@ -166,7 +167,8 @@ test('Feed Phase 2 の分割モジュールを正しい順序で読み込む', (
     assert(feedCoreIndex >= 0, 'feed-core.js が読み込まれていません');
     assert(feedConstantsIndex > feedCoreIndex, 'feed/constants.js は feed-core.js より後に読み込んでください');
     assert(feedParserIndex > feedConstantsIndex, 'feed/parser.js は feed/constants.js より後に読み込んでください');
-    assert(feedDataIndex > feedParserIndex, 'feed/data.js は feed/parser.js より後に読み込んでください');
+    assert(feedXmlIndex > feedParserIndex, 'feed/xml.js は feed/parser.js より後に読み込んでください');
+    assert(feedDataIndex > feedXmlIndex, 'feed/data.js は feed/xml.js より後に読み込んでください');
     assert(feedSearchIndex > feedDataIndex, 'feed/search.js は feed/data.js より後に読み込んでください');
     assert(feedRendererIndex > feedSearchIndex, 'feed/renderer.js は feed/search.js より後に読み込んでください');
     assert(feedWidgetIndex > feedRendererIndex, 'feed.js は feed/renderer.js より後に読み込んでください');
