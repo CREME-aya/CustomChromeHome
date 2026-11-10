@@ -24,6 +24,7 @@ global.writeJsonToStorage = (key, value) => {
 require('../js/feed-core.js');
 require('../js/feed/constants.js');
 require('../js/feed/parser.js');
+require('../js/feed/xml.js');
 require('../js/feed/data.js');
 
 let failed = 0;
@@ -42,6 +43,43 @@ function assertEqual(actual, expected) {
         throw new Error(`Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
     }
 }
+
+test('FeedXml は Atom リンクと日付を正規化する', () => {
+    assertEqual(window.FeedXml.selectAtomLink([{ rel: 'self', href: 'self' }, { rel: 'alternate', href: 'alternate' }]), 'alternate');
+    assertEqual(window.FeedXml.selectAtomLink([{ rel: 'self', href: 'first' }, { href: '' }]), 'first');
+    assertEqual(window.FeedXml.selectAtomLink([]), '');
+    assertEqual(window.FeedXml.normalizeDateText(' 2026-01-01 '), '2026-01-01');
+});
+
+test('FeedXml は Content-Type と XML 宣言から文字コードを決める', () => {
+    assertEqual(window.FeedXml.detectXmlCharset('application/rss+xml; charset=EUC-JP', '<?xml version="1.0" encoding="UTF-8"?>'), 'euc-jp');
+    assertEqual(window.FeedXml.detectXmlCharset('text/xml', '<?xml version="1.0" encoding="Shift_JIS"?><rss/>'), 'shift_jis');
+    assertEqual(window.FeedXml.detectXmlCharset('', '<rss/>'), 'utf-8');
+    assertEqual(window.FeedXml.detectXmlCharset('text/xml; charset=UTF-8', '\xFF\xFE<\x00'), 'utf-16le');
+    const sjisBytes = Uint8Array.from([0x3c, 0x3f, 0x78, 0x6d, 0x6c, 0x20, 0x65, 0x6e, 0x63, 0x6f, 0x64, 0x69, 0x6e, 0x67, 0x3d, 0x22, 0x53, 0x68, 0x69, 0x66, 0x74, 0x5f, 0x4a, 0x49, 0x53, 0x22, 0x3f, 0x3e, 0x82, 0xa0]);
+    assert(window.FeedXml.decodeFeedBytes(sjisBytes.buffer, 'text/xml').endsWith('\u3042'), 'Shift_JIS をデコードできません');
+    assertEqual(window.FeedXml.decodeFeedBytes(Uint8Array.from([0xe3, 0x81, 0x82]).buffer, 'text/xml; charset=unknown-x'), '\u3042');
+});
+
+test('FeedXml は音声・動画以外の enclosure をサムネイル候補に残す', () => {
+    assertEqual(window.FeedXml.isEnclosureThumbnailCandidate('false'), true);
+    assertEqual(window.FeedXml.isEnclosureThumbnailCandidate(''), true);
+    assertEqual(window.FeedXml.isEnclosureThumbnailCandidate('image/png'), true);
+    assertEqual(window.FeedXml.isEnclosureThumbnailCandidate('audio/mpeg'), false);
+    assertEqual(window.FeedXml.isEnclosureThumbnailCandidate('video/mp4'), false);
+    assertEqual(window.FeedXml.pickThumbnail([], [], { link: 'https://res.cloudinary.com/a.png?_a=1', type: 'false' }), 'https://res.cloudinary.com/a.png?_a=1');
+});
+
+test('FeedXml は空の XML と DOMParser 不在を解析エラーにする', () => {
+    for (const source of ['', '<rss/>']) {
+        try {
+            window.FeedXml.parseFeedXml(source, null);
+            throw new Error('解析エラーがありません');
+        } catch (error) {
+            assertEqual(error.code, 'parse');
+        }
+    }
+});
 
 test('FeedData.parseFeedUrls はHTTP URLだけを重複排除して返す', () => {
     const urls = window.FeedData.parseFeedUrls([
@@ -86,21 +124,14 @@ test('FeedData.buildOpmlDocument は保存フィードを書き出せる', () =>
 });
 
 test('FeedData.loadFeedSources は取得結果を正規化してキャッシュする', async () => {
+    const originalParser = window.FeedXml.parseFeedXml;
+    window.FeedXml.parseFeedXml = () => ({
+        status: 'ok', feed: { title: 'Example Feed' },
+        items: [{ title: 'Example Article', link: 'https://example.com/a?utm_source=rss#frag', pubDate: '2026-06-25T16:00:00Z', description: 'Body' }]
+    });
     global.fetch = async (url) => {
-        assert(String(url).includes(encodeURIComponent('https://example.com/custom.xml')), 'rss_url がAPI URLへ含まれていません');
-        return {
-            ok: true,
-            json: async () => ({
-                status: 'ok',
-                feed: { title: 'Example Feed' },
-                items: [{
-                    title: 'Example Article',
-                    link: 'https://example.com/a?utm_source=rss#frag',
-                    pubDate: '2026-06-25T16:00:00Z',
-                    description: 'Body'
-                }]
-            })
-        };
+        assertEqual(url, 'https://example.com/custom.xml');
+        return { ok: true, text: async () => '<rss/>' };
     };
 
     const result = await window.FeedData.loadFeedSources(['https://example.com/custom.xml']);
@@ -109,6 +140,7 @@ test('FeedData.loadFeedSources は取得結果を正規化してキャッシュ�
     assertEqual(result.articles[0].title, 'Example Article');
     assertEqual(result.articles[0].canonicalUrl, 'https://example.com/a');
     assert(storage.has(window.FeedConstants.storageKeys.cache), 'フィードキャッシュが保存されていません');
+    window.FeedXml.parseFeedXml = originalParser;
 });
 
 test('FeedData.loadFeedSources は取得失敗時に有効なキャッシュを stale として返す', async () => {

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head><meta charset="UTF-8"><title>Feed XML Tests</title></head>
+<body>
+<h1>Feed XML Tests</h1>
+<pre id="results"></pre>
+<script src="../js/feed/xml.js"></script>
+<script>
+(function() {
+    const results = [];
+    function test(name, callback) {
+        try { callback(); results.push(`PASS ${name}`); }
+        catch (error) { results.push(`FAIL ${name}: ${error.message}`); }
+    }
+    function equal(actual, expected) {
+        if (actual !== expected) throw new Error(`expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+    }
+    test('RSS 2.0 と名前空間拡張', () => {
+        const data = FeedXml.parseFeedXml(`<rss xmlns:media="http://search.yahoo.com/mrss/" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>News</title><link>https://example.com/</link><item><title>Article</title><link>https://example.com/a</link><pubDate>Mon, 01 Jan 2024 00:00:00 GMT</pubDate><description><![CDATA[<p>Summary</p>]]></description><content:encoded><![CDATA[<p>Full</p>]]></content:encoded><guid>id</guid><category>One</category><category>Two</category><enclosure url="https://example.com/a.jpg" type="image/jpeg"/><media:group><media:thumbnail url="https://example.com/thumb.jpg"/></media:group></item></channel></rss>`);
+        const item = data.items[0];
+        equal(data.feed.title, 'News'); equal(data.feed.link, 'https://example.com/');
+        equal(item.title, 'Article'); equal(item.link, 'https://example.com/a'); equal(item.pubDate, 'Mon, 01 Jan 2024 00:00:00 GMT');
+        equal(item.description, '<p>Summary</p>'); equal(item.content, '<p>Full</p>'); equal(item.guid, 'id');
+        equal(item.categories.join(','), 'One,Two'); equal(item.enclosure.link, 'https://example.com/a.jpg'); equal(item.thumbnail, 'https://example.com/thumb.jpg');
+    });
+    test('Atom のリンクと更新日と本文', () => {
+        const data = FeedXml.parseFeedXml(`<feed xmlns="http://www.w3.org/2005/Atom"><title>Atom</title><entry><title>Entry</title><link rel="self" href="https://example.com/self"/><link rel="alternate" href="https://example.com/article"/><updated>2024-01-01T00:00:00Z</updated><summary>Summary</summary><content>Content</content><id>atom-id</id></entry><entry><content>Only content</content></entry></feed>`);
+        equal(data.items[0].link, 'https://example.com/article'); equal(data.items[0].pubDate, '2024-01-01T00:00:00Z');
+        equal(data.items[0].description, 'Summary'); equal(data.items[0].content, 'Content'); equal(data.items[1].description, 'Only content');
+    });
+    test('RDF と Dublin Core', () => {
+        const data = FeedXml.parseFeedXml(`<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://purl.org/rss/1.0/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>RDF</title></channel><item rdf:about="https://example.com/item"><title>Item</title><dc:date>2024-01-01</dc:date><dc:creator>Author</dc:creator></item></rdf:RDF>`);
+        equal(data.items[0].link, 'https://example.com/item'); equal(data.items[0].guid, 'https://example.com/item');
+        equal(data.items[0].pubDate, '2024-01-01'); equal(data.items[0].author, 'Author');
+    });
+    test('Atom の xhtml 本文と media:thumbnail 直下', () => {
+        const data = FeedXml.parseFeedXml(`<feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/"><title>X</title><link href="https://example.com/"/><entry><title>E</title><link href="https://example.com/e"/><published>2024-02-01T00:00:00Z</published><updated>2024-03-01T00:00:00Z</updated><content type="xhtml"><div xmlns="http://www.w3.org/1999/xhtml"><p>Hi <b>there</b></p></div></content><media:thumbnail url="https://example.com/t.png"/></entry></feed>`);
+        const item = data.items[0];
+        equal(data.feed.link, 'https://example.com/'); equal(item.link, 'https://example.com/e'); equal(item.pubDate, '2024-02-01T00:00:00Z');
+        if (!item.content.includes('<b') || !item.content.includes('there')) throw new Error('xhtml 本文が HTML として取り出されていません: ' + item.content);
+        equal(item.thumbnail, 'https://example.com/t.png');
+    });
+    test('enclosure の type="false" は残し audio は除外', () => {
+        const data = FeedXml.parseFeedXml(`<rss><channel><title>Z</title><item><title>A</title><link>https://example.com/a</link><enclosure url="https://res.cloudinary.com/x.png?_a=1" length="0" type="false"/></item><item><title>B</title><link>https://example.com/b</link><enclosure url="https://example.com/b.mp3" type="audio/mpeg"/></item></channel></rss>`);
+        equal(data.items[0].enclosure.link, 'https://res.cloudinary.com/x.png?_a=1'); equal(data.items[0].thumbnail, 'https://res.cloudinary.com/x.png?_a=1');
+        equal(data.items[1].enclosure.link, undefined); equal(data.items[1].thumbnail, '');
+    });
+    test('不正な XML は解析エラー', () => {
+        try { FeedXml.parseFeedXml('<rss><broken></rss>'); } catch (error) { equal(error.code, 'parse'); return; }
+        throw new Error('解析エラーがありません');
+    });
+    test('channel のない RSS と名前空間違いの Atom は解析エラー', () => {
+        for (const source of ['<rss><error>temporary failure</error></rss>', '<feed xmlns="http://purl.org/atom/ns#"><entry/></feed>']) {
+            let code = '';
+            try { FeedXml.parseFeedXml(source); } catch (error) { code = error.code; }
+            equal(code, 'parse');
+        }
+    });
+    document.getElementById('results').textContent = results.join('\n');
+    document.title = results.some(line => line.startsWith('FAIL')) ? 'FAIL' : 'PASS';
+})();
+</script>
+</body>
+</html>
