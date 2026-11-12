@@ -74,6 +74,28 @@ test('WeatherData.buildWeatherForecastUrl はOpen-Meteo予報URLを生成する'
     assertEqual(url.searchParams.get('latitude'), '35');
     assertEqual(url.searchParams.get('longitude'), '139');
     assertEqual(url.searchParams.get('timezone'), 'Asia/Tokyo');
+    assertEqual(url.searchParams.get('models'), 'jma_seamless');
+    assertEqual(url.searchParams.get('hourly'), 'precipitation');
+});
+
+test('WeatherWidget.getWeatherChartAxisMax は最大値以上の目盛りを縦軸の上限にする', () => {
+    assertEqual(window.WeatherWidget.getWeatherChartAxisMax([0, 0, 0]), 1);
+    assertEqual(window.WeatherWidget.getWeatherChartAxisMax([0, 0.4, 1]), 1);
+    assertEqual(window.WeatherWidget.getWeatherChartAxisMax([1.2, 3]), 5);
+    assertEqual(window.WeatherWidget.getWeatherChartAxisMax([12]), 20);
+    assertEqual(window.WeatherWidget.getWeatherChartAxisMax([130.2]), 131);
+});
+
+test('WeatherWidget.renderWeatherChart は時刻と降水量の折れ線を描画する', () => {
+    const html = window.WeatherWidget.renderWeatherChart(
+        ['2999-01-01T01:00', '2999-01-01T02:00', '2999-01-01T03:00'],
+        [0, 3, 1]
+    );
+    assert(html.includes('<svg'), 'SVGが描画されていません');
+    assert(html.includes('weather-chart-line'), '折れ線がありません');
+    assertEqual((html.match(/weather-chart-dot/g) || []).length, 3);
+    assert(html.includes('>5mm</text>'), '縦軸の上限が描画されていません');
+    assert(html.includes('weather-chart-peak'), '最大値のラベルがありません');
 });
 
 test('WeatherData は保存済み位置と既定位置を読み書きする', () => {
@@ -113,7 +135,7 @@ test('WeatherWidget.renderWeatherWidget は現在天気と降水チャートを�
         current_weather: { weathercode: 0, temperature: 24 },
         hourly: {
             time: ['2000-01-01T00:00', '2999-01-01T01:00', '2999-01-01T02:00'],
-            precipitation_probability: [0, 25, 80]
+            precipitation: [0, 0.5, 12]
         }
     });
 
@@ -132,7 +154,7 @@ test('loadWeather は取得結果をウィジェットへ描画して診断へ�
             current_weather: { weathercode: 0, temperature: 20 },
             hourly: {
                 time: ['2999-01-01T00:00', '2999-01-01T01:00', '2999-01-01T02:00'],
-                precipitation_probability: [0, 10, 20]
+                precipitation: [0, 1, 2]
             }
         };
     };

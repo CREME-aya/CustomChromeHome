@@ -108,7 +108,7 @@
         const weather = window.WeatherConstants.wmoWeather[current.weathercode] || { emoji: '🌡️', text: '不明' };
         const chartHTML = renderWeatherChart(
             meteoData.hourly.time,
-            meteoData.hourly.precipitation_probability
+            meteoData.hourly.precipitation
         );
 
         return `
@@ -127,34 +127,68 @@
     }
 
     /**
-     * 降水確率のチャートHTML文字列を生成する。
+     * 1時間降水量の折れ線チャート (SVG) の HTML 文字列を生成する。
+     * 横軸は時刻、縦軸は降水量 (mm)。
      * @param {Array<string>} times - 予測日時のリスト
-     * @param {Array<number>} precipitationProbabilities - 降水確率のリスト
+     * @param {Array<number>} precipitations - 1時間降水量 (mm) のリスト
      * @returns {string} チャートの HTML 文字列
      */
-    function renderWeatherChart(times, precipitationProbabilities) {
+    function renderWeatherChart(times, precipitations) {
+        const { chartHours, chartSize } = window.WeatherConstants;
         const startIndex = findForecastStartIndex(times);
-        const chartItems = [];
+        const points = [];
 
-        for (let i = 0; i < window.WeatherConstants.chartHours; i++) {
+        for (let i = 0; i < chartHours && startIndex + i < times.length; i++) {
             const index = startIndex + i;
-            if (index >= times.length) break;
-
-            const probability = precipitationProbabilities[index] || 0;
-            const hour = new Date(times[index]).getHours().toString().padStart(2, '0');
-            const height = getWeatherChartBarHeight(probability);
-            const opacity = probability > 0 ? 1 : 0.3;
-
-            chartItems.push(`
-                <div class="weather-chart-bar-wrap">
-                    <span class="weather-chart-val">${probability}</span>
-                    <div class="weather-chart-bar" style="height: ${height}px; opacity: ${opacity};"></div>
-                    <span class="weather-chart-label">${hour}</span>
-                </div>
-            `);
+            points.push({
+                hour: new Date(times[index]).getHours().toString().padStart(2, '0'),
+                value: Number(precipitations?.[index]) || 0
+            });
         }
 
-        return `<div class="weather-chart-container">${chartItems.join('')}</div>`;
+        if (points.length === 0) return '<div class="weather-chart-container"></div>';
+
+        const { width, height, top, right, bottom, left } = chartSize;
+        const plotWidth = width - left - right;
+        const plotHeight = height - top - bottom;
+        const baseY = top + plotHeight;
+        const axisMax = getWeatherChartAxisMax(points.map(point => point.value));
+        const stepX = points.length > 1 ? plotWidth / (points.length - 1) : 0;
+        const xOf = i => left + (points.length > 1 ? i * stepX : plotWidth / 2);
+        const yOf = value => baseY - (value / axisMax) * plotHeight;
+
+        const linePath = points.map((point, i) => `${i === 0 ? 'M' : 'L'}${xOf(i).toFixed(1)},${yOf(point.value).toFixed(1)}`).join(' ');
+        const areaPath = `${linePath} L${xOf(points.length - 1).toFixed(1)},${baseY} L${xOf(0).toFixed(1)},${baseY} Z`;
+
+        // 最大値の点だけ数値を直接表示する（雨がない時は表示しない）
+        const peakIndex = points.reduce((best, point, i) => (point.value > points[best].value ? i : best), 0);
+        const peak = points[peakIndex];
+        const peakLabel = peak.value > 0
+            ? `<text class="weather-chart-peak" x="${xOf(peakIndex).toFixed(1)}" y="${(yOf(peak.value) - 4).toFixed(1)}" text-anchor="middle">${peak.value}</text>`
+            : '';
+
+        const hitWidth = points.length > 1 ? stepX : plotWidth;
+        const pointItems = points.map((point, i) => `
+            <g class="weather-chart-point">
+                <title>${point.hour}時 ${point.value}mm</title>
+                <rect class="weather-chart-hit" x="${(xOf(i) - hitWidth / 2).toFixed(1)}" y="${top}" width="${hitWidth.toFixed(1)}" height="${height - top}"></rect>
+                <circle class="weather-chart-dot" cx="${xOf(i).toFixed(1)}" cy="${yOf(point.value).toFixed(1)}" r="2.5"></circle>
+                <text class="weather-chart-label" x="${xOf(i).toFixed(1)}" y="${height - 2}" text-anchor="middle">${point.hour}</text>
+            </g>`).join('');
+
+        return `
+            <div class="weather-chart-container">
+                <svg class="weather-chart" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="1時間降水量 (mm)・気象庁モデル">
+                    <line class="weather-chart-grid" x1="${left}" y1="${top}" x2="${width - right}" y2="${top}"></line>
+                    <line class="weather-chart-axis" x1="${left}" y1="${baseY}" x2="${width - right}" y2="${baseY}"></line>
+                    <text class="weather-chart-tick" x="${left - 4}" y="${top + 3}" text-anchor="end">${axisMax}mm</text>
+                    <text class="weather-chart-tick" x="${left - 4}" y="${baseY + 3}" text-anchor="end">0</text>
+                    <path class="weather-chart-area" d="${areaPath}"></path>
+                    <path class="weather-chart-line" d="${linePath}"></path>
+                    ${peakLabel}
+                    ${pointItems}
+                </svg>
+            </div>`;
     }
 
     /**
@@ -169,16 +203,15 @@
     }
 
     /**
-     * 降水確率に応じたチャートバーの高さを計算する。
-     * @param {number} probability - 降水確率 (0-100)
-     * @returns {number} バーの高さ (px)
+     * 降水量チャートの縦軸の上限を決める。
+     * 最大値以上で最小の候補値を使い、雨がない時も 1mm の軸を表示する。
+     * @param {Array<number>} values - 1時間降水量 (mm) のリスト
+     * @returns {number} 縦軸の上限 (mm)
      */
-    function getWeatherChartBarHeight(probability) {
-        if (probability <= 0) return window.WeatherConstants.chartEmptyBarHeight;
-        return Math.max(
-            window.WeatherConstants.chartBarMinHeight,
-            (probability / 100) * window.WeatherConstants.chartBarMaxHeight
-        );
+    function getWeatherChartAxisMax(values) {
+        const { chartAxisSteps } = window.WeatherConstants;
+        const max = Math.max(0, ...values);
+        return chartAxisSteps.find(step => step >= max) ?? Math.ceil(max);
     }
 
     /**
@@ -196,7 +229,7 @@
         renderWeatherWidget,
         renderWeatherChart,
         findForecastStartIndex,
-        getWeatherChartBarHeight,
+        getWeatherChartAxisMax,
         formatWeatherLocationName
     };
 

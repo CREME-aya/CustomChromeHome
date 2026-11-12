@@ -72,6 +72,8 @@
 
     /**
      * Open-Meteo API の天気予報取得用 URL を構築する。
+     * 気象庁モデルに固定し、現在天気と降水量の出どころを揃える。
+     * （気象庁モデルは降水確率を提供しないため、降水量を使う）
      * @param {Object} location - 地域情報
      * @param {string} location.lat - 緯度
      * @param {string} location.lon - 経度
@@ -82,7 +84,8 @@
             latitude: lat,
             longitude: lon,
             current_weather: 'true',
-            hourly: 'precipitation_probability',
+            hourly: 'precipitation',
+            models: window.WeatherConstants.forecastModel,
             timezone: 'Asia/Tokyo'
         });
 
