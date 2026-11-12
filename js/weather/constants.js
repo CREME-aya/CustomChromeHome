@@ -19,12 +19,12 @@
         statusResetDelayMs: 3000,
         /** チャートに表示する時間数 */
         chartHours: 6,
-        /** チャートバーの最大高さ (px) */
-        chartBarMaxHeight: 36,
-        /** チャートバーの最小高さ (px) */
-        chartBarMinHeight: 4,
-        /** データが0の時のチャートバーの高さ (px) */
-        chartEmptyBarHeight: 2,
+        /** 予報に使う Open-Meteo のモデル（気象庁 MSM/GSM） */
+        forecastModel: 'jma_seamless',
+        /** 降水量チャートの縦軸の上限候補 (mm)。最大値以上の最小の値を使う */
+        chartAxisSteps: Object.freeze([1, 2, 5, 10, 20, 50, 100]),
+        /** 降水量チャートの描画サイズと余白 (px) */
+        chartSize: Object.freeze({ width: 200, height: 64, top: 10, right: 8, bottom: 14, left: 32 }),
         /** WMO 天気コードと絵文字・テキストのマッピング */
         wmoWeather: Object.freeze({
             0: { emoji: '☀️', text: '快晴' },

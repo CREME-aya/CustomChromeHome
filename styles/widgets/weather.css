@@ -92,44 +92,72 @@
   width: 100%;
 }
 
-/* --- 降水確率チャート --- */
+/* --- 降水量チャート（折れ線: 横軸=時刻、縦軸=mm） --- */
 .weather-chart-container {
-  display: flex;
-  gap: var(--space-sm);
   margin-left: var(--space-lg);
   border-left: 1px solid rgba(255,255,255,0.1);
-  padding-left: var(--space-lg);
-  height: 60px;
-  align-items: flex-end;
-}
-
-.weather-chart-bar-wrap {
+  padding-left: var(--space-md);
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
-  height: 100%;
-  width: 24px;
-  gap: var(--space-xs);
 }
 
-/* チャートのバー表現 */
-.weather-chart-bar {
-  width: 12px;
-  background: linear-gradient(to top, #3b82f6, #60a5fa);
-  border-radius: 4px 4px 0 0;
-  transition: height 0.5s ease;
+.weather-chart {
+  display: block;
+  overflow: visible;
 }
 
+.weather-chart-grid {
+  stroke: rgba(255,255,255,0.12);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+
+.weather-chart-axis {
+  stroke: rgba(255,255,255,0.3);
+  stroke-width: 1;
+}
+
+.weather-chart-tick,
 .weather-chart-label {
-  font-size: 0.65rem;
-  color: #cbd5e1;
-  white-space: nowrap;
+  font-size: 9px;
+  fill: #cbd5e1;
 }
 
-.weather-chart-val {
-  font-size: 0.7rem;
-  color: #f8fafc;
+.weather-chart-line {
+  fill: none;
+  stroke: #60a5fa;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.weather-chart-area {
+  fill: #60a5fa;
+  opacity: 0.15;
+}
+
+.weather-chart-dot {
+  fill: #60a5fa;
+  stroke: #0f172a;
+  stroke-width: 1;
+  transition: r 0.15s ease;
+}
+
+.weather-chart-peak {
+  font-size: 10px;
   font-weight: bold;
-  margin-bottom: -2px;
+  fill: #f8fafc;
+}
+
+/* 当たり判定は点より広く取り、ホバーで点を大きくする */
+.weather-chart-hit {
+  fill: transparent;
+}
+
+.weather-chart-point:hover .weather-chart-dot {
+  r: 4;
+}
+
+.weather-chart-point:hover .weather-chart-label {
+  fill: #f8fafc;
 }
