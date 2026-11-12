@@ -1,5 +1,7 @@
 # Nexus Dash
 
+[English](README.en.md) | 日本語
+
 Chrome の新しいタブを、時計、天気、ToDo、カレンダー取り込み、AI チャット、Spotify、RSS フィード、GitHub 連携をまとめたダッシュボードに置き換える拡張機能です。
 
 HTML / CSS / Vanilla JavaScript だけで構成しており、ビルド手順や外部ライブラリは不要です。
@@ -13,19 +15,19 @@ HTML / CSS / Vanilla JavaScript だけで構成しており、ビルド手順や
 
 - 時計と日付の表示
 - 背景画像のローカル画像設定
-- Chrome 風 of ランダム背景
+- Chrome 風のランダム背景
 - ウィジェットごとの表示 / 非表示切り替え
 - ウィジェットの自由な配置（ドラッグ）およびリサイズ（右下ハンドルドラッグ）
 - クイックリンクの追加と削除
-- API接続状態の診断
+- API 接続状態の診断
 - 予定・タスク統合ビュー
-- 画面サイズ変更時や表示切替時における位置の自動補正（境界クランプ）および元の配置の復元
+- 画面サイズ変更時や表示切り替え時における位置の自動補正（境界クランプ）および元の配置の復元
 
 ### 天気
 
 - Open-Meteo API（気象庁モデル）を使った現在天気、気温、降水量の表示
 - 市区町村検索による地点設定
-- 直近 6 時間の1時間降水量グラフ (mm)
+- 直近 6 時間の 1 時間降水量グラフ (mm)
 
 ### ToDo
 
@@ -76,7 +78,7 @@ OAuth 連携ではなく iCal URL 方式です。Google カレンダーの設定
 ### 株価
 
 - Google Sheets の `GOOGLEFINANCE` 関数で計算した現在値・前日比の表示
-- 利用には公開CSVとして取得できる Google Sheets URL の登録が必要
+- 利用には公開 CSV として取得できる Google Sheets URL の登録が必要
 - 取得に失敗した場合は、キャッシュを表示してエラーを通知
 
 ### RSS / Discover
@@ -98,13 +100,13 @@ OAuth 連携ではなく iCal URL 方式です。Google カレンダーの設定
 ### GitHub Contribution Grass（芝生）
 
 - GitHub GraphQL API を用いて、ユーザーの年間コントリビューション（芝生）をダッシュボード上にグリッド表示
-- ダークモードとライトテーマに適応するカラー表示（`getAdaptiveColor`）
+- ダークテーマとライトテーマに適応するカラー表示（`getAdaptiveColor`）
 
 ### API 診断
 
 - Google、GitHub、GoogleFinance、Spotify、AI API、RSS、天気の設定状態を一覧表示
 - 各ウィジェットの同期成功、失敗、キャッシュ表示、未設定を診断へ反映
-- 診断ウィジェット自体は有料APIを自動実行せず、設定状態と直近の通信結果を表示
+- 診断ウィジェット自体は有料 API を自動実行せず、設定状態と直近の通信結果を表示
 
 ## セットアップ
 
@@ -132,7 +134,7 @@ https://<user-name>.github.io/<repository-name>/docs/privacy.html
 2. 対象カレンダーの設定を開く
 3. 「iCal 形式の非公開 URL」または公開 URL をコピーする
 4. Nexus Dash の設定サイドバーを開く
-5. 「Googleカレンダー ToDo化」に URL を貼り付ける
+5. 「Google カレンダー ToDo 化」に URL を貼り付ける
 6. 取り込み範囲を選ぶ
 7. 「予定をToDo化」を押す
 
@@ -198,18 +200,46 @@ GitHub Issues/PR およびコントリビューション芝生を表示するに
 
 ## Spotify 連携の設定
 
-Spotify 認証を使うには、Spotify Developer Dashboard の対象アプリで Redirect URI を登録する必要があります。再生・一時停止・曲送り・曲戻しには Spotify Premium プランが必要です。
+Spotify 連携を使うには、**自分で作った Spotify アプリの Client ID を `.env` に設定してください**。
 
-1. この拡張機能を Chrome に読み込む
-2. 新しいタブの設定サイドバーを開く
-3. 「Spotify 連携設定」の「URI と設定手順を別タブで開く」を押す
-4. 表示された Redirect URI をコピーする
-5. Spotify Developer Dashboard のアプリ設定で Redirect URI に同じ値を追加する
-6. Nexus Dash の Spotify ウィジェットで「連携する」を押す
+コードには作者の Spotify アプリの Client ID が既定値として入っていますが、これは作者用です。Spotify の開発モードのアプリは、アプリのオーナーが許可したアカウントでしか認証できません。そのため、フォークして使う人は自分のアプリを用意する必要があります。再生・一時停止・曲送り・曲戻しには Spotify Premium プランが必要です。
 
-Redirect URI は完全一致が必要です。このアプリは `https://<拡張機能ID>.chromiumapp.org/spotify` の形式を使います。`/spotify` の有無、末尾スラッシュ、大文字小文字が違うと Spotify 側で `redirect_uri: Not matching configuration` になります。
+### 1. Spotify アプリを作る
 
-認証に失敗した場合、直近のエラーは設定サイドバーと Spotify 連携設定ページに表示されます。Spotify 側へ登録後は、Chrome の拡張機能ページで Nexus Dash をリロードし、新しいタブを開き直してください。
+1. [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) に Spotify アカウントでログインする
+2. 「Create app」でアプリを作る。「Which API/SDKs are you planning to use?」では Web API を選ぶ
+3. 作ったアプリの「Settings」を開き、Client ID をコピーする（Client Secret は使わない）
+4. アプリのオーナー以外の Spotify アカウントでも使う場合は、「User Management」にそのアカウントのメールアドレスを追加する
+
+### 2. `.env` に Client ID を設定する
+
+1. リポジトリ直下で `.env.example` をコピーして `.env` を作る
+
+   ```sh
+   cp .env.example .env
+   ```
+
+2. `.env` の `NEXUS_SPOTIFY_CLIENT_ID` に、コピーした Client ID を設定する
+
+   ```text
+   NEXUS_SPOTIFY_CLIENT_ID=あなたのClientID
+   ```
+
+3. Chrome の拡張機能ページで Nexus Dash をリロードする
+
+`.env` は Git 管理対象外なので、Client ID がリポジトリに入ることはありません。`.env` は「パッケージ化されていない拡張機能」として読み込んだ場合にのみ参照されます。配布用の zip（`scripts/package.sh`）には含まれません。
+
+### 3. Redirect URI を登録して連携する
+
+1. 新しいタブの設定サイドバーを開く
+2. 「Spotify 連携設定」の「URI と設定手順を別タブで開く」を押す
+3. 表示された Redirect URI をコピーする
+4. Spotify Developer Dashboard のアプリ設定で、Redirect URIs に同じ値を追加して保存する
+5. Nexus Dash の Spotify ウィジェットで「連携する」を押す
+
+Redirect URI は完全に一致している必要があります。このアプリは `https://<拡張機能ID>.chromiumapp.org/spotify` の形式を使います。`/spotify` の有無、末尾のスラッシュ、大文字・小文字が異なると、Spotify 側で `redirect_uri: Not matching configuration` になります。値は手で組み立てず、設定サイドバーに表示されたものをそのまま使ってください。
+
+認証に失敗した場合、直近のエラーは設定サイドバーと Spotify 連携設定ページに表示されます。Spotify 側に登録した後は、Chrome の拡張機能ページで Nexus Dash をリロードし、新しいタブを開き直してください。
 
 ## 設定と保存先
 
@@ -227,7 +257,7 @@ NEXUS_GOOGLEFINANCE_CSV_URL=
 NEXUS_OPENAI_MODEL=gpt-4o
 NEXUS_ANTHROPIC_MODEL=claude-sonnet-4-6
 NEXUS_GEMINI_MODEL=gemini-3.5-flash
-NEXUS_SPOTIFY_CLIENT_ID=3ed94377fd3840f2b3f3e88967a2ed78
+NEXUS_SPOTIFY_CLIENT_ID=   # 自分の Spotify アプリの Client ID（「Spotify 連携の設定」参照）
 ```
 
 `.env.local` は `.env` より後に読み込まれるため、端末ごとの上書きに使えます。どちらのファイルも Git 管理対象外です。
@@ -245,7 +275,7 @@ NEXUS_SPOTIFY_CLIENT_ID=3ed94377fd3840f2b3f3e88967a2ed78
 - Spotify アクセストークン
 - Spotify リフレッシュトークン
 - クイックリンク
-- API診断の直近ステータス
+- API 診断の直近ステータス
 
 共有 PC で使う場合は、API キーや iCal URL の扱いに注意してください。
 
@@ -254,8 +284,8 @@ NEXUS_SPOTIFY_CLIENT_ID=3ed94377fd3840f2b3f3e88967a2ed78
 `manifest.json` では以下の権限を使います。
 
 - `identity`: Google / Spotify 認証に使うため
-- `tabs`: 認証ページを通常タブで開くフォールバックに使うため
-- `scripting`: 認証や処理に必要な一部のスクリプト実行などに使用するため
+- `tabs`: 認証ページを通常タブで開くフォールバックと、YouTube タブの検索に使うため
+- `scripting`: YouTube タブの再生操作に使うため
 - `host_permissions`: `<all_urls>` を指定し（任意の iCal URL を取得するため絞り込めない）、RSS、天気、カレンダー、Google、AI、Spotify API 等へアクセスするため
 
 ## ファイル構成
@@ -264,9 +294,12 @@ NEXUS_SPOTIFY_CLIENT_ID=3ed94377fd3840f2b3f3e88967a2ed78
 .
 ├── index.html        # 画面構造と script / stylesheet の読み込み順
 ├── manifest.json     # Chrome 拡張設定
+├── README.en.md      # README 英語版
 ├── docs/
 │   ├── privacy.html  # Chrome Web Store 用プライバシーポリシー
-│   └── 要件.md       # 機能・非機能要件
+│   ├── privacy.en.html # 同・英語版
+│   ├── 要件.md       # 機能・非機能要件
+│   └── requirements.en.md # 同・英語版
 ├── js/
 │   ├── ai/           # AI チャットウィジェット
 │   │   ├── constants.js
@@ -372,7 +405,7 @@ node -e "const fs=require('fs'); const vm=require('vm'); global.window=globalThi
 
 - iCal URL は秘密情報に近い扱いです。公開リポジトリやスクリーンショットに載せないでください。
 - AI API キーは外部サービスの課金につながるため、共有環境では保存しないでください。
-- Spotify 認証を使うには、Spotify 側のアプリ設定とリダイレクト URL の整合が必要です。
+- Spotify 認証を使うには、Spotify 側のアプリ設定とリダイレクト URI の整合が必要です。
 
 ## ライセンス
 
