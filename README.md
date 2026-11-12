@@ -118,12 +118,12 @@ OAuth 連携ではなく iCal URL 方式です。Google カレンダーの設定
 
 ## Chrome Web Store 掲載
 
-Chrome Web Store に掲載する場合は、`privacy.html` を GitHub Pages などの公開 URL に配置し、その URL をプライバシーポリシー欄に入力してください。
+Chrome Web Store に掲載する場合は、`docs/privacy.html` を GitHub Pages などの公開 URL に配置し、その URL をプライバシーポリシー欄に入力してください。
 
 例:
 
 ```text
-https://<user-name>.github.io/<repository-name>/privacy.html
+https://<user-name>.github.io/<repository-name>/docs/privacy.html
 ```
 
 ## Google カレンダーの使い方
@@ -264,7 +264,9 @@ NEXUS_SPOTIFY_CLIENT_ID=3ed94377fd3840f2b3f3e88967a2ed78
 .
 ├── index.html        # 画面構造と script / stylesheet の読み込み順
 ├── manifest.json     # Chrome 拡張設定
-├── privacy.html      # Chrome Web Store 用プライバシーポリシー
+├── docs/
+│   ├── privacy.html  # Chrome Web Store 用プライバシーポリシー
+│   └── 要件.md       # 機能・非機能要件
 ├── js/
 │   ├── ai/           # AI チャットウィジェット
 │   │   ├── constants.js
