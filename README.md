@@ -4,6 +4,9 @@ Chrome の新しいタブを、時計、天気、ToDo、カレンダー取り込
 
 HTML / CSS / Vanilla JavaScript だけで構成しており、ビルド手順や外部ライブラリは不要です。
 
+> **位置づけ**：作者が自分で毎日使うための個人ツールです。Chrome Web Store での一般向け展開は行っていません。
+> ソースは MIT ライセンスで公開しているので、自由にフォークして自分用に改造してください。Issue や PR への対応は保証しません。
+
 ## 主な機能
 
 ### ダッシュボード
@@ -345,6 +348,12 @@ NEXUS_SPOTIFY_CLIENT_ID=3ed94377fd3840f2b3f3e88967a2ed78
 
 ビルドは不要です。変更後は Chrome の拡張機能ページで対象拡張をリロードし、新しいタブを開き直してください。
 
+全テストの実行:
+
+```sh
+node tests/run-all.js
+```
+
 全 JavaScript の構文確認:
 
 ```sh
@@ -362,3 +371,7 @@ node -e "const fs=require('fs'); const vm=require('vm'); global.window=globalThi
 - iCal URL は秘密情報に近い扱いです。公開リポジトリやスクリーンショットに載せないでください。
 - AI API キーは外部サービスの課金につながるため、共有環境では保存しないでください。
 - Spotify 認証を使うには、Spotify 側のアプリ設定とリダイレクト URL の整合が必要です。
+
+## ライセンス
+
+[MIT](LICENSE)
